@@ -2,976 +2,827 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LiveCard Studio — Greeting Cards That Breathe</title>
-<meta name="description" content="Create living, interactive greeting cards with floating petals, breathing backgrounds, and photos that transform into art.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@200;300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveCard Studio — Living Cards for Every Moment</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;1,300;1,400&family=Dancing+Script:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#080706;--s1:#0F0E0C;--s2:#151412;--s3:#1C1A18;
-  --tx:#F2EDE5;--tx2:#C8C0B4;--txm:#908880;--txf:#5A5550;
-  --gold:#D4A853;--gold2:#E8C97A;--goldg:rgba(212,168,83,.15);--golds:rgba(212,168,83,.06);
-  --rose:#C4727F;--rose2:#E8A0B4;--roseg:rgba(196,114,127,.12);
-  --lav:#C9B8D9;--sage:#A8B5A0;--peach:#F0C5A8;
-  --bdr:rgba(255,255,255,.04);--bdr2:rgba(255,255,255,.07);
+  --bg:#FDFBF7;--bg2:#F7F3ED;--bg3:#EFEBE4;
+  --tx:#2A2520;--tx2:#5C554D;--tx3:#8A837B;--txf:#B8B0A6;
+  --gold:#C9A96E;--gold2:#B8944E;
+  --blush:#D4A0A0;--sage:#8FA680;--mauve:#B8A0C0;--sky:#7BA4C4;--coral:#D4907A;--mint:#7AC4A8;
+  --mid:#1C1926;
+  --bdr:rgba(0,0,0,.04)
 }
-html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--gold) var(--bg)}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--gold);border-radius:9px}
-body{
-  background:var(--bg);color:var(--tx);
-  font-family:'Outfit',sans-serif;font-weight:300;
-  overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='3' fill='none' stroke='%23D4A853' stroke-width='1' opacity='.6'/%3E%3C/svg%3E") 10 10, crosshair;
-}
-a{color:inherit;text-decoration:none}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 
-/* === FIXED CANVAS LAYERS === */
-.cv{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none}
-#bgC{z-index:0}#ptC{z-index:1}#glC{z-index:2}
+/* AMBIENT */
+#gardenC{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
 
-/* === PAINT SPLASHES === */
-.ps{position:fixed;pointer-events:none;z-index:55;opacity:0;animation:psA 4s ease-out forwards}
-.pd{position:fixed;pointer-events:none;z-index:55;border-radius:50%;opacity:0;animation:pdA 2.2s ease-out forwards}
-@keyframes psA{0%{transform:scale(0) rotate(0);opacity:.8}10%{transform:scale(.45) rotate(8deg);opacity:.65}40%{opacity:.3}100%{transform:scale(1) rotate(30deg);opacity:0}}
-@keyframes pdA{0%{transform:scale(0) translateY(0);opacity:.65}40%{opacity:.3}100%{transform:scale(1) translateY(18px);opacity:0}}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 36px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(24px);background:rgba(253,251,247,.72);border-bottom:1px solid var(--bdr);transition:all .5s}
+.nav.scrolled{background:rgba(253,251,247,.92);box-shadow:0 1px 20px rgba(0,0,0,.03)}
+.nav .logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600}.nav .logo i{color:var(--blush);font-style:normal}
+.nl{display:flex;gap:24px;align-items:center}
+.nl a{font-size:.6rem;font-weight:400;letter-spacing:2.5px;text-transform:uppercase;color:var(--tx2);text-decoration:none;transition:color .3s}.nl a:hover{color:var(--gold2)}
+.nav-cta{padding:8px 22px;border-radius:24px;font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--gold2);text-decoration:none;transition:all .3s;border:none;cursor:pointer}
+.nav-cta:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,169,110,.2)}
 
-/* === NAV === */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:50;
-  padding:16px 32px;display:flex;justify-content:space-between;align-items:center;
-  transition:all .65s cubic-bezier(.23,1,.32,1);border-bottom:1px solid transparent;
-}
-nav.s{background:rgba(8,7,6,.78);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom-color:var(--bdr)}
-.nl{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--gold);letter-spacing:.5px}
-.nl i{color:var(--rose);font-style:normal}
-.nb{
-  padding:8px 20px;border-radius:6px;background:var(--gold);color:var(--bg);
-  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  border:none;cursor:pointer;transition:all .3s;display:inline-block;
-}
-.nb:hover{background:var(--gold2);box-shadow:0 4px 25px var(--goldg);transform:translateY(-1px)}
+/* HERO */
+.hero{position:relative;z-index:2;text-align:center;padding:90px 32px 30px}
+.htag{display:inline-flex;align-items:center;gap:8px;padding:5px 15px;border-radius:18px;background:rgba(201,169,110,.05);border:1px solid rgba(201,169,110,.1);font-size:.5rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;color:var(--gold2);margin-bottom:18px}
+.htag .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+.hero h1{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:300;line-height:1.06;margin-bottom:12px;letter-spacing:-.5px;max-width:700px;margin-left:auto;margin-right:auto}
+.hero h1 em{font-style:italic;color:var(--blush)}.hero h1 .gold{color:var(--gold2)}
+.hero .sub{font-size:.86rem;font-weight:300;color:var(--tx2);line-height:1.8;margin-bottom:24px;max-width:460px;margin-left:auto;margin-right:auto}
 
-/* === CONTENT === */
-.ct{position:relative;z-index:3}
+/* ═══ EVENT TABS ═══ */
+.tabs-wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 24px}
+.tabs-bar{display:flex;justify-content:center;gap:4px;margin-bottom:40px;flex-wrap:wrap}
+.tab-btn{
+  padding:10px 22px;border-radius:24px;border:1px solid var(--bdr);
+  background:rgba(255,255,255,.5);backdrop-filter:blur(8px);
+  font-family:'DM Sans',sans-serif;font-size:.64rem;font-weight:400;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--tx3);
+  cursor:pointer;transition:all .4s;white-space:nowrap;
+}
+.tab-btn:hover{border-color:rgba(201,169,110,.15);color:var(--tx2)}
+.tab-btn.active{background:var(--tx);color:#fff;border-color:var(--tx);box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.tab-btn.codex-btn{background:rgba(28,25,38,.04);border-color:rgba(28,25,38,.08);color:var(--mid)}
+.tab-btn.codex-btn.active{background:var(--mid);color:var(--gold);border-color:var(--mid)}
 
-/* === HERO === */
-.hero{
-  min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;text-align:center;
-  padding:120px 24px 90px;position:relative;
-}
-.hbg{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 18px;border-radius:20px;
-  background:var(--golds);border:1px solid rgba(212,168,83,.1);
-  font-size:.62rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;color:var(--gold);
-  margin-bottom:36px;opacity:0;animation:up 1.6s cubic-bezier(.23,1,.32,1) .5s forwards;
-}
-.hbg::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+/* TAB PANELS */
+.tab-panel{display:none;animation:fadePanel .5s ease}
+.tab-panel.active{display:block}
+@keyframes fadePanel{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
-.hero h1{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(2.8rem,7.5vw,6.5rem);font-weight:500;
-  line-height:1.05;max-width:880px;letter-spacing:-.02em;
-  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) .8s forwards;
-}
-.hero h1 em{font-style:italic;color:var(--gold);position:relative;display:inline-block}
-.hero h1 em::after{
-  content:'';position:absolute;bottom:-3px;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  animation:shim 3.5s ease-in-out infinite;
-}
-@keyframes shim{0%,100%{opacity:.3}50%{opacity:.9}}
+/* EVENT PANEL LAYOUT */
+.event-intro{text-align:center;margin-bottom:36px}
+.event-intro h2{font-size:clamp(1.3rem,2.8vw,2rem);font-weight:300;line-height:1.15;margin-bottom:6px}
+.event-intro h2 em{font-style:italic}
+.event-intro p{font-size:.78rem;font-weight:300;color:var(--tx2);line-height:1.7;max-width:440px;margin:0 auto}
 
-.hsub{
-  font-size:clamp(.92rem,1.6vw,1.15rem);font-weight:200;
-  color:var(--tx2);max-width:480px;line-height:1.85;margin:28px auto 44px;
-  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) 1.1s forwards;
-}
-.hf{
-  display:flex;gap:0;max-width:420px;width:100%;
-  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) 1.4s forwards;
-}
-.hf input{
-  flex:1;padding:14px 18px;background:rgba(15,14,12,.85);
-  border:1.5px solid var(--bdr2);border-right:none;border-radius:8px 0 0 8px;
-  color:var(--tx);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:300;
-  outline:none;backdrop-filter:blur(12px);transition:border-color .3s;
-}
-.hf input::placeholder{color:var(--txf)}
-.hf input:focus{border-color:var(--gold)}
-.hf button{
-  padding:14px 26px;background:var(--gold);color:var(--bg);border:none;
-  border-radius:0 8px 8px 0;font-family:'Outfit',sans-serif;
-  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  cursor:pointer;transition:all .3s;white-space:nowrap;
-}
-.hf button:hover{background:var(--gold2)}
-.hn{
-  font-size:.68rem;color:var(--txf);margin-top:12px;
-  opacity:0;animation:up 1.4s ease-out 1.7s forwards;
-}
-.hp{
-  font-style:italic;font-size:.8rem;color:var(--txm);margin-top:24px;
-  opacity:0;animation:up 1.4s ease-out 2.2s forwards;
-}
-.hsc{
-  position:absolute;bottom:30px;display:flex;flex-direction:column;align-items:center;gap:6px;
-  opacity:0;animation:up 1.4s ease-out 2.6s forwards;
-}
-.hsc span{font-size:.55rem;letter-spacing:4px;text-transform:uppercase;color:var(--txf)}
-.hsc i{display:block;width:1px;height:40px;background:linear-gradient(to bottom,var(--gold),transparent);animation:bob 2.5s ease-in-out infinite}
-@keyframes bob{0%,100%{opacity:.2;transform:scaleY(.9)}50%{opacity:.7;transform:scaleY(1.12)}}
+.cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:50px}
 
-/* === SECTIONS === */
-section{position:relative;padding:100px 24px}
-.si{max-width:1080px;margin:0 auto}
-.sl{
-  display:inline-block;font-size:.58rem;font-weight:500;
-  letter-spacing:4.5px;text-transform:uppercase;color:var(--gold);
-  padding-left:16px;border-left:2px solid var(--gold);margin-bottom:14px;
+/* LIVING CARD */
+.live-card{
+  position:relative;border-radius:4px;overflow:hidden;
+  aspect-ratio:5/7;
+  box-shadow:0 20px 50px rgba(0,0,0,.06),0 3px 15px rgba(0,0,0,.02);
+  transition:transform .6s cubic-bezier(.23,1,.32,1),box-shadow .6s;
+  cursor:default;
 }
-.st{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(1.7rem,3.8vw,3rem);font-weight:500;
-  line-height:1.15;letter-spacing:-.01em;margin-bottom:12px;
-}
-.st em{font-style:italic;color:var(--rose)}
-.sd{font-size:.95rem;font-weight:200;color:var(--tx2);line-height:1.8;max-width:460px}
+.live-card:hover{transform:translateY(-5px);box-shadow:0 30px 70px rgba(0,0,0,.08)}
+.live-card canvas{position:absolute;inset:0;width:100%;height:100%}
+.live-card .c0{z-index:0}.live-card .c1{z-index:1}
 
-/* Scroll reveal */
-.rv{opacity:0;transform:translateY(35px);transition:all .85s cubic-bezier(.23,1,.32,1)}
-.rv.v{opacity:1;transform:translateY(0)}
-.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
-.d4{transition-delay:.32s}.d5{transition-delay:.4s}.d6{transition-delay:.48s}
+.lcov{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;pointer-events:none}
+.lcov .mono{font-family:'DM Sans',sans-serif;font-size:.38rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;opacity:.5;margin-bottom:8px}
+.lcov .title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;line-height:1.12}
+.lcov .msg{font-family:'Dancing Script',cursive;font-size:.85rem;opacity:.55;line-height:1.5;margin-top:6px;max-width:180px}
+.lcov .from{font-family:'DM Sans',sans-serif;font-size:.44rem;font-weight:400;letter-spacing:2px;opacity:.3;margin-top:8px}
+.lcov .dv{width:26px;height:1px;margin:7px auto;opacity:.12}
+/* Wedding specific */
+.lcov .names{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:300;line-height:1.1}
+.lcov .amp{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;margin:1px 0;opacity:.5}
+.lcov .dt{font-family:'DM Sans',sans-serif;font-size:.44rem;font-weight:400;letter-spacing:2.5px;text-transform:uppercase;opacity:.4;margin-top:8px}
+.lcov .ven{font-family:'Cormorant Garamond',serif;font-size:.6rem;font-weight:300;font-style:italic;opacity:.3;margin-top:2px}
 
-/* === FEATURES === */
-.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
-.fc{
-  padding:28px 24px;background:rgba(15,14,12,.55);
-  border:1px solid var(--bdr);border-radius:14px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:all .5s cubic-bezier(.23,1,.32,1);position:relative;overflow:hidden;
-}
-.fc::after{
-  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .4s;
-}
-.fc:hover{border-color:rgba(212,168,83,.1);transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.fc:hover::after{opacity:1}
-.fi{font-size:1.7rem;margin-bottom:14px;display:block;filter:grayscale(.3)}
-.fc:hover .fi{filter:grayscale(0)}
-.fc h3{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:500;margin-bottom:6px}
-.fc p{font-size:.8rem;font-weight:200;color:var(--txm);line-height:1.7}
+/* Theme label under card */
+.card-label{text-align:center;margin-top:12px}
+.card-label h4{font-size:.82rem;font-weight:500;margin-bottom:2px}
+.card-label p{font-size:.62rem;font-weight:300;color:var(--tx3)}
 
-/* === STEPS === */
-.hw{text-align:center}
-.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px;position:relative}
-.sg::before{
-  content:'';position:absolute;top:28px;left:13%;right:13%;height:1px;
-  background:linear-gradient(90deg,transparent,var(--bdr2),var(--bdr2),transparent);
-}
-.sp{text-align:center;position:relative}
-.sn{
-  width:42px;height:42px;border-radius:50%;
-  background:var(--s2);border:1.5px solid var(--bdr2);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 14px;font-family:'Playfair Display',serif;
-  font-size:.92rem;font-weight:600;color:var(--gold);
-  position:relative;z-index:2;transition:all .4s;
-}
-.sp:hover .sn{border-color:var(--gold);box-shadow:0 0 30px var(--goldg)}
-.sp h4{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:500;margin-bottom:4px}
-.sp p{font-size:.72rem;font-weight:200;color:var(--txf);line-height:1.55}
+/* ═══ CODEX TAB ═══ */
+.codex-panel{max-width:900px;margin:0 auto}
+.codex-hero{text-align:center;margin-bottom:40px}
+.codex-hero .ch-badge{display:inline-block;padding:6px 18px;border-radius:18px;background:rgba(28,25,38,.04);border:1px solid rgba(28,25,38,.08);font-size:.5rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;color:var(--mid);margin-bottom:14px}
+.codex-hero h2{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;line-height:1.12;margin-bottom:8px}
+.codex-hero h2 em{font-style:italic;color:var(--gold2)}
+.codex-hero p{font-size:.82rem;font-weight:300;color:var(--tx2);line-height:1.8;max-width:520px;margin:0 auto}
 
-/* === LIVING THEME DEMOS === */
-.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px}
-.td{
-  border-radius:14px;overflow:hidden;border:1px solid var(--bdr);
-  transition:all .55s cubic-bezier(.23,1,.32,1);
+.prompt-list{display:flex;flex-direction:column;gap:20px;margin-bottom:40px}
+.prompt-card{border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.55);backdrop-filter:blur(8px);overflow:hidden;transition:all .4s}
+.prompt-card:hover{box-shadow:0 10px 30px rgba(0,0,0,.03);border-color:rgba(201,169,110,.1)}
+.prompt-head{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;cursor:pointer;user-select:none}
+.prompt-head .ph-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:.85rem;font-weight:600;color:#fff;background:var(--mid);flex-shrink:0}
+.prompt-head .ph-icon{font-size:1.1rem;flex-shrink:0}
+.prompt-head .ph-info{flex:1}
+.prompt-head .ph-info h4{font-size:.82rem;font-weight:500;margin-bottom:1px}
+.prompt-head .ph-info span{font-size:.58rem;font-weight:300;color:var(--tx3)}
+.prompt-head .ph-arrow{font-size:.7rem;color:var(--tx3);transition:transform .3s;flex-shrink:0}
+.prompt-card.open .ph-arrow{transform:rotate(180deg)}
+.prompt-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.23,1,.32,1)}
+.prompt-card.open .prompt-body{max-height:2000px}
+.prompt-inner{padding:0 22px 20px}
+.prompt-desc{font-size:.7rem;font-weight:300;color:var(--tx2);line-height:1.7;margin-bottom:12px}
+.prompt-block{position:relative;background:var(--mid);border-radius:10px;padding:16px 18px;font-family:'SF Mono','Fira Code',monospace;font-size:.58rem;line-height:1.8;color:rgba(255,255,255,.75);white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto}
+.prompt-block::-webkit-scrollbar{width:4px}.prompt-block::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.copy-btn{position:absolute;top:8px;right:8px;padding:5px 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:.52rem;font-weight:400;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .3s;z-index:2}
+.copy-btn:hover{background:rgba(201,169,110,.15);color:var(--gold);border-color:rgba(201,169,110,.2)}
+.copy-btn.copied{background:rgba(143,166,128,.15);color:var(--sage);border-color:rgba(143,166,128,.2)}
+
+.prompt-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.prompt-tags span{padding:3px 9px;border-radius:8px;font-size:.48rem;font-weight:400;letter-spacing:.5px}
+.pt-api{background:rgba(123,164,196,.08);border:1px solid rgba(123,164,196,.1);color:var(--sky)}
+.pt-canvas{background:rgba(143,166,128,.08);border:1px solid rgba(143,166,128,.1);color:var(--sage)}
+.pt-ai{background:rgba(184,160,192,.08);border:1px solid rgba(184,160,192,.1);color:var(--mauve)}
+.pt-nfc{background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.1);color:var(--gold2)}
+.pt-sensor{background:rgba(212,144,122,.08);border:1px solid rgba(212,144,122,.1);color:var(--coral)}
+
+.codex-note{text-align:center;padding:28px 24px;border-radius:16px;background:rgba(201,169,110,.025);border:1px solid rgba(201,169,110,.06);margin-bottom:24px}
+.codex-note h4{font-size:.88rem;font-weight:500;margin-bottom:4px}
+.codex-note p{font-size:.66rem;font-weight:300;color:var(--tx2);line-height:1.7;max-width:500px;margin:0 auto}
+
+/* ═══ CTA SECTION ═══ */
+.bottom-cta{position:relative;z-index:2;text-align:center;padding:60px 32px 80px}
+.bottom-cta h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:300;margin-bottom:6px}
+.bottom-cta h2 em{font-style:italic;color:var(--blush)}
+.bottom-cta p{font-size:.78rem;font-weight:300;color:var(--tx2);margin-bottom:20px}
+.bottom-cta .btn-p{padding:14px 40px}
+.bottom-cta a.btn-p{display:inline-block;text-decoration:none;color:#fff}
+.bottom-cta .pr{font-size:.64rem;color:var(--tx3);margin-top:12px}.bottom-cta .pr b{color:var(--gold2);font-weight:500}
+
+/* FOOTER */
+.ftr{position:relative;z-index:2;text-align:center;padding:22px;border-top:1px solid var(--bdr)}
+.ftr .fl{font-family:'Cormorant Garamond',serif;font-size:.82rem;font-weight:500}.ftr .fl i{color:var(--blush);font-style:normal}
+.ftr p{font-size:.54rem;color:var(--txf);letter-spacing:1px;margin-top:2px}
+
+/* REVEALS */
+.rv{opacity:0;transform:translateY(26px);transition:all .8s cubic-bezier(.23,1,.32,1)}.rv.v{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.18s}.d3{transition-delay:.26s}
+
+@media(max-width:900px){
+  .cards-row{grid-template-columns:1fr 1fr;gap:20px}
+  .prompt-list{flex-direction:column}
+  .nl a:not(.nav-cta){display:none}
+  .tabs-bar{gap:3px}
+  .tab-btn{padding:8px 14px;font-size:.56rem}
 }
-.td:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 24px 60px rgba(0,0,0,.5);border-color:var(--bdr2)}
-.tc{height:140px;position:relative;overflow:hidden}
-.tc canvas{width:100%;height:100%;display:block}
-.tm{padding:12px 14px;background:var(--s1)}
-.tm h4{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:500;margin-bottom:2px}
-.tm p{font-size:.66rem;font-weight:200;color:var(--txf)}
-.cs{display:flex;gap:3px;margin-top:6px}
-.cs i{width:9px;height:9px;border-radius:50%;display:block;font-style:normal}
-
-/* === TIERS === */
-.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
-.ti{
-  padding:32px 24px;background:rgba(15,14,12,.55);
-  border:1px solid var(--bdr);border-radius:14px;
-  backdrop-filter:blur(10px);display:flex;flex-direction:column;
-  transition:all .5s cubic-bezier(.23,1,.32,1);position:relative;
-}
-.ti.ft{border-color:rgba(212,168,83,.15);background:rgba(212,168,83,.03)}
-.ti.ft::before{
-  content:'MOST POPULAR';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
-  font-size:.52rem;font-weight:600;letter-spacing:2.5px;
-  padding:3px 12px;border-radius:10px;background:var(--gold);color:var(--bg);
-}
-.ti:hover{transform:translateY(-5px);box-shadow:0 20px 55px rgba(0,0,0,.45)}
-.ti-i{font-size:1.8rem;margin-bottom:12px}
-.ti h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:500;margin-bottom:4px}
-.ti .pr{font-size:1.5rem;font-weight:500;color:var(--gold);margin-bottom:6px}
-.ti .pr small{font-size:.65rem;font-weight:300;color:var(--txf)}
-.ti .de{font-size:.78rem;font-weight:200;color:var(--txm);line-height:1.65;margin-bottom:14px;flex:1}
-.tl{list-style:none;display:flex;flex-direction:column;gap:5px}
-.tl li{font-size:.74rem;font-weight:300;color:var(--txm);padding-left:16px;position:relative}
-.tl li::before{content:'✦';position:absolute;left:0;color:var(--gold);font-size:.55rem;top:2px}
-
-/* === OCCASIONS === */
-.oc{text-align:center}
-.ot{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:36px}
-.ot a{
-  padding:9px 18px;border-radius:22px;
-  background:var(--s1);border:1px solid var(--bdr);
-  font-size:.78rem;font-weight:300;color:var(--txm);transition:all .3s;
-}
-.ot a:hover{border-color:var(--gold);color:var(--gold);background:var(--golds);transform:translateY(-2px)}
-
-/* === PROOF === */
-.pf{text-align:center;max-width:660px;margin:0 auto}
-.pq{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(1.15rem,2.6vw,1.6rem);font-style:italic;font-weight:400;
-  line-height:1.7;margin-top:26px;
-}
-.pq b{color:var(--gold);font-weight:500}
-.pa{margin-top:14px;font-size:.78rem;color:var(--txf)}
-
-/* === CTA === */
-.cta{text-align:center;max-width:520px;margin:0 auto;padding:70px 24px 100px}
-.cf{display:flex;gap:0;max-width:420px;width:100%;margin:26px auto 0}
-.cf input{
-  flex:1;padding:14px 18px;background:rgba(15,14,12,.85);
-  border:1.5px solid var(--bdr2);border-right:none;border-radius:8px 0 0 8px;
-  color:var(--tx);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:300;outline:none;
-  backdrop-filter:blur(12px);transition:border-color .3s;
-}
-.cf input::placeholder{color:var(--txf)}
-.cf input:focus{border-color:var(--rose)}
-.cf button{
-  padding:14px 26px;background:var(--rose);color:#fff;border:none;
-  border-radius:0 8px 8px 0;font-family:'Outfit',sans-serif;
-  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  cursor:pointer;transition:all .3s;white-space:nowrap;
-}
-.cf button:hover{background:var(--rose2);box-shadow:0 4px 25px var(--roseg)}
-.cn{font-size:.68rem;color:var(--txf);margin-top:10px}
-
-/* Form success */
-.fok{display:none;padding:12px 22px;background:rgba(168,181,160,.08);border:1px solid rgba(168,181,160,.12);border-radius:8px;color:var(--sage);font-size:.85rem;text-align:center;margin-top:12px}
-.fok.on{display:block;animation:up .6s ease-out}
-
-/* === DIVIDER === */
-.dv{display:flex;align-items:center;justify-content:center;gap:18px;padding:6px 0}
-.dl{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--bdr2),transparent)}
-
-/* === FOOTER === */
-footer{position:relative;z-index:3;text-align:center;padding:26px;border-top:1px solid var(--bdr)}
-footer p{font-size:.64rem;color:var(--txf);letter-spacing:1px}
-footer .fl{font-family:'Playfair Display',serif;font-size:.82rem;color:var(--gold);margin-bottom:4px}
-footer .fl i{color:var(--rose);font-style:normal}
-
-/* === LIVE CARD DEMO === */
-.demo-wrap{display:flex;flex-direction:column;align-items:center;gap:28px;margin-top:44px}
-.demo-card{
-  position:relative;width:360px;height:520px;border-radius:22px;overflow:hidden;
-  border:1px solid rgba(212,168,83,.2);box-shadow:0 30px 80px rgba(0,0,0,.6);
-  cursor:crosshair;flex-shrink:0;
-}
-.demo-card canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
-.demo-inner{
-  position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;padding:32px;
-  transition:filter .6s ease;pointer-events:none;
-}
-.di-msg{font-family:'Dancing Script',cursive;font-size:2rem;color:#fff;text-align:center;line-height:1.5;text-shadow:0 2px 24px rgba(0,0,0,.6);margin-bottom:10px}
-.di-sub{font-size:.72rem;font-weight:200;color:rgba(255,255,255,.6);text-align:center;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.5)}
-.demo-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:.54rem;letter-spacing:3.5px;text-transform:uppercase;color:rgba(255,255,255,.35);white-space:nowrap;z-index:2;pointer-events:none}
-.demo-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
-.demo-filters button{padding:7px 16px;border-radius:20px;border:1px solid var(--bdr2);background:var(--s1);color:var(--txm);font-family:'Outfit',sans-serif;font-size:.64rem;font-weight:400;letter-spacing:1.5px;cursor:pointer;transition:all .3s;text-transform:uppercase}
-.demo-filters button:hover,.demo-filters button.active{border-color:var(--gold);color:var(--gold);background:var(--golds)}
-.demo-label{font-size:.58rem;letter-spacing:3.5px;text-transform:uppercase;color:var(--txf)}
-
-/* === FAQ === */
-.faq{max-width:680px;margin:44px auto 0}
-.faq-item{border-bottom:1px solid var(--bdr);overflow:hidden}
-.faq-q{width:100%;background:none;border:none;color:var(--tx);text-align:left;font-family:'Playfair Display',serif;font-size:.95rem;font-weight:500;padding:20px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:color .3s}
-.faq-q:hover{color:var(--gold)}
-.faq-ic{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--gold);font-style:normal;transition:transform .35s cubic-bezier(.23,1,.32,1),border-color .3s}
-.faq-item.open .faq-q{color:var(--gold)}
-.faq-item.open .faq-ic{border-color:var(--gold);transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.23,1,.32,1)}
-.faq-item.open .faq-a{max-height:160px}
-.faq-a p{font-size:.84rem;font-weight:200;color:var(--txm);line-height:1.85;padding-bottom:20px}
-
-/* === COUNTDOWN === */
-.cdt{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:28px;flex-wrap:wrap}
-.cdb{text-align:center;min-width:82px;padding:18px 16px;background:rgba(15,14,12,.55);border:1px solid var(--bdr);border-radius:14px;backdrop-filter:blur(10px)}
-.cdb span{display:block;font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:600;color:var(--gold);line-height:1;letter-spacing:-.02em}
-.cdb small{display:block;font-size:.5rem;font-weight:400;letter-spacing:3.5px;text-transform:uppercase;color:var(--txf);margin-top:6px}
-.cbs{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);opacity:.3;padding-bottom:16px}
-
-/* KEYFRAMES */
-@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  nav{padding:12px 18px}
-  .fg,.pg{grid-template-columns:1fr}
-  .sg{grid-template-columns:1fr 1fr}
-  .sg::before{display:none}
-  .tg{grid-template-columns:1fr 1fr}
-  section{padding:70px 18px}
-  .hero{padding:100px 18px 70px}
-  .hf,.cf{flex-direction:column}
-  .hf input,.cf input{border-right:1.5px solid var(--bdr2);border-radius:8px}
-  .hf button,.cf button{border-radius:8px;margin-top:6px}
-  .demo-card{width:100%;max-width:340px;height:460px}
-  .cdb{min-width:64px;padding:12px 12px}
-  .cdb span{font-size:1.9rem}
-}
-@media(max-width:480px){
-  .sg{grid-template-columns:1fr;gap:24px}
-  .tg{grid-template-columns:1fr}
-  .cdt{gap:6px}
-  .cbs{font-size:1.4rem}
-}
+@media(max-width:600px){.cards-row{grid-template-columns:1fr;max-width:300px;margin-left:auto;margin-right:auto}}
 </style>
 </head>
 <body>
 
-<canvas id="bgC" class="cv"></canvas>
-<canvas id="ptC" class="cv"></canvas>
-<canvas id="glC" class="cv"></canvas>
+<canvas id="gardenC"></canvas>
 
-<nav id="nv">
-  <div class="nl">Live<i>Card</i> Studio</div>
-  <a href="/login.html" class="nb">Sign In</a>
+<nav class="nav" id="nav">
+  <div class="logo">Live<i>Card</i> Studio</div>
+  <div class="nl"><a href="#tabs">Events</a><a href="#cta">Pricing</a><a href="/login.html">Sign In</a><a href="/login.html" class="nav-cta">Create Card</a></div>
 </nav>
 
-<div class="ct">
-
-<!-- ======= HERO ======= -->
+<!-- HERO -->
 <section class="hero">
-  <div class="hbg">Launching Mother's Day 2026</div>
-  <h1>Greeting Cards<br>That <em>Breathe</em></h1>
-  <p class="hsub">Upload your photos. Choose a living theme. Send a card with floating petals, breathing watercolors, and art that transforms at a touch.</p>
-  <form class="hf" id="hF" onsubmit="return hs(event,this)">
-    <input type="email" placeholder="your@email.com" required aria-label="Email">
-    <button type="submit">Notify Me</button>
-  </form>
-  <p class="hn">Free early access · No spam · Unsubscribe anytime</p>
-  <p class="hp">🎨 touch anywhere to paint 🖌</p>
-  <div class="hsc"><span>Explore</span><i></i></div>
+  <div class="htag"><span class="dot"></span>Now in Preview</div>
+  <h1>Greeting cards that <em>breathe,</em> bloom, and come <span class="gold">alive</span></h1>
+  <p class="sub">Living digital cards with real-time particle physics, floating petals, and photos that transform into art. For every occasion worth remembering.</p>
 </section>
 
-<!-- ======= FEATURES ======= -->
-<section>
-  <div class="si">
-    <div class="rv"><div class="sl">Why LiveCard</div></div>
-    <div class="rv d1"><div class="st">Not another e&#8209;card.<br>A moment that feels <em>alive.</em></div></div>
-    <div class="rv d2"><div class="sd">Every card is a standalone interactive experience — no app, no account to view. Just open and feel.</div></div>
-    <div class="fg">
-      <div class="fc rv d1"><span class="fi">🎨</span><h3>Breathing Backgrounds</h3><p>Soft watercolor blobs drift and pulse like a painting still being made. Each theme has its own palette of living colors.</p></div>
-      <div class="fc rv d2"><span class="fi">🌸</span><h3>Floating Petals</h3><p>Organic petals and bokeh particles fall gently through the scene, creating atmosphere no static card can match.</p></div>
-      <div class="fc rv d3"><span class="fi">🖼</span><h3>Photos → Art</h3><p>Tap any photo to cycle through oil painting, watercolor, pencil sketch, pop art, dreamy glow, and vintage styles.</p></div>
-      <div class="fc rv d4"><span class="fi">🖌</span><h3>Paint With Touch</h3><p>Click or drag anywhere to leave vibrant paint splashes. Every person who opens the card adds their own color.</p></div>
-      <div class="fc rv d5"><span class="fi">🔗</span><h3>Shareable Links</h3><p>Every card gets a unique URL. Share it like sharing a webpage — full-screen art on any device, any browser.</p></div>
-      <div class="fc rv d6"><span class="fi">✨</span><h3>NFC Tap Cards</h3><p>Coming soon — luxury physical cards with embedded NFC. Tap your phone to the card and the living experience opens instantly.</p></div>
-    </div>
+<!-- EVENT TABS -->
+<div class="tabs-wrap" id="tabs">
+  <div class="tabs-bar" id="tabsBar">
+    <button class="tab-btn active" data-tab="wedding">💍 Weddings</button>
+    <button class="tab-btn" data-tab="birthday">🎂 Birthdays</button>
+    <button class="tab-btn" data-tab="mothers">🌸 Mother's Day</button>
+    <button class="tab-btn" data-tab="baby">👶 Baby Shower</button>
+    <button class="tab-btn" data-tab="grad">🎓 Graduation</button>
+    <button class="tab-btn" data-tab="holiday">✨ Holidays</button>
+    <button class="tab-btn codex-btn" data-tab="codex">🧬 Custom Studio</button>
   </div>
-</section>
 
-<!-- ======= HOW IT WORKS ======= -->
-<section>
-  <div class="si hw">
-    <div class="rv"><div class="sl">How It Works</div></div>
-    <div class="rv d1"><div class="st" style="margin:0 auto">Four steps. One unforgettable card.</div></div>
-    <div class="sg">
-      <div class="sp rv d1"><div class="sn">1</div><h4>Pick an Occasion</h4><p>Birthday, wedding, thank you & more</p></div>
-      <div class="sp rv d2"><div class="sn">2</div><h4>Upload Photos</h4><p>1–2 photos become interactive art</p></div>
-      <div class="sp rv d3"><div class="sn">3</div><h4>Customize</h4><p>Write your message, pick a living theme</p></div>
-      <div class="sp rv d4"><div class="sn">4</div><h4>Send</h4><p>Share a link or download. Magic delivered</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ======= LIVE CARD DEMO ======= -->
-<section>
-  <div class="si" style="text-align:center">
-    <div class="rv"><div class="sl">Feel It First</div></div>
-    <div class="rv d1"><div class="st" style="margin:0 auto">Touch the card. <em>Paint.</em></div></div>
-    <div class="rv d2"><div class="sd" style="margin:0 auto">This is what your recipient experiences. Click or drag inside the card to paint. Switch styles to transform the art.</div></div>
-    <div class="demo-wrap rv d3">
-      <div class="demo-card" id="demoCard">
-        <canvas id="demoC"></canvas>
-        <div class="demo-inner" id="demoInner">
-          <p class="di-msg">Happy Birthday,<br>Mom 💛</p>
-          <p class="di-sub">From someone who loves you</p>
+  <!-- ═══ WEDDING ═══ -->
+  <div class="tab-panel active" id="tab-wedding">
+    <div class="event-intro"><h2>Living invitations for your <em style="color:var(--blush)">forever day</em></h2><p>Save-the-dates and invitations with floating particles, atmospheric light, and one-tap RSVP. Three curated collections.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="w1" data-engine="starfield" data-palette="gold"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E8E0D0"><div class="mono" style="color:#C9A96E">Save the Date</div><div class="dv" style="background:#C9A96E"></div><div class="names">Olivia</div><div class="amp" style="color:#C9A96E">&</div><div class="names">James</div><div class="dv" style="background:rgba(255,255,255,.1)"></div><div class="dt">September 14, 2026</div><div class="ven">The Garden Estate · Napa Valley</div></div>
         </div>
-        <div class="demo-hint">touch to paint</div>
+        <div class="card-label"><h4>Black Tie</h4><p>Midnight gold & starlight</p></div>
       </div>
-      <div class="demo-filters">
-        <span class="demo-label">Art Style</span>
-        <button class="active" onclick="setDemoFilter('none',this)">Natural</button>
-        <button onclick="setDemoFilter('watercolor',this)">Watercolor</button>
-        <button onclick="setDemoFilter('oil',this)">Oil Paint</button>
-        <button onclick="setDemoFilter('sketch',this)">Sketch</button>
-        <button onclick="setDemoFilter('glow',this)">Dreamy</button>
+      <div>
+        <div class="live-card" id="w2" data-engine="dust" data-palette="ivory"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#3A3530"><div class="mono" style="color:#8A837B">Wedding</div><div class="dv" style="background:#D0C8BE"></div><div class="names" style="letter-spacing:2px">Sophie</div><div class="amp" style="color:#B8A090">&</div><div class="names" style="letter-spacing:2px">Daniel</div><div class="dv" style="background:#D0C8BE"></div><div class="dt" style="color:#8A837B">June 21, 2026</div></div>
+        </div>
+        <div class="card-label"><h4>Modern Minimal</h4><p>Clean lines, quiet beauty</p></div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======= THEMES ======= -->
-<section>
-  <div class="si">
-    <div class="rv"><div class="sl">Living Themes</div></div>
-    <div class="rv d1"><div class="st">Every theme has its own pulse.</div></div>
-    <div class="rv d2"><div class="sd">Each card breathes with a unique palette of animated colors, petal styles, and frame finishes.</div></div>
-    <div class="tg">
-      <div class="td rv d1"><div class="tc" id="tw"></div><div class="tm"><h4>Watercolor Garden</h4><p>Warm, soft, painterly</p><div class="cs"><i style="background:#E8A0B4"></i><i style="background:#C9B8D9"></i><i style="background:#A8B5A0"></i><i style="background:#F0C5A8"></i></div></div></div>
-      <div class="td rv d2"><div class="tc" id="ts"></div><div class="tm"><h4>Starlit Night</h4><p>Deep, celestial, golden</p><div class="cs"><i style="background:#1B2540"></i><i style="background:#D4A853"></i><i style="background:#8BA4C4"></i><i style="background:#C9C0D9"></i></div></div></div>
-      <div class="td rv d3"><div class="tc" id="tg"></div><div class="tm"><h4>Golden Hour</h4><p>Amber sunsets</p><div class="cs"><i style="background:#D4A853"></i><i style="background:#E8C080"></i><i style="background:#C47850"></i><i style="background:#F5E6D0"></i></div></div></div>
-      <div class="td rv d4"><div class="tc" id="tb"></div><div class="tm"><h4>Cherry Blossom</h4><p>Soft pinks, spring greens</p><div class="cs"><i style="background:#F4B4C8"></i><i style="background:#FCDCE8"></i><i style="background:#98C9A3"></i><i style="background:#FFF5F7"></i></div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ======= PRICING TIERS ======= -->
-<section>
-  <div class="si">
-    <div class="rv"><div class="sl">Choose Your Experience</div></div>
-    <div class="rv d1"><div class="st">From digital to <em>physical.</em></div></div>
-    <div class="pg">
-      <div class="ti rv d1">
-        <div class="ti-i">💌</div><h3>Digital Card</h3>
-        <div class="pr">Free <small>/ your first card</small></div>
-        <div class="de">A living, breathing card shared as a link. Breathing backgrounds, floating petals, art filters, interactive paint.</div>
-        <ul class="tl"><li>2 living themes</li><li>1–2 photos with art filters</li><li>Shareable link</li><li>LiveCard watermark</li></ul>
-      </div>
-      <div class="ti ft rv d2">
-        <div class="ti-i">✨</div><h3>Premium Card</h3>
-        <div class="pr">$3.99 <small>/ per card</small></div>
-        <div class="de">Unlock all themes, remove watermark, add custom music, and get a permanent hosted link that never expires.</div>
-        <ul class="tl"><li>All living themes</li><li>No watermark</li><li>Custom background music</li><li>Permanent hosted URL</li><li>Download as HTML file</li></ul>
-      </div>
-      <div class="ti rv d3">
-        <div class="ti-i">💍</div><h3>NFC Tap Card</h3>
-        <div class="pr">$29.99 <small>/ physical + digital</small></div>
-        <div class="de">A luxury printed card with embedded NFC chip. Tap your phone to the card — the living experience opens instantly. Keepsake meets magic.</div>
-        <ul class="tl"><li>Everything in Premium</li><li>Foil-stamped physical card</li><li>Embedded NFC chip</li><li>Luxury envelope &amp; mailer</li><li>Ships in 3–5 days</li></ul>
+      <div>
+        <div class="live-card" id="w3" data-engine="petals" data-palette="garden"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#3A3020"><div class="mono" style="color:#8FA680">Save the Date</div><div class="dv" style="background:#C0B8A0"></div><div class="names">Emma</div><div class="amp" style="color:#D4A0A0">&</div><div class="names">Liam</div><div class="dv" style="background:#C0B8A0"></div><div class="dt" style="color:#8A7A60">April 12, 2026</div></div>
+        </div>
+        <div class="card-label"><h4>Garden Romance</h4><p>Petals through golden light</p></div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- ======= OCCASIONS ======= -->
-<section>
-  <div class="si oc">
-    <div class="rv"><div class="sl">For Every Moment</div></div>
-    <div class="rv d1"><div class="st" style="margin:0 auto">One platform. Every occasion.</div></div>
-    <div class="ot rv d2">
-      <a>🎂 Birthday</a><a>💍 Wedding</a><a>👶 New Baby</a><a>💜 Thank You</a><a>🎄 Holiday</a>
-      <a>✨ Anniversary</a><a>🌼 Get Well</a><a>🎉 Congrats</a><a>🎓 Graduation</a><a>🙌 Just Because</a>
-    </div>
-  </div>
-</section>
-
-<!-- ======= FAQ ======= -->
-<section>
-  <div class="si">
-    <div class="rv"><div class="sl">Questions</div></div>
-    <div class="rv d1"><div class="st">Everything you want to know.</div></div>
-    <div class="faq rv d2">
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">Do recipients need an account to view a card?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>No account needed — ever. Recipients just open the link you send them. The full interactive experience works instantly in any browser, on any device, no download required.</p></div>
+  <!-- ═══ BIRTHDAY ═══ -->
+  <div class="tab-panel" id="tab-birthday">
+    <div class="event-intro"><h2>Birthday cards that feel like a <em style="color:var(--coral)">celebration</em></h2><p>Confetti bursts, candle glows, and party energy. Cards they'll actually want to open more than once.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="b1" data-engine="confetti" data-palette="party"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#F8F0E4"><div class="mono" style="color:#D4907A">Birthday</div><div class="dv" style="background:rgba(255,255,255,.12)"></div><div class="title">Happy<br>Birthday!</div><div class="msg">Another year of being absolutely wonderful</div><div class="from">— Love, everyone</div></div>
+        </div>
+        <div class="card-label"><h4>Confetti Pop</h4><p>Bursting celebration energy</p></div>
       </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">What devices and browsers are supported?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>Any modern browser works — Chrome, Safari, Firefox, Edge — on desktop, tablet, or mobile. Cards use standard HTML canvas so no plugins or special software are needed.</p></div>
+      <div>
+        <div class="live-card" id="b2" data-engine="candles" data-palette="warm"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#F8E8D0"><div class="mono" style="color:#D4A060">Make a Wish</div><div class="dv" style="background:rgba(255,200,100,.15)"></div><div class="title" style="font-size:1.5rem">✨ 30 ✨</div><div class="msg">Blow out the candles and make it count</div><div class="from">— Your people</div></div>
+        </div>
+        <div class="card-label"><h4>Candlelight</h4><p>Warm glow, intimate vibes</p></div>
       </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">How long do card links stay active?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>Free cards: 30 days. Premium cards: permanently hosted, never expires. NFC Tap Cards include a permanent hosted link that lives as long as the physical card does.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">Can I use my own photos?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>Yes — upload up to 2 photos per card. Recipients can tap any photo to cycle through art styles: watercolor, oil painting, pencil sketch, pop art, dreamy glow, and vintage.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">When are NFC physical cards available?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>NFC Tap Cards launch alongside the app on Mother's Day 2026. Join the waitlist now for early access and priority ordering before we open to the public.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">Can I add music to my card?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>Yes — custom background audio is included on Premium and NFC Tap Card tiers. Choose from a curated music library or upload your own clip (MP3, up to 60 seconds).</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="faqToggle(this)">Are my photos stored privately?<i class="faq-ic">+</i></button>
-        <div class="faq-a"><p>Your photos are stored securely and only accessible via your unique card link. We never share, sell, or use your images for any purpose other than rendering your card.</p></div>
+      <div>
+        <div class="live-card" id="b3" data-engine="starfield" data-palette="neon"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E0E8FF"><div class="mono" style="color:#7BA4C4">Party Time</div><div class="dv" style="background:rgba(123,164,196,.2)"></div><div class="title">Let's<br>Celebrate</div><div class="msg">Life's too short for boring cards</div><div class="from">— The squad</div></div>
+        </div>
+        <div class="card-label"><h4>Cosmic Glow</h4><p>Neon starfield party</p></div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- ======= PROOF ======= -->
-<section>
-  <div class="pf rv">
-    <div class="sl">The Reaction</div>
-    <p class="pq">"My grandmother opened it and started <b>painting on her phone screen</b>. She thought she was inside a real painting. She&nbsp;cried."</p>
-    <p class="pa">— The card that started it all</p>
-  </div>
-</section>
-
-<!-- ======= COUNTDOWN ======= -->
-<section style="padding-bottom:30px">
-  <div class="si" style="text-align:center">
-    <div class="rv"><div class="sl">Launching In</div></div>
-    <div class="cdt rv d1">
-      <div class="cdb"><span id="cdD">--</span><small>Days</small></div>
-      <div class="cbs">:</div>
-      <div class="cdb"><span id="cdH">--</span><small>Hours</small></div>
-      <div class="cbs">:</div>
-      <div class="cdb"><span id="cdM">--</span><small>Minutes</small></div>
-      <div class="cbs">:</div>
-      <div class="cdb"><span id="cdS">--</span><small>Seconds</small></div>
+  <!-- ═══ MOTHER'S DAY ═══ -->
+  <div class="tab-panel" id="tab-mothers">
+    <div class="event-intro"><h2>Tell her she's everything in a card that <em style="color:var(--blush)">lives</em></h2><p>Soft botanicals, floating petals, and words that feel as warm as she does. Cards she'll revisit all year.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="m1" data-engine="petals" data-palette="rose"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#4A2030"><div class="mono" style="color:#C08080">Mother's Day</div><div class="dv" style="background:#D4A0A0"></div><div class="title">Mom,<br>thank you</div><div class="msg">For every quiet sacrifice and loud laugh</div><div class="from">— With all my love</div></div>
+        </div>
+        <div class="card-label"><h4>Rose Garden</h4><p>Floating blush petals</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="m2" data-engine="petals" data-palette="lavender"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#3A2840"><div class="mono" style="color:#B088C0">For You, Mom</div><div class="dv" style="background:#B8A0C0"></div><div class="title">You are<br>my world</div><div class="msg">Everything beautiful I know, I learned from you</div><div class="from">— Always yours</div></div>
+        </div>
+        <div class="card-label"><h4>Lavender Dream</h4><p>Gentle purple botanicals</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="m3" data-engine="petals" data-palette="sunlit"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#3A3020"><div class="mono" style="color:#C0A060">Happy Mother's Day</div><div class="dv" style="background:#D4C090"></div><div class="title">Like the<br>sun itself</div><div class="msg">Warm, bright, and the center of everything</div><div class="from">— Your sunshine</div></div>
+        </div>
+        <div class="card-label"><h4>Golden Hour</h4><p>Sunlit warmth & pollen</p></div>
+      </div>
     </div>
-    <p class="rv d2" style="font-size:.78rem;color:var(--txf);margin-top:18px;letter-spacing:2.5px">Mother's Day · May 10, 2026</p>
   </div>
-</section>
 
-<!-- ======= CTA ======= -->
-<section class="cta" id="cta">
-  <div class="rv">
-    <div class="sl">Early Access</div>
-    <div class="st" style="text-align:center">Be the first to send<br>a card that <em>breathes.</em></div>
-    <p class="sd" style="margin:6px auto 0;text-align:center">Launching Mother's Day 2026. Early access members get their first card free.</p>
-    <form class="cf" id="cF" onsubmit="return hs(event,this)">
-      <input type="email" placeholder="your@email.com" required aria-label="Email">
-      <button type="submit">Join Waitlist</button>
-    </form>
-    <p class="cn">Free early access · No spam ever</p>
-    <div class="fok" id="cO">You're in! ✨ We'll reach out before launch.</div>
+  <!-- ═══ BABY SHOWER ═══ -->
+  <div class="tab-panel" id="tab-baby">
+    <div class="event-intro"><h2>Welcome the little one with <em style="color:var(--mint)">wonder</em></h2><p>Soft pastels, floating bubbles, and dreamy clouds. Invitations as tender as the occasion.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="bs1" data-engine="bubbles" data-palette="softblue"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#2A3540"><div class="mono" style="color:#7BA4C4">Baby Shower</div><div class="dv" style="background:#A0C0D4"></div><div class="title">A little<br>one awaits</div><div class="msg">Join us in celebrating new beginnings</div><div class="from">— Mom & Dad</div></div>
+        </div>
+        <div class="card-label"><h4>Cloud Nine</h4><p>Soft blue floating bubbles</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="bs2" data-engine="bubbles" data-palette="softpink"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#402A30"><div class="mono" style="color:#D4A0A8">Welcome Baby</div><div class="dv" style="background:#E0B8C0"></div><div class="title">Sweet<br>arrival</div><div class="msg">A tiny miracle is on the way</div><div class="from">— The parents-to-be</div></div>
+        </div>
+        <div class="card-label"><h4>Blush Cloud</h4><p>Pastel pink dreamscape</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="bs3" data-engine="bubbles" data-palette="mint"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#203530"><div class="mono" style="color:#7AC4A8">Oh Baby!</div><div class="dv" style="background:#90D4B8"></div><div class="title">Growing<br>love</div><div class="msg">Something wonderful this way comes</div><div class="from">— With joy</div></div>
+        </div>
+        <div class="card-label"><h4>Mint Garden</h4><p>Fresh botanical softness</p></div>
+      </div>
+    </div>
   </div>
-</section>
 
+  <!-- ═══ GRADUATION ═══ -->
+  <div class="tab-panel" id="tab-grad">
+    <div class="event-intro"><h2>They did it — now send a card that <em style="color:var(--gold2)">shines</em></h2><p>Achievement energy with gold accents, rising particles, and proud vibes. For the graduate who deserves more than a text.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="g1" data-engine="rise" data-palette="navy"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E0E0E8"><div class="mono" style="color:#C9A96E">Congratulations</div><div class="dv" style="background:#C9A96E"></div><div class="title">You<br>did it!</div><div class="msg">The world just got a lot brighter</div><div class="from">— So proud</div></div>
+        </div>
+        <div class="card-label"><h4>Navy & Gold</h4><p>Classic achievement glow</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="g2" data-engine="confetti" data-palette="gradparty"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#F8F0E4"><div class="mono" style="color:#D4907A">Class of 2026</div><div class="dv" style="background:rgba(255,255,255,.12)"></div><div class="title">Go get<br>'em, grad</div><div class="msg">This is just the beginning</div><div class="from">— The fam</div></div>
+        </div>
+        <div class="card-label"><h4>Grad Party</h4><p>Confetti celebration burst</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="g3" data-engine="starfield" data-palette="twilight"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E0D8F0"><div class="mono" style="color:#B088C0">The Future</div><div class="dv" style="background:rgba(176,136,192,.2)"></div><div class="title">Stars<br>ahead</div><div class="msg">Your story is just beginning to unfold</div><div class="from">— Believe in it</div></div>
+        </div>
+        <div class="card-label"><h4>Twilight</h4><p>Dreamy star-field future</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HOLIDAYS ═══ -->
+  <div class="tab-panel" id="tab-holiday">
+    <div class="event-intro"><h2>Season's greetings that <em style="color:var(--sage)">glow</em></h2><p>From cozy Christmas to sparkling New Year's — festive cards that capture the magic of the season.</p></div>
+    <div class="cards-row">
+      <div>
+        <div class="live-card" id="h1" data-engine="snow" data-palette="winter"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E0E8F0"><div class="mono" style="color:#90B0C8">Happy Holidays</div><div class="dv" style="background:rgba(180,200,220,.2)"></div><div class="title">Peace &<br>Joy</div><div class="msg">Wishing you warmth in every snowflake</div><div class="from">— From our family</div></div>
+        </div>
+        <div class="card-label"><h4>Winter Wonderland</h4><p>Gentle snowfall & frost</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="h2" data-engine="candles" data-palette="christmas"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#F0E8D8"><div class="mono" style="color:#B08040">Merry Christmas</div><div class="dv" style="background:rgba(180,130,60,.15)"></div><div class="title">Tis the<br>Season</div><div class="msg">May your days be merry and bright</div><div class="from">— Ho ho ho</div></div>
+        </div>
+        <div class="card-label"><h4>Fireside</h4><p>Warm candlelight glow</p></div>
+      </div>
+      <div>
+        <div class="live-card" id="h3" data-engine="starfield" data-palette="newyear"><canvas class="c0"></canvas><canvas class="c1"></canvas>
+          <div class="lcov" style="color:#E8E0F0"><div class="mono" style="color:#C9A96E">New Year</div><div class="dv" style="background:#C9A96E"></div><div class="title">2027<br>Awaits</div><div class="msg">Here's to new adventures and brighter days</div><div class="from">— Cheers!</div></div>
+        </div>
+        <div class="card-label"><h4>Midnight Spark</h4><p>New Year's starfield</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CODEX TAB ═══ -->
+  <div class="tab-panel" id="tab-codex">
+    <div class="codex-panel">
+      <div class="codex-hero">
+        <div class="ch-badge">🧬 Custom Studio — Build Prompts</div>
+        <h2>Copy these prompts into <em>Claude Code</em></h2>
+        <p>Each prompt below is engineered to build a production-ready feature for LiveCard Studio. Open your project in VS Code, launch Claude Code, and paste. Click any card to expand the full prompt.</p>
+      </div>
+
+      <div class="codex-note">
+        <h4>⚡ Before you start</h4>
+        <p>Make sure your LiveCard Studio project is open in VS Code and Claude Code (terminal) is running. These prompts reference the existing codebase structure — the card engine, particle systems, canvas renderer, and theme palette system. Run them in order for best results.</p>
+      </div>
+
+      <div class="prompt-list">
+
+        <!-- PROMPT 1: Sound-Reactive -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">1</div>
+            <div class="ph-icon">🎙️</div>
+            <div class="ph-info"><h4>Sound-Reactive Cards</h4><span>Web Audio API · Frequency analysis · Particle physics</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Adds microphone input that analyzes audio frequencies in real-time and maps them to particle behavior — size, velocity, color, spawn rate. Bass hits expand particles, mids shift hue, highs trigger sparkle bursts.</div>
+            <div class="prompt-block" id="p1">Build a sound-reactive card module for LiveCard Studio.
+
+CONTEXT: LiveCard Studio is a living greeting card platform. Cards use HTML5 canvas with requestAnimationFrame particle systems. Each card has two canvas layers (background blobs + foreground particles). The existing engine uses a palette system with properties like bg color, blob colors, and particle configs.
+
+REQUIREMENTS:
+1. Create a SoundReactiveEngine class that:
+   - Uses navigator.mediaDevices.getUserMedia({audio:true}) to access the mic
+   - Creates an AnalyserNode with fftSize=256 via Web Audio API
+   - Extracts frequency data every frame into 3 bands:
+     * Bass (bins 0-8): drives particle SIZE (multiply base size by 1 + bassLevel * 2)
+     * Mids (bins 8-32): drives particle HUE shift (rotate hue by midLevel * 60deg)
+     * Highs (bins 32-64): drives SPARKLE BURST spawn rate (when highLevel > threshold, spawn 5-10 tiny fast-decay particles at random positions)
+   - Normalizes each band to 0.0-1.0 range with smoothing (lerp with previous frame, factor 0.15)
+   - Exposes { bass, mids, highs } as reactive state
+
+2. Create a visual frequency bar at the card bottom:
+   - 32 thin vertical bars, each representing a frequency bin
+   - Bar height = bin amplitude, color = gradient from card palette
+   - Render on the particle canvas layer with globalAlpha 0.3
+
+3. Add a bass-hit ring effect:
+   - When bass spikes above 0.7, draw an expanding ring from card center
+   - Ring starts at r=20, expands to r=150, opacity fades from 0.4 to 0
+   - Ring color from card palette, stroke width 2px, wobbly radius using sin(angle*3+time)
+
+4. Integration:
+   - Add "Enable Microphone" button overlay on the card (centered, pill-shaped, glass-morphism)
+   - Button disappears after mic permission granted
+   - When active, bass/mids/highs modify existing particle loop each frame
+   - When inactive, particles render normally
+   - Graceful fallback: if mic denied, show subtle tooltip "Mic access needed for sound-reactive mode"
+
+5. Mobile-first: Test with both getUserMedia on mobile Safari and Chrome. Handle the autoplay/user-gesture requirement.
+
+TECH: Vanilla JS, HTML5 Canvas 2D, Web Audio API. No frameworks. File should export a class that can be imported into the card engine.
+              <button class="copy-btn" onclick="copyPrompt(event,'p1')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-api">Web Audio API</span><span class="pt-canvas">Canvas 2D</span><span class="pt-sensor">MediaStream</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 2: Gesture Physics -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">2</div>
+            <div class="ph-icon">📱</div>
+            <div class="ph-info"><h4>Gesture Physics Engine</h4><span>DeviceOrientation · Accelerometer · Blow detection</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Device sensors mapped to real-time force vectors on particles. Tilt your phone and gravity shifts. Blow into the mic and petals scatter. Shake and particles burst outward.</div>
+            <div class="prompt-block" id="p2">Build a gesture physics engine for LiveCard Studio cards.
+
+CONTEXT: Cards render particles on canvas with position {x,y}, velocity {vx,vy}, and per-frame updates. Existing particle types include petals (bezier shapes), stars (circles with glow), embers (radial gradients), confetti (rotating rectangles), bubbles, snow, and dust motes.
+
+REQUIREMENTS:
+1. Create a GesturePhysicsEngine class with three input sources:
+
+   TILT (DeviceOrientationEvent):
+   - Map event.gamma (left/right tilt, -90 to 90) to gravity X force
+   - Map event.beta (front/back tilt, -180 to 180) to gravity Y force  
+   - Normalize to force vector magnitude 0-2
+   - Apply as acceleration to all particles each frame: p.vx += gravityX * 0.02; p.vy += gravityY * 0.02
+   - Request permission on iOS 13+ with DeviceOrientationEvent.requestPermission()
+   - Desktop fallback: map mouse position relative to card center as gravity direction
+
+   BLOW (Microphone amplitude):
+   - Reuse mic stream from sound-reactive module if available, or create new
+   - Monitor RMS amplitude of audio input
+   - When amplitude spikes above threshold (0.15) for 3+ consecutive frames:
+     * Apply upward scatter force to all particles: p.vy -= blowForce * 3; p.vx += (Math.random()-0.5) * blowForce * 2
+     * Trigger visual wind lines (3-5 curved strokes sweeping upward, fade out over 20 frames)
+   - Detect blow vs speech: blow = sustained amplitude with low frequency dominance
+
+   SHAKE (DeviceMotionEvent):
+   - Monitor accelerationIncludingGravity magnitude: sqrt(x² + y² + z²)
+   - When magnitude exceeds threshold (25) for 2+ frames:
+     * Apply random burst force to all particles: random direction, magnitude 3-6
+     * Spawn 15 extra burst particles at card center that fly outward and fade
+     * Add screen shake: translate card by random ±3px for 10 frames, ease back
+
+2. Gesture indicator UI:
+   - Small badge appears top-right when gesture detected: "Tilting...", "Blow!", "Shake!"
+   - Badge auto-fades after 2 seconds
+   - Subtle directional arrow on canvas showing current gravity vector (faint, 20% opacity)
+
+3. Velocity damping: multiply all velocities by 0.97 per frame to prevent runaway speeds
+
+4. Boundary wrapping: particles that exit one edge re-enter from the opposite edge
+
+5. Integration: Export class with start(canvasEl, particlesArray)/stop() interface. Should layer on top of existing particle render loop without replacing it.
+
+TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature detection for all sensor APIs.
+              <button class="copy-btn" onclick="copyPrompt(event,'p2')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-sensor">DeviceOrientation</span><span class="pt-sensor">Accelerometer</span><span class="pt-api">MediaStream</span><span class="pt-canvas">Canvas 2D</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 3: Time-Evolving Lifecycle -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">3</div>
+            <div class="ph-icon">🌅</div>
+            <div class="ph-info"><h4>Time-Evolving Lifecycle</h4><span>Date math · Stage transitions · Seasonal rendering</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Cards that age like a real garden. Day 1 shows seeds. Day 5 shows sprouts. Day 10 blooms fully. Day 35 fades to gold.</div>
+            <div class="prompt-block" id="p3">Build a time-evolving lifecycle system for LiveCard Studio. Input: card.createdAt. Define 6 stages (SEED, SPROUT, BUD, BLOOM, FULL GARDEN, GOLDEN FADE). Export getLifecycleState(createdAt).<button class="copy-btn" onclick="copyPrompt(event,'p3')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">Date API</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 4: Photo-Reactive Worlds -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">4</div>
+            <div class="ph-icon">🎨</div>
+            <div class="ph-info"><h4>Photo-Reactive Worlds</h4><span>Color extraction · Palette generation · Dynamic theming</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Upload any photo and the card extracts dominant colors and generates a matching living universe.</div>
+            <div class="prompt-block" id="p4">Build a photo-reactive world generator. K-means color extraction, warmth/brightness analysis, world generation from palette. Export generateWorldFromImage(imageFile).<button class="copy-btn" onclick="copyPrompt(event,'p4')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-ai">Color Science</span><span class="pt-api">File API</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 5: AI Personal Universe -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">5</div>
+            <div class="ph-icon">🔮</div>
+            <div class="ph-info"><h4>AI Personal Universe Generator</h4><span>Text parsing · Concept-to-visual mapping</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Type a description and the card generates a unique living world with matching palette and particle shapes.</div>
+            <div class="prompt-block" id="p5">Build an AI personal universe generator. Concept keyword dictionary (40+ entries), text parsing, world generation. Export generateUniverseFromText(text).<button class="copy-btn" onclick="copyPrompt(event,'p5')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-ai">NLP Parsing</span><span class="pt-canvas">Canvas 2D</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 6: Constellation Group Cards -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">6</div>
+            <div class="ph-icon">👥</div>
+            <div class="ph-info"><h4>Constellation Group Cards</h4><span>Multi-contributor · Star map · Tap-to-reveal</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Multiple people contribute; each becomes a star in a shared constellation. Tap any star to see photo and message.</div>
+            <div class="prompt-block" id="p6">Build constellation group card system: contributor form, star placement, tap-to-reveal modal, ambient animation. localStorage for prototype.<button class="copy-btn" onclick="copyPrompt(event,'p6')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">localStorage</span><span class="pt-api">Touch Events</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 7: Generative Ambient Sound -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">7</div>
+            <div class="ph-icon">🎵</div>
+            <div class="ph-info"><h4>Generative Ambient Sound</h4><span>Web Audio oscillators · Procedural music · Never loops</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Each card gets a unique procedural soundtrack that never loops — ocean drones, garden crickets, starfield shimmer.</div>
+            <div class="prompt-block" id="p7">Build AmbientSoundEngine: theme-mapped sound palettes (ocean, garden, fire, starfield, celebration), procedural timing, start/stop/setVolume. Web Audio only.<button class="copy-btn" onclick="copyPrompt(event,'p7')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-api">Web Audio API</span><span class="pt-ai">Procedural Audio</span></div>
+          </div></div>
+        </div>
+
+        <!-- PROMPT 8: NFC Integration -->
+        <div class="prompt-card">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="ph-num">8</div>
+            <div class="ph-icon">📱</div>
+            <div class="ph-info"><h4>NFC Print Bridge</h4><span>Web NFC API · Deep linking · QR fallback</span></div>
+            <div class="ph-arrow">▼</div>
+          </div>
+          <div class="prompt-body"><div class="prompt-inner">
+            <div class="prompt-desc">Connects physical NFC-embedded cards to their digital living versions. Landing page, QR fallback, analytics.</div>
+            <div class="prompt-block" id="p8">Build NFC-to-digital bridge: URL schema lcs_{id}, landing page /c/:cardId with load sequence, styled QR export, client-side analytics, card management dashboard.<button class="copy-btn" onclick="copyPrompt(event,'p8')">Copy</button></div>
+            <div class="prompt-tags"><span class="pt-nfc">NFC</span><span class="pt-api">URL Routing</span><span class="pt-canvas">QR Generation</span></div>
+          </div></div>
+        </div>
+
+        <div class="codex-note">
+          <h4>💡 Pro tip</h4>
+          <p>Run prompts 1-5 as individual features first, test each one, then ask Claude Code to integrate them into a unified card engine with a config-driven approach. Prompt 8 (NFC Bridge) is the production deployment layer — save it for when the features are solid.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 
-<footer>
-  <div class="fl">Live<i>Card</i> Studio</div>
-  <p>© 2026 LiveCard Studio. Cards that breathe.</p>
-</footer>
+<!-- BOTTOM CTA -->
+<section class="bottom-cta rv" id="cta">
+  <h2>Ready to send something <em>alive?</em></h2>
+  <p>Start free. Upgrade when you're ready.</p>
+  <a href="/login.html" class="nav-cta btn-p">Create Your Card</a>
+  <p class="pr">Free tier available · Premium themes from <b>$4.99</b> · NFC prints from <b>$12/card</b></p>
+</section>
+
+<div class="ftr"><div class="fl">Live<i>Card</i> Studio</div><p>© 2026 LiveCard Studio · Living cards for every moment</p></div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// 1. BREATHING WATERCOLOR BACKGROUND
-// ═══════════════════════════════════════════════════
-;(function(){
-  const c=document.getElementById('bgC'), x=c.getContext('2d');
-  let W,H;
-  function sz(){W=c.width=innerWidth; H=c.height=innerHeight}
-  sz(); addEventListener('resize',sz);
+const dpr=Math.min(devicePixelRatio||1,2);let sY=0;
+addEventListener('scroll',()=>{sY=window.scrollY});
 
-  const pal=[
-    {r:212,g:168,b:83,a:.028},{r:196,g:114,b:127,a:.022},{r:168,g:181,b:160,a:.018},
-    {r:201,g:184,b:217,a:.016},{r:240,g:197,b:168,a:.014},{r:160,g:140,b:120,a:.011},
-    {r:100,g:130,b:160,a:.012},{r:220,g:170,b:190,a:.013},{r:170,g:200,b:180,a:.010},
-    {r:180,g:160,b:200,a:.011},{r:200,g:180,b:140,a:.009},{r:140,g:180,b:200,a:.010},
-    {r:230,g:195,b:160,a:.012},{r:175,g:155,b:195,a:.011},
-  ];
-  const blobs=pal.map(p=>({
-    x:Math.random()*2000, y:Math.random()*2000,
-    r:200+Math.random()*380,
-    vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.25,
-    c:p, ph:Math.random()*6.28,
-    bs:.0016+Math.random()*.003, ba:.13+Math.random()*.14
-  }));
-
-  window._bg=function(t){
-    x.fillStyle='#080706'; x.fillRect(0,0,W,H);
-    for(const b of blobs){
-      const br=1+Math.sin(t*b.bs+b.ph)*b.ba, rr=b.r*br;
-      b.x+=b.vx+Math.sin(t*.0008+b.ph)*.16;
-      b.y+=b.vy+Math.cos(t*.0006+b.ph)*.12;
-      if(b.x<-rr)b.x=W+rr; if(b.x>W+rr)b.x=-rr;
-      if(b.y<-rr)b.y=H+rr; if(b.y>H+rr)b.y=-rr;
-      const a=b.c.a*(.65+.35*Math.sin(t*.0016+b.ph));
-      const g=x.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
-      g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
-      g.addColorStop(.5,`rgba(${b.c.r},${b.c.g},${b.c.b},${a*.3})`);
-      g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
-      x.fillStyle=g; x.fillRect(0,0,W,H);
-    }
-  };
-})();
-
-// ═══════════════════════════════════════════════════
-// 2. FLOATING PETALS + BOKEH
-// ═══════════════════════════════════════════════════
-;(function(){
-  const c=document.getElementById('ptC'), x=c.getContext('2d');
-  function sz(){c.width=innerWidth; c.height=innerHeight}
-  sz(); addEventListener('resize',sz);
-
-  const cols=['212,168,83','196,114,127','201,184,217','168,181,160',
-    '240,197,168','232,160,180','130,170,210','220,190,140','180,200,190','190,160,210'];
-  const P=[];
-  for(let i=0;i<48;i++){
-    P.push({
-      x:Math.random()*innerWidth,
-      y:Math.random()*innerHeight*3.5-innerHeight,
-      sz:1.5+Math.random()*8,
-      sy:.08+Math.random()*.34, sx:(Math.random()-.5)*.2,
-      rot:Math.random()*6.28, rs:(Math.random()-.5)*.016,
-      ws:.0006+Math.random()*.0018, ph:Math.random()*6.28,
-      col:cols[~~(Math.random()*cols.length)],
-      op:.08+Math.random()*.25,
-      sh:Math.random()>.35?'p':'c',
-      dp:.3+Math.random()*.7
-    });
-  }
-
-  window._pt=function(t){
-    x.clearRect(0,0,c.width,c.height);
-    const sY=pageYOffset||0;
-    for(const p of P){
-      p.y+=p.sy; p.x+=p.sx+Math.sin(t*p.ws+p.ph)*.5; p.rot+=p.rs;
-      if(p.y>innerHeight+sY+40){p.y=sY-30; p.x=Math.random()*innerWidth}
-      const dy=p.y-sY*(.15*p.dp);
-      if(dy<-40||dy>innerHeight+40) continue;
-      x.save(); x.translate(p.x,dy); x.rotate(p.rot);
-      x.globalAlpha=p.op*(.55+.45*Math.sin(t*.002+p.ph));
-      if(p.sh==='p'){
-        x.beginPath(); x.moveTo(0,-p.sz);
-        x.bezierCurveTo(p.sz*.8,-p.sz*.4, p.sz*.8,p.sz*.4, 0,p.sz);
-        x.bezierCurveTo(-p.sz*.8,p.sz*.4, -p.sz*.8,-p.sz*.4, 0,-p.sz);
-        x.fillStyle=`rgba(${p.col},${p.op})`; x.fill();
-      } else {
-        const g=x.createRadialGradient(0,0,0,0,0,p.sz);
-        g.addColorStop(0,`rgba(${p.col},${p.op})`);
-        g.addColorStop(1,`rgba(${p.col},0)`);
-        x.fillStyle=g; x.fillRect(-p.sz,-p.sz,p.sz*2,p.sz*2);
-      }
-      x.restore();
-    }
-  };
-})();
-
-// ═══════════════════════════════════════════════════
-// 3. MOUSE GLOW TRAIL
-// ═══════════════════════════════════════════════════
-;(function(){
-  const c=document.getElementById('glC'), x=c.getContext('2d');
-  function sz(){c.width=innerWidth; c.height=innerHeight}
-  sz(); addEventListener('resize',sz);
-
-  let mx=-999,my=-999; const trail=[];
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-  document.addEventListener('touchmove',e=>{const t=e.touches[0];mx=t.clientX;my=t.clientY},{passive:true});
-
-  window._gl=function(t){
-    x.clearRect(0,0,c.width,c.height);
-    if(mx<0)return;
-    trail.push({x:mx,y:my,t});
-    while(trail.length>30)trail.shift();
-    for(let i=0;i<trail.length;i++){
-      const p=trail[i], age=(t-p.t)/1000, fade=Math.max(0,1-age/.75);
-      if(fade<=0) continue;
-      const sz=50+i*5;
-      const g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,sz);
-      g.addColorStop(0,`rgba(212,168,83,${fade*.055})`);
-      g.addColorStop(.35,`rgba(196,114,127,${fade*.025})`);
-      g.addColorStop(1,'rgba(0,0,0,0)');
-      x.fillStyle=g; x.fillRect(p.x-sz,p.y-sz,sz*2,sz*2);
-    }
-    const cg=x.createRadialGradient(mx,my,0,mx,my,110);
-    cg.addColorStop(0,'rgba(212,168,83,0.045)');
-    cg.addColorStop(.25,'rgba(196,114,127,0.02)');
-    cg.addColorStop(1,'rgba(0,0,0,0)');
-    x.fillStyle=cg; x.fillRect(mx-110,my-110,220,220);
-  };
-})();
-
-// ═══════════════════════════════════════════════════
-// 4. ANIMATION LOOP
-// ═══════════════════════════════════════════════════
-;(function loop(t){window._bg(t);window._pt(t);window._gl(t);requestAnimationFrame(loop)})(0);
-
-// ═══════════════════════════════════════════════════
-// 5. MINI THEME CANVASES
-// ═══════════════════════════════════════════════════
-;(function(){
-  const defs={
-    tw:{bg:'#FDF6EC',blobs:[{r:232,g:160,b:180},{r:201,g:184,b:217},{r:168,g:181,b:160},{r:240,g:197,b:168},{r:196,g:114,b:127}]},
-    ts:{bg:'#0C1225',blobs:[{r:40,g:60,b:120},{r:212,g:168,b:83},{r:100,g:130,b:180},{r:140,g:130,b:180},{r:70,g:90,b:155}]},
-    tg:{bg:'#FBF5EA',blobs:[{r:212,g:168,b:83},{r:232,g:192,b:128},{r:196,g:120,b:80},{r:220,g:180,b:100},{r:200,g:160,b:90}]},
-    tb:{bg:'#FFF8FA',blobs:[{r:244,g:180,b:200},{r:252,g:220,b:232},{r:152,g:201,b:163},{r:230,g:170,b:190},{r:210,g:200,b:215}]}
-  };
-  for(const[id,def] of Object.entries(defs)){
-    const el=document.getElementById(id); if(!el)continue;
-    const cv=document.createElement('canvas'); cv.width=340; cv.height=160;
-    el.appendChild(cv); const ctx=cv.getContext('2d');
-    const mb=def.blobs.map(c=>({
-      x:Math.random()*340,y:Math.random()*160,r:45+Math.random()*65,
-      vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.4,c,ph:Math.random()*6.28
-    }));
-    const mp=[]; for(let i=0;i<10;i++) mp.push({
-      x:Math.random()*340,y:Math.random()*160,sz:1.2+Math.random()*2.8,
-      sy:.18+Math.random()*.4,rot:Math.random()*6.28,rs:(Math.random()-.5)*.02,
-      ph:Math.random()*6.28,op:.15+Math.random()*.25
-    });
-    (function draw(t){
-      ctx.fillStyle=def.bg; ctx.fillRect(0,0,340,160);
-      for(const b of mb){
-        const rr=b.r*(1+Math.sin(t*.003+b.ph)*.2);
-        b.x+=b.vx; b.y+=b.vy;
-        if(b.x<-rr)b.x=340+rr; if(b.x>340+rr)b.x=-rr;
-        if(b.y<-rr)b.y=160+rr; if(b.y>160+rr)b.y=-rr;
-        const a=.15+.07*Math.sin(t*.002+b.ph);
-        const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
-        g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
-        g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
-        ctx.fillStyle=g; ctx.fillRect(0,0,340,160);
-      }
-      for(const p of mp){
-        p.y+=p.sy; p.rot+=p.rs;
-        if(p.y>165){p.y=-5; p.x=Math.random()*340}
-        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-        ctx.globalAlpha=p.op*(.55+.45*Math.sin(t*.003+p.ph));
-        ctx.beginPath(); ctx.moveTo(0,-p.sz);
-        ctx.bezierCurveTo(p.sz*.7,-p.sz*.4,p.sz*.7,p.sz*.4,0,p.sz);
-        ctx.bezierCurveTo(-p.sz*.7,p.sz*.4,-p.sz*.7,-p.sz*.4,0,-p.sz);
-        ctx.fillStyle=`rgba(${def.blobs[0].r},${def.blobs[0].g},${def.blobs[0].b},${p.op})`;
-        ctx.fill(); ctx.restore();
-      }
-      requestAnimationFrame(draw);
-    })(0);
-  }
-})();
-
-// ═══════════════════════════════════════════════════
-// 6. INTERACTIVE PAINT SPLASHES
-// ═══════════════════════════════════════════════════
-;(function(){
-  const cs=[
-    'rgba(219,84,130,.55)','rgba(130,60,200,.5)','rgba(50,180,120,.45)',
-    'rgba(240,140,40,.55)','rgba(50,130,230,.5)','rgba(230,50,70,.5)',
-    'rgba(255,200,40,.55)','rgba(100,200,180,.45)','rgba(210,80,180,.5)',
-    'rgba(80,170,255,.45)','rgba(255,120,80,.5)','rgba(160,100,220,.45)',
-    'rgba(212,168,83,.5)','rgba(196,114,127,.5)','rgba(168,181,160,.45)'
-  ];
-  function sp(px,py){
-    const e=document.createElement('div'); e.className='ps';
-    const s=90+Math.random()*180, c=cs[~~(Math.random()*cs.length)];
-    const rx=()=>30+Math.random()*40;
-    e.style.cssText=`left:${px-s/2}px;top:${py-s/2}px;width:${s}px;height:${s}px;`+
-      `background:radial-gradient(ellipse at ${rx()}% ${rx()}%,${c},transparent 55%);`+
-      `transform:rotate(${Math.random()*360}deg);`+
-      `border-radius:${35+Math.random()*25}% ${45+Math.random()*25}% ${35+Math.random()*25}% ${45+Math.random()*25}%`;
-    document.body.appendChild(e); setTimeout(()=>e.remove(),4000);
-    const nd=2+~~(Math.random()*3);
-    for(let i=0;i<nd;i++){
-      setTimeout(()=>{
-        const d=document.createElement('div'); d.className='pd';
-        const ds=6+Math.random()*26, c2=cs[~~(Math.random()*cs.length)];
-        d.style.cssText=`left:${px+(Math.random()-.5)*s-ds/2}px;top:${py+(Math.random()-.5)*s-ds/2}px;`+
-          `width:${ds}px;height:${ds}px;background:radial-gradient(circle,${c2},transparent 60%)`;
-        document.body.appendChild(d); setTimeout(()=>d.remove(),2200);
-      },i*30);
-    }
-  }
-  const skip=e=>e.target.closest('form,button,input,a,.nb');
-  document.addEventListener('click',e=>{if(skip(e))return; sp(e.clientX,e.clientY);
-    setTimeout(()=>sp(e.clientX+(Math.random()-.5)*130,e.clientY+(Math.random()-.5)*130),40)});
-  document.addEventListener('touchstart',e=>{if(skip(e))return; const t=e.touches[0]; sp(t.clientX,t.clientY)},{passive:true});
-  let dn=false,lt=0;
-  document.addEventListener('mousedown',e=>{if(!skip(e))dn=true});
-  document.addEventListener('mouseup',()=>dn=false);
-  document.addEventListener('mousemove',e=>{if(dn&&Date.now()-lt>45){lt=Date.now();sp(e.clientX,e.clientY)}});
-  document.addEventListener('touchmove',e=>{if(skip(e))return;
-    if(Date.now()-lt>45){lt=Date.now();const t=e.touches[0];sp(t.clientX,t.clientY)}},{passive:true});
-})();
-
-// ═══════════════════════════════════════════════════
-// 7. SCROLL REVEALS
-// ═══════════════════════════════════════════════════
-;(function(){
-  const obs=new IntersectionObserver(es=>{
-    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})
-  },{threshold:.1,rootMargin:'0px 0px -25px 0px'});
-  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
-})();
-
-// ═══════════════════════════════════════════════════
-// 8. NAV BLUR ON SCROLL
-// ═══════════════════════════════════════════════════
-addEventListener('scroll',()=>{document.getElementById('nv').classList.toggle('s',pageYOffset>50)});
-
-// ═══════════════════════════════════════════════════
-// 9. FORM HANDLING — Formspree
-// Replace YOUR_FORM_ID with your ID from formspree.io
-// ═══════════════════════════════════════════════════
-async function hs(e,f){
-  e.preventDefault();
-  const em=f.querySelector('input').value; if(!em)return false;
-  const btn=f.querySelector('button');
-  btn.textContent='Sending…'; btn.disabled=true;
-  try{
-    const res=await fetch('https://formspree.io/f/xvzbwwyq',{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Accept:'application/json'},
-      body:JSON.stringify({email:em})
-    });
-    f.style.display='none';
-    let ok=f.parentElement.querySelector('.fok');
-    if(!ok){ok=document.createElement('div');ok.className='fok';
-      f.parentElement.insertBefore(ok,f.nextSibling);}
-    ok.innerHTML=res.ok?"You're in! ✨ We'll notify you before launch.":'Something went wrong — please try again.';
-    ok.classList.add('on');
-  }catch{btn.textContent='Try Again';btn.disabled=false;}
-  return false;
-}
-
-// ═══════════════════════════════════════════════════
-// 10. LIVE CARD DEMO
-// ═══════════════════════════════════════════════════
-;(function(){
-  const card=document.getElementById('demoCard');
-  const cv=document.getElementById('demoC');
-  if(!card||!cv)return;
-
-  function sz(){cv.width=card.offsetWidth;cv.height=card.offsetHeight}
-  sz(); new ResizeObserver(sz).observe(card);
-  const ctx=cv.getContext('2d');
-
-  const blobs=[
-    {r:232,g:160,b:180},{r:201,g:184,b:217},{r:168,g:181,b:160},
-    {r:240,g:197,b:168},{r:196,g:114,b:127},{r:212,g:168,b:83}
-  ].map(c=>({
-    x:Math.random()*400,y:Math.random()*560,r:80+Math.random()*130,
-    vx:(Math.random()-.5)*.45,vy:(Math.random()-.5)*.38,c,ph:Math.random()*6.28
-  }));
-
-  const petals=[];
-  for(let i=0;i<18;i++) petals.push({
-    x:Math.random()*400,y:Math.random()*560,sz:.9+Math.random()*3.8,
-    sy:.14+Math.random()*.28,rot:Math.random()*6.28,rs:(Math.random()-.5)*.022,
-    ph:Math.random()*6.28,op:.1+Math.random()*.22
+// ═══ COPY PROMPT ═══
+function copyPrompt(e,id){
+  e.stopPropagation();
+  const el=document.getElementById(id);
+  const btn=el.querySelector('.copy-btn');
+  const text=el.textContent.replace(btn.textContent,'').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
   });
+}
 
-  (function draw(t){
-    if(!cv.width)return requestAnimationFrame(draw);
-    const W=cv.width,H=cv.height;
-    ctx.fillStyle='#2A1F28'; ctx.fillRect(0,0,W,H);
-    for(const b of blobs){
-      const rr=b.r*(1+Math.sin(t*.0025+b.ph)*.22);
-      b.x+=b.vx+Math.sin(t*.0009+b.ph)*.25;
-      b.y+=b.vy+Math.cos(t*.0007+b.ph)*.2;
-      if(b.x<-rr)b.x=W+rr; if(b.x>W+rr)b.x=-rr;
-      if(b.y<-rr)b.y=H+rr; if(b.y>H+rr)b.y=-rr;
-      const a=.12+.06*Math.sin(t*.0018+b.ph);
-      const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
-      g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
-      g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    }
-    for(const p of petals){
-      p.y+=p.sy; p.rot+=p.rs;
-      if(p.y>H+10){p.y=-10;p.x=Math.random()*W}
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-      ctx.globalAlpha=p.op*(.5+.5*Math.sin(t*.002+p.ph));
-      ctx.beginPath(); ctx.moveTo(0,-p.sz);
-      ctx.bezierCurveTo(p.sz*.7,-p.sz*.4,p.sz*.7,p.sz*.4,0,p.sz);
-      ctx.bezierCurveTo(-p.sz*.7,p.sz*.4,-p.sz*.7,-p.sz*.4,0,-p.sz);
-      ctx.fillStyle='rgba(232,160,180,'+p.op+')'; ctx.fill(); ctx.restore();
-    }
-    requestAnimationFrame(draw);
-  })(0);
-
-  // Scoped paint splashes inside the card frame
-  const dc=['rgba(219,84,130,.7)','rgba(212,168,83,.65)','rgba(201,184,217,.6)',
-    'rgba(240,197,168,.65)','rgba(196,114,127,.65)','rgba(255,200,80,.65)',
-    'rgba(130,60,200,.6)','rgba(100,200,180,.55)'];
-  function dsp(cx,cy){
-    const rect=card.getBoundingClientRect();
-    const e=document.createElement('div');
-    const s=50+Math.random()*90, c=dc[~~(Math.random()*dc.length)];
-    const rx=()=>30+Math.random()*40;
-    e.style.cssText=`position:absolute;left:${cx-rect.left-s/2}px;top:${cy-rect.top-s/2}px;`+
-      `width:${s}px;height:${s}px;z-index:5;pointer-events:none;`+
-      `background:radial-gradient(ellipse at ${rx()}% ${rx()}%,${c},transparent 55%);`+
-      `transform:rotate(${Math.random()*360}deg);`+
-      `border-radius:${35+~~(Math.random()*25)}% ${45+~~(Math.random()*25)}% ${35+~~(Math.random()*25)}% ${45+~~(Math.random()*25)}%;`+
-      `opacity:0;animation:psA 3.5s ease-out forwards`;
-    card.appendChild(e); setTimeout(()=>e.remove(),3500);
-  }
-  let ddn=false,dlt=0;
-  card.addEventListener('click',e=>dsp(e.clientX,e.clientY));
-  card.addEventListener('mousedown',()=>ddn=true);
-  card.addEventListener('mouseup',()=>ddn=false);
-  card.addEventListener('mouseleave',()=>ddn=false);
-  card.addEventListener('mousemove',e=>{if(ddn&&Date.now()-dlt>55){dlt=Date.now();dsp(e.clientX,e.clientY)}});
-  card.addEventListener('touchstart',e=>{const t=e.touches[0];dsp(t.clientX,t.clientY)},{passive:true});
-  card.addEventListener('touchmove',e=>{
-    if(Date.now()-dlt>55){dlt=Date.now();const t=e.touches[0];dsp(t.clientX,t.clientY)}
-  },{passive:true});
-})();
-
-const demoFilters={
-  none:'none',
-  watercolor:'blur(0.4px) saturate(1.35) contrast(0.9)',
-  oil:'contrast(1.12) saturate(1.55) brightness(0.94)',
-  sketch:'grayscale(1) contrast(1.45) brightness(1.12)',
-  glow:'blur(0.35px) brightness(1.22) saturate(1.28)'
+// ═══ PALETTES ═══
+const PAL={
+  gold:{bg:'#1C1926',blobs:['55,40,95','95,70,135','130,100,55'],star:true,goldRate:.6},
+  neon:{bg:'#0A0A18',blobs:['40,60,140','80,40,160','60,100,180'],star:true,goldRate:.2},
+  navy:{bg:'#101828',blobs:['30,50,100','60,80,120','100,80,40'],star:true,goldRate:.5},
+  twilight:{bg:'#1A1028',blobs:['60,30,100','100,60,140','80,50,120'],star:true,goldRate:.3},
+  newyear:{bg:'#14101E',blobs:['80,50,120','120,80,50','50,30,80'],star:true,goldRate:.65},
+  warm:{bg:'#1A1008',blobs:['100,60,20','80,40,10','60,30,8'],star:false},
+  christmas:{bg:'#140A06',blobs:['100,40,10','60,80,20','80,60,15'],star:false},
+  ivory:{bg:'#FAF7F2',blobs:['215,210,200','200,195,185'],light:true},
+  garden:{bg:'#F5EFE0',blobs:['200,185,160','180,200,170','210,180,180'],light:true},
+  rose:{bg:'#FAF0F0',blobs:['220,180,185','200,170,175','230,195,195'],light:true},
+  lavender:{bg:'#F4F0FA',blobs:['200,185,220','185,175,210','215,200,230'],light:true},
+  sunlit:{bg:'#FAF5E8',blobs:['220,200,160','210,190,150','200,180,140'],light:true},
+  softblue:{bg:'#F0F5FA',blobs:['185,205,225','175,195,215','195,210,230'],light:true},
+  softpink:{bg:'#FAF0F2',blobs:['225,195,205','215,185,195','235,210,220'],light:true},
+  mint:{bg:'#F0FAF5',blobs:['180,220,200','170,210,190','190,230,210'],light:true},
+  winter:{bg:'#0E1218',blobs:['40,60,90','30,50,80','50,70,100'],star:false},
+  party:{bg:'#1A0A14',blobs:['120,40,80','80,30,100','140,60,60'],star:false},
+  gradparty:{bg:'#180A10',blobs:['100,40,60','80,50,100','60,80,40'],star:false},
 };
-function setDemoFilter(k,btn){
-  const inner=document.getElementById('demoInner');
-  if(inner)inner.style.filter=demoFilters[k]||'none';
-  document.querySelectorAll('.demo-filters button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
 
-// ═══════════════════════════════════════════════════
-// 11. FAQ ACCORDION
-// ═══════════════════════════════════════════════════
-function faqToggle(btn){
-  const item=btn.parentElement;
-  const isOpen=item.classList.contains('open');
-  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
-  if(!isOpen)item.classList.add('open');
-}
+// ═══ CARD ENGINE ═══
+const activeCards=new Map();
 
-// ═══════════════════════════════════════════════════
-// 12. COUNTDOWN TIMER
-// ═══════════════════════════════════════════════════
-;(function(){
-  const target=new Date('2026-05-10T00:00:00');
-  const el={d:document.getElementById('cdD'),h:document.getElementById('cdH'),
-    m:document.getElementById('cdM'),s:document.getElementById('cdS')};
-  function tick(){
-    const diff=target-Date.now();
-    if(diff<=0){for(const k in el)if(el[k])el[k].textContent='00';return;}
-    const pad=n=>String(n).padStart(2,'0');
-    if(el.d)el.d.textContent=pad(Math.floor(diff/864e5));
-    if(el.h)el.h.textContent=pad(Math.floor((diff%864e5)/36e5));
-    if(el.m)el.m.textContent=pad(Math.floor((diff%36e5)/6e4));
-    if(el.s)el.s.textContent=pad(Math.floor((diff%6e4)/1e3));
+function bootCard(el){
+  const eng=el.dataset.engine;
+  const palName=el.dataset.palette;
+  const pal=PAL[palName]||PAL.gold;
+  const c0=el.querySelector('.c0'),c1=el.querySelector('.c1');
+  const x0=c0.getContext('2d'),x1=c1.getContext('2d');
+
+  function sz(){const r=el.getBoundingClientRect();[c0,c1].forEach(c=>{c.width=r.width*dpr;c.height=r.height*dpr;c.getContext('2d').setTransform(dpr,0,0,dpr,0,0)})}
+  sz();
+  const W=()=>c0.width/dpr,H=()=>c0.height/dpr;
+
+  const blobs=pal.blobs.map(c=>({x:Math.random()*400,y:Math.random()*600,r:80+Math.random()*100,c,a:pal.light?.03:.08+Math.random()*.04,ph:Math.random()*6.28}));
+
+  let particles=[];
+  const w0=400,h0=600;
+
+  if(eng==='starfield'){
+    for(let i=0;i<30;i++)particles.push({type:'star',x:Math.random()*w0,y:Math.random()*h0,sz:.4+Math.random()*1.2,ph:Math.random()*6.28,sp:.002+Math.random()*.003,gold:Math.random()<(pal.goldRate||.5),vx:(Math.random()-.5)*.03,vy:(Math.random()-.5)*.02});
   }
-  tick(); setInterval(tick,1000);
+  else if(eng==='petals'){
+    for(let i=0;i<20;i++){
+      const isPollen=Math.random()>.72;
+      particles.push({type:isPollen?'pollen':'petal',x:Math.random()*w0,y:isPollen?Math.random()*h0:-10-Math.random()*200,size:isPollen?1+Math.random()*1.3:2.5+Math.random()*5,vy:isPollen?-(0.02+Math.random()*.05):.08+Math.random()*.2,vx:(Math.random()-.5)*.12,rot:Math.random()*6.28,rotS:(Math.random()-.5)*.005,ph:Math.random()*6.28,drift:.0005+Math.random()*.001,op:.04+Math.random()*.1,shape:Math.random()});
+    }
+  }
+  else if(eng==='dust'){
+    for(let i=0;i<14;i++)particles.push({type:'mote',x:Math.random()*w0,y:Math.random()*h0,sz:.6+Math.random()*1.6,vx:(Math.random()-.5)*.025,vy:-(0.01+Math.random()*.04),ph:Math.random()*6.28,drift:.0003+Math.random()*.0006,op:.025+Math.random()*.06,shape:Math.random()>.5?'c':'l',rot:Math.random()*Math.PI});
+  }
+  else if(eng==='confetti'){
+    for(let i=0;i<35;i++)particles.push({type:'confetti',x:Math.random()*w0,y:-10-Math.random()*h0,size:2+Math.random()*4,vy:.15+Math.random()*.4,vx:(Math.random()-.5)*.3,rot:Math.random()*6.28,rotS:(Math.random()-.5)*.02,ph:Math.random()*6.28,op:.15+Math.random()*.3,hue:Math.random()*360});
+  }
+  else if(eng==='candles'){
+    for(let i=0;i<25;i++)particles.push({type:'ember',x:Math.random()*w0,y:Math.random()*h0,size:1+Math.random()*3,vy:-(0.05+Math.random()*.15),vx:(Math.random()-.5)*.06,ph:Math.random()*6.28,drift:.0004+Math.random()*.001,op:.08+Math.random()*.2,warm:Math.random()});
+  }
+  else if(eng==='bubbles'){
+    for(let i=0;i<22;i++)particles.push({type:'bubble',x:Math.random()*w0,y:h0+10+Math.random()*200,size:2+Math.random()*6,vy:-(0.06+Math.random()*.15),vx:(Math.random()-.5)*.08,ph:Math.random()*6.28,drift:.0003+Math.random()*.0008,op:.05+Math.random()*.12});
+  }
+  else if(eng==='snow'){
+    for(let i=0;i<30;i++)particles.push({type:'snow',x:Math.random()*w0,y:-10-Math.random()*300,size:1+Math.random()*3,vy:.05+Math.random()*.15,vx:(Math.random()-.5)*.08,ph:Math.random()*6.28,drift:.0004+Math.random()*.001,op:.06+Math.random()*.15});
+  }
+  else if(eng==='rise'){
+    for(let i=0;i<30;i++){
+      const isGold=Math.random()>.5;
+      particles.push({type:'riser',x:Math.random()*w0,y:Math.random()*h0,size:1+Math.random()*2.5,vy:-(0.08+Math.random()*.2),vx:(Math.random()-.5)*.06,ph:Math.random()*6.28,drift:.0005+Math.random()*.001,op:.08+Math.random()*.2,gold:isGold});
+    }
+  }
+
+  let running=false,rafId;
+  function render(t){
+    const w=W(),h=H();
+    x0.fillStyle=pal.bg;x0.fillRect(0,0,w,h);
+    for(const b of blobs){
+      const bx=b.x+Math.sin(t*.0004+b.ph)*30;
+      const by=b.y+Math.cos(t*.0003+b.ph)*20;
+      const a=b.a*(.5+.5*Math.sin(t*.001+b.ph));
+      const g=x0.createRadialGradient(bx,by,0,bx,by,b.r);
+      g.addColorStop(0,`rgba(${b.c},${a})`);g.addColorStop(1,`rgba(${b.c},0)`);
+      x0.fillStyle=g;x0.fillRect(0,0,w,h);
+    }
+    x1.clearRect(0,0,w,h);
+    const sx=w/w0,sy=h/h0;
+    for(const p of particles){
+      const px=p.x*sx,py=p.y*sy;
+      if(p.type==='star'){
+        const gl=Math.pow(Math.max(0,Math.sin(t*p.sp+p.ph)),3);
+        p.x+=p.vx+Math.sin(t*.0004+p.ph)*.06;p.y+=p.vy;
+        if(p.x<-3)p.x=w0+3;if(p.x>w0+3)p.x=-3;if(p.y<-3)p.y=h0+3;if(p.y>h0+3)p.y=-3;
+        const col=p.gold?`rgba(201,169,110,${.1+gl*.6})`:`rgba(200,195,220,${.08+gl*.4})`;
+        x1.globalAlpha=.1+gl*.55;x1.beginPath();x1.arc(px,py,p.sz*(.3+gl*.7)*sx,0,Math.PI*2);x1.fillStyle=col;x1.fill();
+        if(gl>.4){const sg=x1.createRadialGradient(px,py,0,px,py,p.sz*5*sx);sg.addColorStop(0,`rgba(${p.gold?'201,169,110':'200,195,220'},${gl*.08})`);sg.addColorStop(1,'rgba(0,0,0,0)');x1.fillStyle=sg;x1.fillRect(px-p.sz*5*sx,py-p.sz*5*sy,p.sz*10*sx,p.sz*10*sy)}
+      }
+      else if(p.type==='petal'||p.type==='pollen'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.001)+p.ph)*.2;p.y+=p.vy;p.rot=(p.rot||0)+(p.rotS||0);
+        if(p.type==='petal'&&p.y>h0+8){p.y=-8;p.x=Math.random()*w0}
+        if(p.type==='pollen'&&p.y<-4){p.y=h0+4;p.x=Math.random()*w0}
+        x1.save();x1.translate(px,py);x1.rotate(p.rot);
+        x1.globalAlpha=(p.op||.1)*(.4+.6*Math.sin(t*.001+p.ph));
+        if(p.type==='petal'){const s=p.size*sx,pw=s*(.3+(p.shape||0)*.18);x1.beginPath();x1.moveTo(0,-s);x1.bezierCurveTo(pw,-s*.5,pw*.8,s*.3,0,s);x1.bezierCurveTo(-pw*.6,s*.4,-pw*.9,-s*.3,0,-s);x1.fillStyle=pal.light?`rgba(180,150,155,.35)`:`rgba(220,180,185,.4)`;x1.fill()}
+        else{const r=p.size*2.5*sx;const gr=x1.createRadialGradient(0,0,0,0,0,r);gr.addColorStop(0,`rgba(200,185,140,${(p.op||.1)*.4})`);gr.addColorStop(1,'rgba(200,185,140,0)');x1.fillStyle=gr;x1.fillRect(-r,-r,r*2,r*2)}
+        x1.restore();
+      }
+      else if(p.type==='mote'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.08;p.y+=p.vy;
+        if(p.y<-3){p.y=h0+3;p.x=Math.random()*w0}
+        x1.save();x1.translate(px,py);x1.globalAlpha=(p.op||.05)*(.4+.6*Math.sin(t*.0007+p.ph));
+        if(p.shape==='c'){x1.beginPath();x1.arc(0,0,p.sz*sx,0,Math.PI*2);x1.fillStyle='rgba(180,174,160,.5)';x1.fill()}
+        else{x1.rotate((p.rot||0)+t*.00006);x1.strokeStyle='rgba(180,174,160,.3)';x1.lineWidth=.25;x1.beginPath();x1.moveTo(-p.sz*1.8*sx,0);x1.lineTo(p.sz*1.8*sx,0);x1.stroke()}
+        x1.restore();
+      }
+      else if(p.type==='confetti'){
+        p.x+=p.vx+Math.sin(t*.001+p.ph)*.4;p.y+=p.vy;p.rot+=p.rotS;
+        if(p.y>h0+10){p.y=-10;p.x=Math.random()*w0;p.vx=(Math.random()-.5)*.3}
+        x1.save();x1.translate(px,py);x1.rotate(p.rot);
+        x1.globalAlpha=p.op*(.5+.5*Math.sin(t*.002+p.ph));
+        x1.fillStyle=`hsla(${p.hue},70%,65%,${p.op})`;
+        const s=p.size*sx;
+        if(Math.random()>.5){x1.fillRect(-s,-s*.3,s*2,s*.6)}
+        else{x1.beginPath();x1.arc(0,0,s*.5,0,Math.PI*2);x1.fill()}
+        x1.restore();
+      }
+      else if(p.type==='ember'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0006)+p.ph)*.15;p.y+=p.vy;
+        if(p.y<-5){p.y=h0+5;p.x=Math.random()*w0}
+        const ep=.5+.5*Math.sin(t*.003+p.ph);
+        x1.globalAlpha=p.op*ep;
+        const r=p.size*sx;const c=p.warm>.5?'255,180,60':'255,140,40';
+        const gr=x1.createRadialGradient(px,py,0,px,py,r*3);
+        gr.addColorStop(0,`rgba(${c},${p.op*ep*.5})`);gr.addColorStop(1,`rgba(${c},0)`);
+        x1.fillStyle=gr;x1.fillRect(px-r*3,py-r*3,r*6,r*6);
+        x1.beginPath();x1.arc(px,py,r*.4,0,Math.PI*2);
+        x1.fillStyle=`rgba(255,255,200,${ep*.6})`;x1.fill();
+      }
+      else if(p.type==='bubble'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.15;p.y+=p.vy;
+        if(p.y<-10){p.y=h0+10;p.x=Math.random()*w0}
+        const s=p.size*sx;const bob=Math.sin(t*.002+p.ph)*.5;
+        x1.globalAlpha=p.op*(.5+.5*Math.sin(t*.001+p.ph));
+        x1.beginPath();x1.arc(px,py+bob,s,0,Math.PI*2);
+        x1.strokeStyle=pal.light?`rgba(150,170,190,${p.op*.5})`:`rgba(180,200,220,${p.op*.4})`;
+        x1.lineWidth=.4;x1.stroke();
+        const bg=x1.createRadialGradient(px-s*.2,py-s*.2+bob,0,px,py+bob,s);
+        bg.addColorStop(0,'rgba(255,255,255,.03)');bg.addColorStop(1,'rgba(255,255,255,0)');
+        x1.fillStyle=bg;x1.fill();
+      }
+      else if(p.type==='snow'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.2;p.y+=p.vy;
+        if(p.y>h0+8){p.y=-8;p.x=Math.random()*w0}
+        x1.globalAlpha=p.op*(.4+.6*Math.sin(t*.001+p.ph));
+        x1.beginPath();x1.arc(px,py,p.size*.5*sx,0,Math.PI*2);
+        x1.fillStyle=`rgba(220,230,245,${p.op})`;x1.fill();
+        if(p.size>2){const gl=x1.createRadialGradient(px,py,0,px,py,p.size*2*sx);gl.addColorStop(0,`rgba(220,230,245,${p.op*.15})`);gl.addColorStop(1,'rgba(220,230,245,0)');x1.fillStyle=gl;x1.fillRect(px-p.size*2*sx,py-p.size*2*sy,p.size*4*sx,p.size*4*sy)}
+      }
+      else if(p.type==='riser'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0006)+p.ph)*.12;p.y+=p.vy;
+        if(p.y<-5){p.y=h0+5;p.x=Math.random()*w0}
+        const c=p.gold?'201,169,110':'180,190,210';
+        x1.globalAlpha=p.op*(.5+.5*Math.sin(t*.002+p.ph));
+        const r=p.size*sx;const gr=x1.createRadialGradient(px,py,0,px,py,r*3);
+        gr.addColorStop(0,`rgba(${c},${p.op*.5})`);gr.addColorStop(1,`rgba(${c},0)`);
+        x1.fillStyle=gr;x1.fillRect(px-r*3,py-r*3,r*6,r*6);
+        x1.beginPath();x1.arc(px,py,r*.4,0,Math.PI*2);
+        x1.fillStyle=`rgba(${c},${p.op})`;x1.fill();
+      }
+    }
+    x1.globalAlpha=1;
+    if(running)rafId=requestAnimationFrame(render);
+  }
+
+  return{
+    start(){if(!running){running=true;sz();rafId=requestAnimationFrame(render)}},
+    stop(){running=false;cancelAnimationFrame(rafId)},
+    resize:sz
+  };
+}
+
+const tabBtns=document.querySelectorAll('.tab-btn');
+const tabPanels=document.querySelectorAll('.tab-panel');
+
+function switchTab(tabName){
+  tabBtns.forEach(b=>b.classList.toggle('active',b.dataset.tab===tabName));
+  tabPanels.forEach(p=>{
+    const isActive=p.id==='tab-'+tabName;
+    p.classList.toggle('active',isActive);
+  });
+  bootVisibleCards();
+}
+
+tabBtns.forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+function bootVisibleCards(){
+  activeCards.forEach(c=>c.stop());
+  activeCards.clear();
+  const activePanel=document.querySelector('.tab-panel.active');
+  if(!activePanel)return;
+  activePanel.querySelectorAll('.live-card').forEach(el=>{
+    if(!el.dataset.engine)return;
+    const card=bootCard(el);
+    activeCards.set(el.id,card);
+    card.start();
+  });
+}
+
+addEventListener('resize',()=>{activeCards.forEach(c=>c.resize())});
+bootVisibleCards();
+
+// ═══ AMBIENT GARDEN ═══
+;(function(){
+  const C=document.getElementById('gardenC'),X=C.getContext('2d');
+  function sz(){C.width=innerWidth*dpr;C.height=innerHeight*dpr;X.setTransform(dpr,0,0,dpr,0,0)}
+  sz();addEventListener('resize',sz);
+  const blobs=[{x:200,y:300,r:340,vx:.08,vy:.05,c:'212,190,170',a:.016,ph:0},{x:800,y:200,r:290,vx:-.06,vy:.06,c:'190,205,180',a:.012,ph:2},{x:400,y:600,r:260,vx:.05,vy:-.04,c:'210,185,202',a:.01,ph:4},{x:1e3,y:500,r:300,vx:-.06,vy:.05,c:'220,205,170',a:.014,ph:1}];
+  const FC=[[218,180,180],[240,210,210],[190,175,155],[220,205,185],[185,205,178],[210,222,200],[210,190,210],[232,220,232]];
+  const flowers=[];for(let i=0;i<14;i++){const c1=FC[~~(Math.random()*FC.length)],c2=FC[~~(Math.random()*FC.length)],l=Math.random();flowers.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight*3,size:10+Math.random()*(l>.6?22:38),petals:5+~~(Math.random()*3),bloom:.3+Math.random()*.7,rot:Math.random()*Math.PI*2,rotS:(Math.random()-.5)*.0001,swPh:Math.random()*6.28,swAmp:2+Math.random()*4,swSpd:.0003+Math.random()*.0005,layer:l,op:l>.6?.04+Math.random()*.08:.015+Math.random()*.035,c1,c2,pw:.25+Math.random()*.12,cv:.3+Math.random()*.25})}
+  const petals=[];for(let i=0;i<22;i++){const c=FC[~~(Math.random()*FC.length)];petals.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight-innerHeight*.3,size:3+Math.random()*5,vy:.08+Math.random()*.22,vx:(Math.random()-.5)*.14,rot:Math.random()*Math.PI*2,rotS:(Math.random()-.5)*.004,ph:Math.random()*6.28,drift:.0006+Math.random()*.0013,op:.02+Math.random()*.07,color:c,shape:Math.random()})}
+  (function loop(t){
+    const w=innerWidth,h=innerHeight;X.fillStyle='#FDFBF7';X.fillRect(0,0,w,h);
+    for(const b of blobs){b.x+=b.vx;b.y+=b.vy;if(b.x<-b.r)b.x=w+b.r;if(b.x>w+b.r)b.x=-b.r;if(b.y<-b.r)b.y=h+b.r;if(b.y>h+b.r)b.y=-b.r;const a=b.a*(.5+.5*Math.sin(t*.0008+b.ph));const g=X.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*(1+Math.sin(t*.0006+b.ph)*.08));g.addColorStop(0,`rgba(${b.c},${a})`);g.addColorStop(1,`rgba(${b.c},0)`);X.fillStyle=g;X.fillRect(0,0,w,h)}
+    for(const f of flowers){const vy=f.y-sY*(.08+f.layer*.35);if(vy<-f.size*2||vy>h+f.size*2)continue;const sway=Math.sin(t*f.swSpd+f.swPh)*f.swAmp;const bl=f.bloom+Math.sin(t*.0003)*.03;const pl=f.size*bl,pw=f.size*f.pw;X.save();X.translate(f.x+sway,vy);X.rotate(f.rot+t*f.rotS);X.globalAlpha=f.op;for(let i=0;i<f.petals;i++){X.save();X.rotate((i/f.petals)*Math.PI*2);X.beginPath();X.moveTo(0,0);X.bezierCurveTo(pw,-pl*f.cv,pw*.7,-pl*.85,0,-pl);X.bezierCurveTo(-pw*.7,-pl*.85,-pw,-pl*f.cv,0,0);const gr=X.createLinearGradient(0,0,0,-pl);gr.addColorStop(0,`rgba(${f.c1},.7)`);gr.addColorStop(1,`rgba(${f.c2},.18)`);X.fillStyle=gr;X.fill();X.restore()}X.restore()}
+    for(const p of petals){p.x+=p.vx+Math.sin(t*p.drift+p.ph)*.2;p.y+=p.vy;p.rot+=p.rotS;if(p.y>h+10){p.y=-10;p.x=Math.random()*w}X.save();X.translate(p.x,p.y);X.rotate(p.rot);X.globalAlpha=p.op*(.35+.65*Math.sin(t*.0008+p.ph));const s=p.size,pw=s*(.28+p.shape*.18);X.beginPath();X.moveTo(0,-s);X.bezierCurveTo(pw,-s*.5,pw*.8,s*.3,0,s);X.bezierCurveTo(-pw*.6,s*.4,-pw*.9,-s*.3,0,-s);X.fillStyle=`rgba(${p.color},.45)`;X.fill();X.restore()}
+    requestAnimationFrame(loop)
+  })(0)
 })();
+
+addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',sY>50)});
+document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('v')})},{threshold:.06,rootMargin:'0px 0px -20px 0px'}).observe(el)});
 </script>
 </body>
 </html>
