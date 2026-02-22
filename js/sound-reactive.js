@@ -1,7 +1,7 @@
 /**
- * Sound-Reactive Cards — LiveCard Studio
- * Web Audio API · Frequency analysis · Particle physics
- * Spec: bass → size, mids → hue, highs → sparkle burst
+ * Sound-Reactive Card Module — LiveCard Studio
+ * Web Audio API · AnalyserNode fftSize=256 · Bass/Mids/Highs → size, hue, sparkles
+ * Export: SoundReactiveEngine (import into card engine), createSoundReactiveDemo (standalone demo).
  */
 
 const SMOOTH = 0.15;
@@ -10,14 +10,20 @@ const MIDS_BINS = [8, 32];
 const HIGHS_BINS = [32, 64];
 const HIGH_SPARKLE_THRESHOLD = 0.4;
 const BASS_RING_THRESHOLD = 0.7;
+const BASS_RING_RADIUS_MAX = 150;
+const BASS_RING_RADIUS_START = 20;
 
+/**
+ * SoundReactiveEngine — extracts 3 bands from mic, exposes reactive state for particle loop.
+ * Call start() from a user gesture (e.g. button click) for mobile Safari/Chrome.
+ */
 export class SoundReactiveEngine {
   constructor() {
     this._ctx = null;
     this._stream = null;
     this._analyser = null;
     this._source = null;
-    this._data = new Uint8Array(128); // fftSize 256 → half for frequency
+    this._data = new Uint8Array(128);
     this._bass = 0;
     this._mids = 0;
     this._highs = 0;
@@ -27,6 +33,7 @@ export class SoundReactiveEngine {
     this._active = false;
   }
 
+  /** Reactive state: { bass, mids, highs } in 0.0–1.0, smoothed. */
   get state() {
     return { bass: this._bass, mids: this._mids, highs: this._highs };
   }
@@ -35,16 +42,24 @@ export class SoundReactiveEngine {
     return prev + (next - prev) * SMOOTH;
   }
 
+  /**
+   * Start mic and analyser. Must be called from user gesture (click/tap) for mobile.
+   * @returns {Promise<boolean>} true if mic granted and analyser ready
+   */
   async start() {
-    if (this._active) return;
+    if (this._active) return true;
     try {
       this._stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      this._ctx = new Ctx();
       this._analyser = this._ctx.createAnalyser();
       this._analyser.fftSize = 256;
       this._analyser.smoothingTimeConstant = 0.5;
       this._source = this._ctx.createMediaStreamSource(this._stream);
       this._source.connect(this._analyser);
+      if (this._ctx.state === 'suspended') {
+        await this._ctx.resume();
+      }
       this._active = true;
       return true;
     } catch (e) {
@@ -68,6 +83,9 @@ export class SoundReactiveEngine {
     this._prevBass = this._prevMids = this._prevHighs = 0;
   }
 
+  /**
+   * Call every frame from your particle loop. Updates bands (bass/mids/highs) from analyser.
+   */
   update() {
     if (!this._active || !this._analyser) return;
     this._analyser.getByteFrequencyData(this._data);
@@ -79,14 +97,15 @@ export class SoundReactiveEngine {
     const rawBass = sum(this._data, BASS_BINS[0], BASS_BINS[1]) / 255;
     const rawMids = sum(this._data, MIDS_BINS[0], MIDS_BINS[1]) / 255;
     const rawHighs = sum(this._data, HIGHS_BINS[0], HIGHS_BINS[1]) / 255;
-    this._bass = this._lerp(this._prevBass, rawBass);
-    this._mids = this._lerp(this._prevMids, rawMids);
-    this._highs = this._lerp(this._prevHighs, rawHighs);
+    this._bass = this._lerp(this._prevBass, Math.min(1, rawBass));
+    this._mids = this._lerp(this._prevMids, Math.min(1, rawMids));
+    this._highs = this._lerp(this._prevHighs, Math.min(1, rawHighs));
     this._prevBass = this._bass;
     this._prevMids = this._mids;
     this._prevHighs = this._highs;
   }
 
+  /** Raw frequency bins (length 128 for fftSize 256). Use for frequency bar viz. */
   getFrequencyData() {
     if (!this._active || !this._analyser) return null;
     this._analyser.getByteFrequencyData(this._data);
@@ -129,8 +148,8 @@ export function createSoundReactiveDemo(container) {
       <div class="codex-demo-card codex-demo-sound" style="aspect-ratio:5/7;max-width:300px;width:100%;position:relative;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.08);">
         <canvas class="c0" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
         <canvas class="c1" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
-        <div class="codex-mic-overlay" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(28,25,38,.25);backdrop-filter:blur(8px);">
-          <button type="button" class="codex-mic-btn" aria-label="Enable microphone">🎙️ Enable Microphone</button>
+        <div class="codex-mic-overlay" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(28,25,38,.25);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">
+          <button type="button" class="codex-mic-btn" aria-label="Enable microphone" style="border-radius:24px;padding:12px 24px;backdrop-filter:blur(8px);">🎙️ Enable Microphone</button>
           <p class="codex-mic-tooltip" style="display:none;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:.6rem;color:rgba(255,255,255,.8);white-space:nowrap;">Mic access needed for sound-reactive mode</p>
         </div>
       </div>
@@ -182,11 +201,13 @@ export function createSoundReactiveDemo(container) {
   }
 
   function drawBassRing(ctx, w, h, t) {
-    const rings = bassRings.filter(r => r.radius < 200);
+    const scale = Math.min(w, h) / 400;
+    const rings = bassRings.filter(r => r.radius < BASS_RING_RADIUS_MAX);
     rings.forEach(r => {
       r.radius += 3;
       r.phase += 0.2;
-      const alpha = Math.max(0, 0.4 * (1 - (r.radius - 20) / 130));
+      const range = BASS_RING_RADIUS_MAX - BASS_RING_RADIUS_START;
+      const alpha = Math.max(0, 0.4 * (1 - (r.radius - BASS_RING_RADIUS_START) / range));
       ctx.strokeStyle = `rgba(201,169,110,${alpha})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -194,7 +215,7 @@ export function createSoundReactiveDemo(container) {
       for (let i = 0; i <= 32; i++) {
         const angle = (i / 32) * Math.PI * 2;
         const wobble = Math.sin(angle * 3 + r.phase) * 4;
-        const rad = (r.radius + wobble) * Math.min(w, h) / 400;
+        const rad = (r.radius + wobble) * scale;
         const x = cx + Math.cos(angle) * rad;
         const y = cy + Math.sin(angle) * rad;
         if (i === 0) ctx.moveTo(x, y);
@@ -214,8 +235,7 @@ export function createSoundReactiveDemo(container) {
     const maxH = h * 0.12;
     ctx.globalAlpha = 0.3;
     for (let i = 0; i < barCount; i++) {
-      const idx = Math.floor((i / barCount) * data.length);
-      const val = (data[idx] || 0) / 255;
+      const val = (data[i] ?? 0) / 255;
       const barH = val * maxH;
       const x = i * barW;
       const grad = ctx.createLinearGradient(x, h, x, h - barH);
@@ -252,7 +272,7 @@ export function createSoundReactiveDemo(container) {
     }
 
     if (state.bass > BASS_RING_THRESHOLD && (bassRings.length === 0 || t - (bassRings[bassRings.length - 1]?.t || 0) > 200)) {
-      bassRings.push({ radius: 20, phase: t * 0.003, t });
+      bassRings.push({ radius: BASS_RING_RADIUS_START, phase: t * 0.003, t });
     }
 
     x0.fillStyle = GOLD_PALETTE.bg;
@@ -312,7 +332,7 @@ export function createSoundReactiveDemo(container) {
     drawBassRing(x1, w, h, t);
     drawFreqBars(x1, w, h);
 
-    bassRings = bassRings.filter(r => r.radius < 200);
+    bassRings = bassRings.filter(r => r.radius < BASS_RING_RADIUS_MAX);
 
     rafId = requestAnimationFrame(render);
   }
@@ -335,8 +355,10 @@ export function createSoundReactiveDemo(container) {
       if (ok) {
         micBtn.parentElement.style.display = 'none';
       } else {
-        if (tooltip) tooltip.style.display = 'block';
-        setTimeout(() => { if (tooltip) tooltip.style.display = 'none'; }, 3000);
+        if (tooltip) {
+          tooltip.style.display = 'block';
+          setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
+        }
       }
     });
 

@@ -3,11 +3,19 @@
  */
 import { createSoundReactiveDemo } from './sound-reactive.js';
 import { createConstellationDemo } from './constellation.js';
+import { createGesturePhysicsDemo } from './gesture-physics.js';
+import { createLifecycleDemo } from './lifecycle-demo.js';
+import { createPhotoReactiveDemo } from './photo-reactive.js';
+import { createUniverseDemo } from './universe-demo.js';
 
 const TAB_ID = 'tab-codex';
 const DEMOS = {
   'sound-reactive': createSoundReactiveDemo,
   'constellation': createConstellationDemo,
+  'gesture-physics': createGesturePhysicsDemo,
+  'lifecycle': createLifecycleDemo,
+  'photo-reactive': createPhotoReactiveDemo,
+  'universe': createUniverseDemo,
 };
 
 let activeDemos = new Map();

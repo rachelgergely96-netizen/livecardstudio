@@ -145,6 +145,49 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 .codex-mic-btn:hover{background:rgba(201,169,110,.4);transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,169,110,.2)}
 .codex-demo-desc{font-size:.72rem;font-weight:300;color:var(--tx2);line-height:1.6;max-width:420px;margin:0;text-align:center}
 
+/* AI Universe Generator demo */
+.universe-demo{display:flex;flex-direction:column;align-items:center;gap:18px;margin-bottom:16px}
+.universe-input-wrap{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;width:100%;max-width:420px}
+.universe-input{flex:1;min-width:200px;padding:12px 18px;border-radius:12px;border:1px solid var(--bdr);background:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--tx);transition:border-color .3s}
+.universe-input::placeholder{color:var(--tx3)}
+.universe-input:focus{outline:none;border-color:var(--gold2)}
+.universe-submit{padding:12px 24px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:1px;color:#fff;background:var(--mid);border:none;cursor:pointer;transition:all .3s}
+.universe-submit:hover{background:var(--gold2);transform:translateY(-1px)}
+.universe-generating{display:none;text-align:center;padding:24px 20px}
+.universe-generating-text{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;color:var(--tx2);margin-bottom:16px}
+.universe-palette-preview{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.universe-swatch{width:32px;height:32px;border-radius:8px;opacity:0;animation:universeSwatchFade .6s ease forwards}
+@keyframes universeSwatchFade{to{opacity:1}}
+.universe-card-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.universe-card-wrap .live-card{max-width:280px;margin:0 auto}
+.universe-try{display:none}
+.universe-try-btn{padding:8px 20px;border-radius:24px;font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2);background:transparent;border:1px solid var(--bdr);cursor:pointer;transition:all .3s}
+.universe-try-btn:hover{border-color:var(--gold2);color:var(--gold2)}
+
+/* Photo-reactive card */
+.photo-card-ui{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;pointer-events:none}
+.photo-card-ui>*{pointer-events:auto}
+.photo-upload-btn{
+  padding:12px 28px;border-radius:999px;font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.95);background:rgba(255,255,255,.12);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.25);cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.15)
+}
+.photo-upload-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35);transform:translateY(-2px)}
+.photo-card-ui .photo-palette-dots{position:absolute;top:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:80px}
+.photo-card-ui .photo-palette-dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.3);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.photo-card-ui .photo-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.2);
+  font-size:.75rem;font-weight:500;letter-spacing:1.5px;color:#fff;opacity:0;
+  animation:photoPulse 1s ease-in-out infinite
+}
+@keyframes photoPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.photo-card-ui .photo-loading.visible{display:flex;opacity:1}
+.photo-card-ui .photo-thumbnail{
+  position:absolute;bottom:12px;left:12px;width:40px;height:40px;border-radius:8px;object-fit:cover;opacity:.5;
+  border:1px solid rgba(255,255,255,.2);box-shadow:0 2px 8px rgba(0,0,0,.2)
+}
+.photo-card-ui input[type="file"]{position:absolute;width:0;height:0;opacity:0}
+
 /* ═══ CTA SECTION ═══ */
 .bottom-cta{position:relative;z-index:2;text-align:center;padding:60px 32px 80px}
 .bottom-cta h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:300;margin-bottom:6px}
@@ -391,7 +434,9 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Device sensors mapped to real-time force vectors on particles. Tilt your phone and gravity shifts. Blow into the mic and petals scatter. Shake and particles burst outward.</div>
+            <div class="codex-demo-container" data-demo="gesture-physics"></div>
+            <p class="codex-demo-desc">Device sensors mapped to real-time force vectors on particles. Tilt your phone and gravity shifts. Blow into the mic and petals scatter. Shake and particles burst outward.</p>
+            <div class="prompt-desc">Full prompt (copy to Claude):</div>
             <div class="prompt-block" id="p2">Build a gesture physics engine for LiveCard Studio cards.
 
 CONTEXT: Cards render particles on canvas with position {x,y}, velocity {vx,vy}, and per-frame updates. Existing particle types include petals (bezier shapes), stars (circles with glow), embers (radial gradients), confetti (rotating rectangles), bubbles, snow, and dust motes.
@@ -448,7 +493,9 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Cards that age like a real garden. Day 1 shows seeds. Day 5 shows sprouts. Day 10 blooms fully. Day 35 fades to gold.</div>
+            <div class="codex-demo-container" data-demo="lifecycle"></div>
+            <p class="codex-demo-desc">Cards that age like a real garden. Day 1 shows seeds. Day 5 shows sprouts. Day 10 blooms fully. Day 35 fades to gold. Use the slider to scrub through days.</p>
+            <div class="prompt-desc">Full prompt (copy to Claude):</div>
             <div class="prompt-block" id="p3">Build a time-evolving lifecycle system for LiveCard Studio. Input: card.createdAt. Define 6 stages (SEED, SPROUT, BUD, BLOOM, FULL GARDEN, GOLDEN FADE). Export getLifecycleState(createdAt).<button class="copy-btn" onclick="copyPrompt(event,'p3')">Copy</button></div>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">Date API</span></div>
           </div></div>
@@ -463,7 +510,21 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Upload any photo and the card extracts dominant colors and generates a matching living universe.</div>
+            <div class="codex-demo-container" data-demo="photo-reactive">
+              <div class="codex-demo-wrap" style="align-items:center">
+                <div class="live-card photo-upload-card" id="photoCard" data-engine="photo" data-palette="gold">
+                  <canvas class="c0"></canvas><canvas class="c1"></canvas>
+                  <div class="photo-card-ui">
+                    <input type="file" id="photoInput" accept="image/*" hidden />
+                    <button type="button" class="photo-upload-btn" id="photoUploadBtn">Upload Photo</button>
+                    <div class="photo-palette-dots" id="photoPaletteDots" aria-hidden="true"></div>
+                    <div class="photo-loading" id="photoLoading">Generating universe…</div>
+                    <img class="photo-thumbnail" id="photoThumbnail" alt="" hidden />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="codex-demo-desc">Upload any photo and the card extracts dominant colors and generates a matching living universe.</p>
             <div class="prompt-block" id="p4">Build a photo-reactive world generator. K-means color extraction, warmth/brightness analysis, world generation from palette. Export generateWorldFromImage(imageFile).<button class="copy-btn" onclick="copyPrompt(event,'p4')">Copy</button></div>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-ai">Color Science</span><span class="pt-api">File API</span></div>
           </div></div>
@@ -478,7 +539,8 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Type a description and the card generates a unique living world with matching palette and particle shapes.</div>
+            <div class="codex-demo-container" data-demo="universe"></div>
+            <p class="codex-demo-desc">Type a description and the card generates a unique living world with matching palette and particle shapes.</p>
             <div class="prompt-block" id="p5">Build an AI personal universe generator. Concept keyword dictionary (40+ entries), text parsing, world generation. Export generateUniverseFromText(text).<button class="copy-btn" onclick="copyPrompt(event,'p5')">Copy</button></div>
             <div class="prompt-tags"><span class="pt-ai">NLP Parsing</span><span class="pt-canvas">Canvas 2D</span></div>
           </div></div>
@@ -495,6 +557,7 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="constellation"></div>
             <p class="codex-demo-desc">Every person becomes a star in your sky. Tap any star to see who it is — the star brightens, a ring of light expands, then the message rises. Watch for the shooting star.</p>
+            <p style="margin-top:10px"><a href="constellation.html" class="copy-btn" style="display:inline-block;text-decoration:none">Create your own constellation card →</a></p>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">localStorage</span><span class="pt-api">Touch Events</span></div>
           </div></div>
         </div>
@@ -549,6 +612,7 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
 
 <div class="ftr"><div class="fl">Live<i>Card</i> Studio</div><p>© 2026 LiveCard Studio · Living cards for every moment</p></div>
 
+<script src="js/ambient-sound-engine.js"></script>
 <script>
 const dpr=Math.min(devicePixelRatio||1,2);let sY=0;
 addEventListener('scroll',()=>{sY=window.scrollY});
@@ -587,13 +651,70 @@ const PAL={
   gradparty:{bg:'#180A10',blobs:['100,40,60','80,50,100','60,80,40'],star:false},
 };
 
+// ═══ UNIVERSE DEFAULT (AI generator fallback) ═══
+function getDefaultUniverseConfig(){
+  return { bg:'#0A0A18', blobs:['20,20,50','60,60,120','80,80,160'], light:false, motion:'drift', particleShape:'star', density:35, palette:['#0A0A18','#181830','#6060A0','#A0A0E0'] };
+}
+function hexToRgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
+function drawUniverseShape(ctx,shapeName,s,op,sx,sy,t,ph,hex){
+  const col=hexToRgba(hex,op*(.5+.5*Math.sin(t*.001+ph)));
+  ctx.fillStyle=col;ctx.strokeStyle=col;
+  if(shapeName==='heart'){
+    ctx.beginPath();const scale=s*sx;ctx.moveTo(0,-.35*scale);ctx.bezierCurveTo(.5*scale,-.35*scale,.6*scale,0,0,.25*scale);ctx.bezierCurveTo(-.6*scale,0,-.5*scale,-.35*scale,0,-.35*scale);ctx.fill();
+  }
+  else if(shapeName==='flower'){
+    const scale=s*sx;const petalR=scale*.5;const pw=scale*.15;
+    for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2;ctx.save();ctx.rotate(a);ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(pw,-petalR*.5,pw*.8,petalR*.3,0,petalR);ctx.bezierCurveTo(-pw*.6,petalR*.4,-pw*.9,-petalR*.3,0,0);ctx.fill();ctx.restore();}
+    ctx.beginPath();ctx.arc(0,0,scale*.12,0,Math.PI*2);ctx.fill();
+  }
+  else if(shapeName==='leaf'){
+    ctx.beginPath();const scale=s*sx;ctx.moveTo(0,-.5*scale);ctx.bezierCurveTo(scale*.4,.1*scale,.25*scale,.5*scale,0,.5*scale);ctx.bezierCurveTo(-.25*scale,.5*scale,-.4*scale,.1*scale,0,-.5*scale);ctx.fill();
+  }
+  else if(shapeName==='music'){
+    const scale=s*sx;ctx.beginPath();ctx.arc(0,-.4*scale,scale*.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(0,-.6*scale);ctx.lineTo(0,.6*scale);ctx.lineTo(.15*scale,.4*scale);ctx.lineTo(.15*scale,-.2*scale);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=.5;ctx.stroke();
+  }
+  else if(shapeName==='star'){
+    const scale=s*sx;const outer=scale*.5;const inner=scale*.2;ctx.beginPath();for(let i=0;i<10;i++){const r=i%2?inner:outer;const a=(i/10)*Math.PI*2-Math.PI/2;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.fill();
+  }
+  else if(shapeName==='crystal'){
+    const scale=s*sx;ctx.beginPath();for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2;const x=Math.cos(a)*scale*.45,y=Math.sin(a)*scale*.45;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.stroke();const a0=ctx.globalAlpha;ctx.globalAlpha=a0*0.6;ctx.fill();ctx.globalAlpha=a0;
+  }
+  else if(shapeName==='ember'){
+    const r=s*sx;const gr=ctx.createRadialGradient(0,0,0,0,0,r*2);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(-r*2,-r*2,r*4,r*4);ctx.beginPath();ctx.arc(0,0,r*.35,0,Math.PI*2);ctx.fillStyle=hexToRgba(hex,.9);ctx.fill();
+  }
+  else if(shapeName==='bubble'){
+    ctx.lineWidth=.4;ctx.strokeStyle=hexToRgba(hex,op*.6);ctx.beginPath();ctx.arc(0,0,s*sx,0,Math.PI*2);ctx.stroke();const bg=ctx.createRadialGradient(-s*sx*.2,-s*sy*.2,0,0,0,s*sx);bg.addColorStop(0,'rgba(255,255,255,.08)');bg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=bg;ctx.fill();
+  }
+  else if(shapeName==='snowflake'){
+    const scale=s*sx*.4;ctx.lineWidth=.3;ctx.strokeStyle=col;for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*scale,Math.sin(a)*scale);ctx.moveTo(Math.cos(a)*scale*.6,Math.sin(a)*scale*.6);ctx.lineTo(Math.cos(a+0.3)*scale*.8,Math.sin(a+0.3)*scale*.8);ctx.moveTo(Math.cos(a)*scale*.6,Math.sin(a)*scale*.6);ctx.lineTo(Math.cos(a-0.3)*scale*.8,Math.sin(a-0.3)*scale*.8);ctx.stroke();}
+  }
+  else if(shapeName==='confetti'){
+    const w=s*sx*.8,h=s*sy*.25;ctx.fillRect(-w/2,-h/2,w,h);
+  }
+  else if(shapeName==='diamond'){
+    const scale=s*sx;ctx.beginPath();ctx.moveTo(0,-.5*scale);ctx.lineTo(.4*scale,0);ctx.lineTo(0,.5*scale);ctx.lineTo(-.4*scale,0);ctx.closePath();ctx.fill();
+  }
+  else if(shapeName==='raindrop'){
+    ctx.beginPath();const scale=s*sx;ctx.moveTo(0,-.5*scale);ctx.bezierCurveTo(.35*scale,.2*scale,.2*scale,.5*scale,0,.5*scale);ctx.bezierCurveTo(-.2*scale,.5*scale,-.35*scale,.2*scale,0,-.5*scale);ctx.fill();
+  }
+  else{
+    ctx.beginPath();ctx.arc(0,0,s*sx*.4,0,Math.PI*2);ctx.fill();
+  }
+}
+
 // ═══ CARD ENGINE ═══
 const activeCards=new Map();
 
 function bootCard(el){
   const eng=el.dataset.engine;
   const palName=el.dataset.palette;
-  const pal=PAL[palName]||PAL.gold;
+  const photoConfig=el._photoConfig;
+  const universeConfig=el._universeConfig;
+  const pal=eng==='universe'
+    ? (universeConfig||getDefaultUniverseConfig())
+    : eng==='photo'
+    ? (photoConfig?{bg:photoConfig.bg,blobs:photoConfig.blobs||[],light:photoConfig.light}:{bg:'#1e1c24',blobs:[],light:false})
+    : (PAL[palName]||PAL.gold);
   const c0=el.querySelector('.c0'),c1=el.querySelector('.c1');
   const x0=c0.getContext('2d'),x1=c1.getContext('2d');
 
@@ -606,7 +727,22 @@ function bootCard(el){
   let particles=[];
   const w0=400,h0=600;
 
-  if(eng==='starfield'){
+  if(eng==='photo'&&photoConfig){
+    const pc=photoConfig.particleCount||25;
+    const colors=photoConfig.particleColors||['200,200,220'];
+    const pt=photoConfig.particleType||'fall';
+    for(let i=0;i<pc;i++){
+      const color=colors[i%colors.length];
+      if(pt==='rise'){
+        particles.push({type:'ember',x:Math.random()*w0,y:Math.random()*h0,size:1+Math.random()*3,vy:-(0.05+Math.random()*.15),vx:(Math.random()-.5)*.06,ph:Math.random()*6.28,drift:.0004+Math.random()*.001,op:.08+Math.random()*.2,warm:Math.random(),color});
+      }else if(pt==='float'){
+        particles.push({type:'crystal',x:Math.random()*w0,y:Math.random()*h0,size:1.2+Math.random()*2.5,vy:.02+Math.random()*.06,vx:(Math.random()-.5)*.12,ph:Math.random()*6.28,drift:.0003+Math.random()*.0006,op:.06+Math.random()*.18,rot:Math.random()*6.28,rotS:(Math.random()-.5)*.004,color});
+      }else{
+        particles.push({type:'petal',x:Math.random()*w0,y:-10-Math.random()*200,size:2.5+Math.random()*5,vy:.08+Math.random()*.2,vx:(Math.random()-.5)*.12,rot:Math.random()*6.28,rotS:(Math.random()-.5)*.005,ph:Math.random()*6.28,drift:.0005+Math.random()*.001,op:.04+Math.random()*.1,shape:Math.random(),color});
+      }
+    }
+  }
+  else if(eng==='starfield'){
     for(let i=0;i<30;i++)particles.push({type:'star',x:Math.random()*w0,y:Math.random()*h0,sz:.4+Math.random()*1.2,ph:Math.random()*6.28,sp:.002+Math.random()*.003,gold:Math.random()<(pal.goldRate||.5),vx:(Math.random()-.5)*.03,vy:(Math.random()-.5)*.02});
   }
   else if(eng==='petals'){
@@ -667,7 +803,7 @@ function bootCard(el){
         if(p.type==='pollen'&&p.y<-4){p.y=h0+4;p.x=Math.random()*w0}
         x1.save();x1.translate(px,py);x1.rotate(p.rot);
         x1.globalAlpha=(p.op||.1)*(.4+.6*Math.sin(t*.001+p.ph));
-        if(p.type==='petal'){const s=p.size*sx,pw=s*(.3+(p.shape||0)*.18);x1.beginPath();x1.moveTo(0,-s);x1.bezierCurveTo(pw,-s*.5,pw*.8,s*.3,0,s);x1.bezierCurveTo(-pw*.6,s*.4,-pw*.9,-s*.3,0,-s);x1.fillStyle=pal.light?`rgba(180,150,155,.35)`:`rgba(220,180,185,.4)`;x1.fill()}
+        if(p.type==='petal'){const s=p.size*sx,pw=s*(.3+(p.shape||0)*.18);x1.beginPath();x1.moveTo(0,-s);x1.bezierCurveTo(pw,-s*.5,pw*.8,s*.3,0,s);x1.bezierCurveTo(-pw*.6,s*.4,-pw*.9,-s*.3,0,-s);const pc=p.color;x1.fillStyle=pc?`rgba(${pc},.4)`:(pal.light?`rgba(180,150,155,.35)`:`rgba(220,180,185,.4)`);x1.fill()}
         else{const r=p.size*2.5*sx;const gr=x1.createRadialGradient(0,0,0,0,0,r);gr.addColorStop(0,`rgba(200,185,140,${(p.op||.1)*.4})`);gr.addColorStop(1,'rgba(200,185,140,0)');x1.fillStyle=gr;x1.fillRect(-r,-r,r*2,r*2)}
         x1.restore();
       }
@@ -695,12 +831,26 @@ function bootCard(el){
         if(p.y<-5){p.y=h0+5;p.x=Math.random()*w0}
         const ep=.5+.5*Math.sin(t*.003+p.ph);
         x1.globalAlpha=p.op*ep;
-        const r=p.size*sx;const c=p.warm>.5?'255,180,60':'255,140,40';
+        const r=p.size*sx;const c=p.color||(p.warm>.5?'255,180,60':'255,140,40');
         const gr=x1.createRadialGradient(px,py,0,px,py,r*3);
         gr.addColorStop(0,`rgba(${c},${p.op*ep*.5})`);gr.addColorStop(1,`rgba(${c},0)`);
         x1.fillStyle=gr;x1.fillRect(px-r*3,py-r*3,r*6,r*6);
         x1.beginPath();x1.arc(px,py,r*.4,0,Math.PI*2);
         x1.fillStyle=`rgba(255,255,200,${ep*.6})`;x1.fill();
+      }
+      else if(p.type==='crystal'){
+        p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.2;p.y+=p.vy;
+        if(p.y>h0+8){p.y=-8;p.x=Math.random()*w0}
+        if(p.x<-5)p.x=w0+5;if(p.x>w0+5)p.x=-5;
+        const s=p.size*sx;const col=p.color||'180,200,220';
+        x1.save();x1.translate(px,py);x1.rotate((p.rot||0)+(t*(p.rotS||.004)));
+        x1.globalAlpha=(p.op||.1)*(.5+.5*Math.sin(t*.001+p.ph));
+        x1.strokeStyle=`rgba(${col},${(p.op||.1)*.8})`;
+        x1.lineWidth=.4;
+        x1.beginPath();
+        for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2;const x=Math.cos(a)*s,y=Math.sin(a)*s;if(i===0)x1.moveTo(x,y);else x1.lineTo(x,y);}
+        x1.closePath();x1.stroke();
+        x1.restore();
       }
       else if(p.type==='bubble'){
         p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.15;p.y+=p.vy;
@@ -732,6 +882,20 @@ function bootCard(el){
         x1.fillStyle=gr;x1.fillRect(px-r*3,py-r*3,r*6,r*6);
         x1.beginPath();x1.arc(px,py,r*.4,0,Math.PI*2);
         x1.fillStyle=`rgba(${c},${p.op})`;x1.fill();
+      }
+      else if(p.type==='universe'){
+        const m=p.motion||'float';
+        if(m==='wave'){ p.x+=p.vx+Math.sin(t*.0008+p.ph)*1.2; p.y+=p.vy+Math.cos(t*.0006+p.ph)*.8; }
+        else if(m==='swing'){ p.x+=p.vx+Math.sin(t*.001+p.ph)*1.5; p.y+=p.vy; p.rot=(p.rot||0)+(p.rotS||0); }
+        else if(m==='spiral'){ p.x+=p.vx+Math.cos(t*.0005+p.ph)*.6; p.y+=p.vy+Math.sin(t*.0005+p.ph)*.6; p.rot=(p.rot||0)+.012; }
+        else { p.x+=p.vx+Math.sin(t*(p.drift||.0005)+p.ph)*.15; p.y+=p.vy; p.rot=(p.rot||0)+(p.rotS||0); }
+        if(p.x<-5)p.x=w0+5;if(p.x>w0+5)p.x=-5;if(p.y<-5)p.y=h0+5;if(p.y>h0+5)p.y=-5;
+        const palHex=pal.palette||['#A0A0E0'];
+        const hex=palHex[p.colorIndex%palHex.length];
+        x1.save();x1.translate(px,py);x1.rotate(p.rot);
+        x1.globalAlpha=p.op*(.5+.5*Math.sin(t*.001+p.ph));
+        drawUniverseShape(x1,p.shape,p.size,p.op,sx,sy,t,p.ph,hex);
+        x1.restore();
       }
     }
     x1.globalAlpha=1;
@@ -795,6 +959,96 @@ bootVisibleCards();
 
 addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',sY>50)});
 document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('v')})},{threshold:.06,rootMargin:'0px 0px -20px 0px'}).observe(el)});
+
+// ═══ AMBIENT SOUND (user gesture → start, speaker toggle, volume, sessionStorage mute) ═══
+(function(){
+  const STORAGE_MUTE='livecard_ambient_mute';
+  const STORAGE_VOL='livecard_ambient_vol';
+  let ambientEngine=null;
+  let hasUserActivated=false;
+
+  function getMuted(){ try{ return sessionStorage.getItem(STORAGE_MUTE)==='1'; }catch(e){ return false; } }
+  function setMuted(v){ try{ sessionStorage.setItem(STORAGE_MUTE,v?'1':'0'); }catch(e){} }
+  function getStoredVol(){ try{ const v=parseInt(sessionStorage.getItem(STORAGE_VOL),10); return isNaN(v)?80:Math.max(0,Math.min(100,v)); }catch(e){ return 80; } }
+  function setStoredVol(v){ try{ sessionStorage.setItem(STORAGE_VOL,String(Math.round(v))); }catch(e){} }
+
+  function themeForCard(card){
+    if(!window.AmbientSoundEngine)return 'starfield';
+    return AmbientSoundEngine.resolveThemeType(card.dataset.engine||'',card.dataset.palette||'');
+  }
+
+  function startEngineForCard(card){
+    if(!window.AmbientSoundEngine)return;
+    if(ambientEngine){ ambientEngine.stop(); ambientEngine=null; }
+    const theme=themeForCard(card);
+    ambientEngine=new AmbientSoundEngine(theme);
+    ambientEngine.start();
+    const vol=getMuted()?0:getStoredVol()/100;
+    ambientEngine.setVolume(vol);
+    updateAllSoundUI();
+  }
+
+  function updateAllSoundUI(){
+    const muted=getMuted();
+    const vol=getStoredVol();
+    document.querySelectorAll('.card-sound-btn').forEach(btn=>{
+      btn.classList.toggle('muted',muted);
+      btn.textContent=muted?'\u{1F507}':'\u{1F50A}';
+    });
+    document.querySelectorAll('.card-sound-slider').forEach(sl=>{ sl.value=vol; });
+  }
+
+  function injectSoundUI(){
+    document.querySelectorAll('.live-card[data-engine]').forEach(card=>{
+      if(card.querySelector('.card-sound-wrap'))return;
+      const wrap=document.createElement('div');
+      wrap.className='card-sound-wrap';
+      wrap.innerHTML='<button type="button" class="card-sound-btn" aria-label="Toggle ambient sound">'+ (getMuted()?'\u{1F507}':'\u{1F50A}') +'</button><div class="card-sound-slider-wrap"><input type="range" class="card-sound-slider" min="0" max="100" value="'+getStoredVol()+'" aria-label="Ambient volume"></div>';
+      card.appendChild(wrap);
+
+      const btn=wrap.querySelector('.card-sound-btn');
+      const slider=wrap.querySelector('.card-sound-slider');
+
+      card.addEventListener('click',function(ev){
+        if(ev.target.closest('.card-sound-wrap'))return;
+        hasUserActivated=true;
+        startEngineForCard(card);
+      },{passive:true});
+      card.addEventListener('touchstart',function(ev){
+        if(ev.target.closest('.card-sound-wrap'))return;
+        hasUserActivated=true;
+        startEngineForCard(card);
+      },{passive:true});
+
+      btn.addEventListener('click',function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        if(!ambientEngine)return;
+        const next=!getMuted();
+        setMuted(next);
+        ambientEngine.setVolume(next?slider.value/100:0);
+        updateAllSoundUI();
+      });
+      slider.addEventListener('input',function(){
+        const v=parseInt(slider.value,10);
+        setStoredVol(v);
+        if(ambientEngine&&!getMuted())ambientEngine.setVolume(v/100);
+      });
+
+      let longPressTimer;
+      wrap.addEventListener('touchstart',function(){
+        longPressTimer=setTimeout(function(){ wrap.classList.add('reveal'); },400);
+      });
+      wrap.addEventListener('touchend',function(){ clearTimeout(longPressTimer); });
+      wrap.addEventListener('touchcancel',function(){ clearTimeout(longPressTimer); });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    injectSoundUI();
+    updateAllSoundUI();
+  });
+  if(document.readyState!=='loading'){ injectSoundUI(); updateAllSoundUI(); }
+})();
 </script>
 <script type="module" src="js/codex-demos.js"></script>
 </body>
