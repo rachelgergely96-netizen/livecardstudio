@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LiveCard Studio — Greeting Cards That Breathe</title>
+<meta name="description" content="Create living, interactive greeting cards with floating petals, breathing backgrounds, and photos that transform into art.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@200;300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080706;--s1:#0F0E0C;--s2:#151412;--s3:#1C1A18;
+  --tx:#F2EDE5;--tx2:#C8C0B4;--txm:#908880;--txf:#5A5550;
+  --gold:#D4A853;--gold2:#E8C97A;--goldg:rgba(212,168,83,.15);--golds:rgba(212,168,83,.06);
+  --rose:#C4727F;--rose2:#E8A0B4;--roseg:rgba(196,114,127,.12);
+  --lav:#C9B8D9;--sage:#A8B5A0;--peach:#F0C5A8;
+  --bdr:rgba(255,255,255,.04);--bdr2:rgba(255,255,255,.07);
+}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--gold) var(--bg)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:9px}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:'Outfit',sans-serif;font-weight:300;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='3' fill='none' stroke='%23D4A853' stroke-width='1' opacity='.6'/%3E%3C/svg%3E") 10 10, crosshair;
+}
+a{color:inherit;text-decoration:none}
+
+/* === FIXED CANVAS LAYERS === */
+.cv{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none}
+#bgC{z-index:0}#ptC{z-index:1}#glC{z-index:2}
+
+/* === PAINT SPLASHES === */
+.ps{position:fixed;pointer-events:none;z-index:55;opacity:0;animation:psA 4s ease-out forwards}
+.pd{position:fixed;pointer-events:none;z-index:55;border-radius:50%;opacity:0;animation:pdA 2.2s ease-out forwards}
+@keyframes psA{0%{transform:scale(0) rotate(0);opacity:.8}10%{transform:scale(.45) rotate(8deg);opacity:.65}40%{opacity:.3}100%{transform:scale(1) rotate(30deg);opacity:0}}
+@keyframes pdA{0%{transform:scale(0) translateY(0);opacity:.65}40%{opacity:.3}100%{transform:scale(1) translateY(18px);opacity:0}}
+
+/* === NAV === */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  padding:16px 32px;display:flex;justify-content:space-between;align-items:center;
+  transition:all .65s cubic-bezier(.23,1,.32,1);border-bottom:1px solid transparent;
+}
+nav.s{background:rgba(8,7,6,.78);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom-color:var(--bdr)}
+.nl{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--gold);letter-spacing:.5px}
+.nl i{color:var(--rose);font-style:normal}
+.nb{
+  padding:8px 20px;border-radius:6px;background:var(--gold);color:var(--bg);
+  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  border:none;cursor:pointer;transition:all .3s;display:inline-block;
+}
+.nb:hover{background:var(--gold2);box-shadow:0 4px 25px var(--goldg);transform:translateY(-1px)}
+
+/* === CONTENT === */
+.ct{position:relative;z-index:3}
+
+/* === HERO === */
+.hero{
+  min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;
+  padding:120px 24px 90px;position:relative;
+}
+.hbg{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 18px;border-radius:20px;
+  background:var(--golds);border:1px solid rgba(212,168,83,.1);
+  font-size:.62rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;color:var(--gold);
+  margin-bottom:36px;opacity:0;animation:up 1.6s cubic-bezier(.23,1,.32,1) .5s forwards;
+}
+.hbg::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.8rem,7.5vw,6.5rem);font-weight:500;
+  line-height:1.05;max-width:880px;letter-spacing:-.02em;
+  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) .8s forwards;
+}
+.hero h1 em{font-style:italic;color:var(--gold);position:relative;display:inline-block}
+.hero h1 em::after{
+  content:'';position:absolute;bottom:-3px;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:shim 3.5s ease-in-out infinite;
+}
+@keyframes shim{0%,100%{opacity:.3}50%{opacity:.9}}
+
+.hsub{
+  font-size:clamp(.92rem,1.6vw,1.15rem);font-weight:200;
+  color:var(--tx2);max-width:480px;line-height:1.85;margin:28px auto 44px;
+  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) 1.1s forwards;
+}
+.hf{
+  display:flex;gap:0;max-width:420px;width:100%;
+  opacity:0;animation:up 1.8s cubic-bezier(.23,1,.32,1) 1.4s forwards;
+}
+.hf input{
+  flex:1;padding:14px 18px;background:rgba(15,14,12,.85);
+  border:1.5px solid var(--bdr2);border-right:none;border-radius:8px 0 0 8px;
+  color:var(--tx);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:300;
+  outline:none;backdrop-filter:blur(12px);transition:border-color .3s;
+}
+.hf input::placeholder{color:var(--txf)}
+.hf input:focus{border-color:var(--gold)}
+.hf button{
+  padding:14px 26px;background:var(--gold);color:var(--bg);border:none;
+  border-radius:0 8px 8px 0;font-family:'Outfit',sans-serif;
+  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;white-space:nowrap;
+}
+.hf button:hover{background:var(--gold2)}
+.hn{
+  font-size:.68rem;color:var(--txf);margin-top:12px;
+  opacity:0;animation:up 1.4s ease-out 1.7s forwards;
+}
+.hp{
+  font-style:italic;font-size:.8rem;color:var(--txm);margin-top:24px;
+  opacity:0;animation:up 1.4s ease-out 2.2s forwards;
+}
+.hsc{
+  position:absolute;bottom:30px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  opacity:0;animation:up 1.4s ease-out 2.6s forwards;
+}
+.hsc span{font-size:.55rem;letter-spacing:4px;text-transform:uppercase;color:var(--txf)}
+.hsc i{display:block;width:1px;height:40px;background:linear-gradient(to bottom,var(--gold),transparent);animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{opacity:.2;transform:scaleY(.9)}50%{opacity:.7;transform:scaleY(1.12)}}
+
+/* === SECTIONS === */
+section{position:relative;padding:100px 24px}
+.si{max-width:1080px;margin:0 auto}
+.sl{
+  display:inline-block;font-size:.58rem;font-weight:500;
+  letter-spacing:4.5px;text-transform:uppercase;color:var(--gold);
+  padding-left:16px;border-left:2px solid var(--gold);margin-bottom:14px;
+}
+.st{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.7rem,3.8vw,3rem);font-weight:500;
+  line-height:1.15;letter-spacing:-.01em;margin-bottom:12px;
+}
+.st em{font-style:italic;color:var(--rose)}
+.sd{font-size:.95rem;font-weight:200;color:var(--tx2);line-height:1.8;max-width:460px}
+
+/* Scroll reveal */
+.rv{opacity:0;transform:translateY(35px);transition:all .85s cubic-bezier(.23,1,.32,1)}
+.rv.v{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
+.d4{transition-delay:.32s}.d5{transition-delay:.4s}.d6{transition-delay:.48s}
+
+/* === FEATURES === */
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+.fc{
+  padding:28px 24px;background:rgba(15,14,12,.55);
+  border:1px solid var(--bdr);border-radius:14px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:all .5s cubic-bezier(.23,1,.32,1);position:relative;overflow:hidden;
+}
+.fc::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .4s;
+}
+.fc:hover{border-color:rgba(212,168,83,.1);transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.fc:hover::after{opacity:1}
+.fi{font-size:1.7rem;margin-bottom:14px;display:block;filter:grayscale(.3)}
+.fc:hover .fi{filter:grayscale(0)}
+.fc h3{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:500;margin-bottom:6px}
+.fc p{font-size:.8rem;font-weight:200;color:var(--txm);line-height:1.7}
+
+/* === STEPS === */
+.hw{text-align:center}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px;position:relative}
+.sg::before{
+  content:'';position:absolute;top:28px;left:13%;right:13%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--bdr2),var(--bdr2),transparent);
+}
+.sp{text-align:center;position:relative}
+.sn{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--s2);border:1.5px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;font-family:'Playfair Display',serif;
+  font-size:.92rem;font-weight:600;color:var(--gold);
+  position:relative;z-index:2;transition:all .4s;
+}
+.sp:hover .sn{border-color:var(--gold);box-shadow:0 0 30px var(--goldg)}
+.sp h4{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:500;margin-bottom:4px}
+.sp p{font-size:.72rem;font-weight:200;color:var(--txf);line-height:1.55}
+
+/* === LIVING THEME DEMOS === */
+.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px}
+.td{
+  border-radius:14px;overflow:hidden;border:1px solid var(--bdr);
+  transition:all .55s cubic-bezier(.23,1,.32,1);
+}
+.td:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 24px 60px rgba(0,0,0,.5);border-color:var(--bdr2)}
+.tc{height:140px;position:relative;overflow:hidden}
+.tc canvas{width:100%;height:100%;display:block}
+.tm{padding:12px 14px;background:var(--s1)}
+.tm h4{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:500;margin-bottom:2px}
+.tm p{font-size:.66rem;font-weight:200;color:var(--txf)}
+.cs{display:flex;gap:3px;margin-top:6px}
+.cs i{width:9px;height:9px;border-radius:50%;display:block;font-style:normal}
+
+/* === TIERS === */
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.ti{
+  padding:32px 24px;background:rgba(15,14,12,.55);
+  border:1px solid var(--bdr);border-radius:14px;
+  backdrop-filter:blur(10px);display:flex;flex-direction:column;
+  transition:all .5s cubic-bezier(.23,1,.32,1);position:relative;
+}
+.ti.ft{border-color:rgba(212,168,83,.15);background:rgba(212,168,83,.03)}
+.ti.ft::before{
+  content:'MOST POPULAR';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  font-size:.52rem;font-weight:600;letter-spacing:2.5px;
+  padding:3px 12px;border-radius:10px;background:var(--gold);color:var(--bg);
+}
+.ti:hover{transform:translateY(-5px);box-shadow:0 20px 55px rgba(0,0,0,.45)}
+.ti-i{font-size:1.8rem;margin-bottom:12px}
+.ti h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:500;margin-bottom:4px}
+.ti .pr{font-size:1.5rem;font-weight:500;color:var(--gold);margin-bottom:6px}
+.ti .pr small{font-size:.65rem;font-weight:300;color:var(--txf)}
+.ti .de{font-size:.78rem;font-weight:200;color:var(--txm);line-height:1.65;margin-bottom:14px;flex:1}
+.tl{list-style:none;display:flex;flex-direction:column;gap:5px}
+.tl li{font-size:.74rem;font-weight:300;color:var(--txm);padding-left:16px;position:relative}
+.tl li::before{content:'✦';position:absolute;left:0;color:var(--gold);font-size:.55rem;top:2px}
+
+/* === OCCASIONS === */
+.oc{text-align:center}
+.ot{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:36px}
+.ot a{
+  padding:9px 18px;border-radius:22px;
+  background:var(--s1);border:1px solid var(--bdr);
+  font-size:.78rem;font-weight:300;color:var(--txm);transition:all .3s;
+}
+.ot a:hover{border-color:var(--gold);color:var(--gold);background:var(--golds);transform:translateY(-2px)}
+
+/* === PROOF === */
+.pf{text-align:center;max-width:660px;margin:0 auto}
+.pq{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.15rem,2.6vw,1.6rem);font-style:italic;font-weight:400;
+  line-height:1.7;margin-top:26px;
+}
+.pq b{color:var(--gold);font-weight:500}
+.pa{margin-top:14px;font-size:.78rem;color:var(--txf)}
+
+/* === CTA === */
+.cta{text-align:center;max-width:520px;margin:0 auto;padding:70px 24px 100px}
+.cf{display:flex;gap:0;max-width:420px;width:100%;margin:26px auto 0}
+.cf input{
+  flex:1;padding:14px 18px;background:rgba(15,14,12,.85);
+  border:1.5px solid var(--bdr2);border-right:none;border-radius:8px 0 0 8px;
+  color:var(--tx);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:300;outline:none;
+  backdrop-filter:blur(12px);transition:border-color .3s;
+}
+.cf input::placeholder{color:var(--txf)}
+.cf input:focus{border-color:var(--rose)}
+.cf button{
+  padding:14px 26px;background:var(--rose);color:#fff;border:none;
+  border-radius:0 8px 8px 0;font-family:'Outfit',sans-serif;
+  font-size:.65rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;white-space:nowrap;
+}
+.cf button:hover{background:var(--rose2);box-shadow:0 4px 25px var(--roseg)}
+.cn{font-size:.68rem;color:var(--txf);margin-top:10px}
+
+/* Form success */
+.fok{display:none;padding:12px 22px;background:rgba(168,181,160,.08);border:1px solid rgba(168,181,160,.12);border-radius:8px;color:var(--sage);font-size:.85rem;text-align:center;margin-top:12px}
+.fok.on{display:block;animation:up .6s ease-out}
+
+/* === DIVIDER === */
+.dv{display:flex;align-items:center;justify-content:center;gap:18px;padding:6px 0}
+.dl{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--bdr2),transparent)}
+
+/* === FOOTER === */
+footer{position:relative;z-index:3;text-align:center;padding:26px;border-top:1px solid var(--bdr)}
+footer p{font-size:.64rem;color:var(--txf);letter-spacing:1px}
+footer .fl{font-family:'Playfair Display',serif;font-size:.82rem;color:var(--gold);margin-bottom:4px}
+footer .fl i{color:var(--rose);font-style:normal}
+
+/* === LIVE CARD DEMO === */
+.demo-wrap{display:flex;flex-direction:column;align-items:center;gap:28px;margin-top:44px}
+.demo-card{
+  position:relative;width:360px;height:520px;border-radius:22px;overflow:hidden;
+  border:1px solid rgba(212,168,83,.2);box-shadow:0 30px 80px rgba(0,0,0,.6);
+  cursor:crosshair;flex-shrink:0;
+}
+.demo-card canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.demo-inner{
+  position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;padding:32px;
+  transition:filter .6s ease;pointer-events:none;
+}
+.di-msg{font-family:'Dancing Script',cursive;font-size:2rem;color:#fff;text-align:center;line-height:1.5;text-shadow:0 2px 24px rgba(0,0,0,.6);margin-bottom:10px}
+.di-sub{font-size:.72rem;font-weight:200;color:rgba(255,255,255,.6);text-align:center;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.demo-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:.54rem;letter-spacing:3.5px;text-transform:uppercase;color:rgba(255,255,255,.35);white-space:nowrap;z-index:2;pointer-events:none}
+.demo-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+.demo-filters button{padding:7px 16px;border-radius:20px;border:1px solid var(--bdr2);background:var(--s1);color:var(--txm);font-family:'Outfit',sans-serif;font-size:.64rem;font-weight:400;letter-spacing:1.5px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.demo-filters button:hover,.demo-filters button.active{border-color:var(--gold);color:var(--gold);background:var(--golds)}
+.demo-label{font-size:.58rem;letter-spacing:3.5px;text-transform:uppercase;color:var(--txf)}
+
+/* === FAQ === */
+.faq{max-width:680px;margin:44px auto 0}
+.faq-item{border-bottom:1px solid var(--bdr);overflow:hidden}
+.faq-q{width:100%;background:none;border:none;color:var(--tx);text-align:left;font-family:'Playfair Display',serif;font-size:.95rem;font-weight:500;padding:20px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:color .3s}
+.faq-q:hover{color:var(--gold)}
+.faq-ic{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--gold);font-style:normal;transition:transform .35s cubic-bezier(.23,1,.32,1),border-color .3s}
+.faq-item.open .faq-q{color:var(--gold)}
+.faq-item.open .faq-ic{border-color:var(--gold);transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.23,1,.32,1)}
+.faq-item.open .faq-a{max-height:160px}
+.faq-a p{font-size:.84rem;font-weight:200;color:var(--txm);line-height:1.85;padding-bottom:20px}
+
+/* === COUNTDOWN === */
+.cdt{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:28px;flex-wrap:wrap}
+.cdb{text-align:center;min-width:82px;padding:18px 16px;background:rgba(15,14,12,.55);border:1px solid var(--bdr);border-radius:14px;backdrop-filter:blur(10px)}
+.cdb span{display:block;font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:600;color:var(--gold);line-height:1;letter-spacing:-.02em}
+.cdb small{display:block;font-size:.5rem;font-weight:400;letter-spacing:3.5px;text-transform:uppercase;color:var(--txf);margin-top:6px}
+.cbs{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);opacity:.3;padding-bottom:16px}
+
+/* KEYFRAMES */
+@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:12px 18px}
+  .fg,.pg{grid-template-columns:1fr}
+  .sg{grid-template-columns:1fr 1fr}
+  .sg::before{display:none}
+  .tg{grid-template-columns:1fr 1fr}
+  section{padding:70px 18px}
+  .hero{padding:100px 18px 70px}
+  .hf,.cf{flex-direction:column}
+  .hf input,.cf input{border-right:1.5px solid var(--bdr2);border-radius:8px}
+  .hf button,.cf button{border-radius:8px;margin-top:6px}
+  .demo-card{width:100%;max-width:340px;height:460px}
+  .cdb{min-width:64px;padding:12px 12px}
+  .cdb span{font-size:1.9rem}
+}
+@media(max-width:480px){
+  .sg{grid-template-columns:1fr;gap:24px}
+  .tg{grid-template-columns:1fr}
+  .cdt{gap:6px}
+  .cbs{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgC" class="cv"></canvas>
+<canvas id="ptC" class="cv"></canvas>
+<canvas id="glC" class="cv"></canvas>
+
+<nav id="nv">
+  <div class="nl">Live<i>Card</i> Studio</div>
+  <a href="#cta" class="nb">Early Access</a>
+</nav>
+
+<div class="ct">
+
+<!-- ======= HERO ======= -->
+<section class="hero">
+  <div class="hbg">Launching Mother's Day 2026</div>
+  <h1>Greeting Cards<br>That <em>Breathe</em></h1>
+  <p class="hsub">Upload your photos. Choose a living theme. Send a card with floating petals, breathing watercolors, and art that transforms at a touch.</p>
+  <form class="hf" id="hF" onsubmit="return hs(event,this)">
+    <input type="email" placeholder="your@email.com" required aria-label="Email">
+    <button type="submit">Notify Me</button>
+  </form>
+  <p class="hn">Free early access · No spam · Unsubscribe anytime</p>
+  <p class="hp">🎨 touch anywhere to paint 🖌</p>
+  <div class="hsc"><span>Explore</span><i></i></div>
+</section>
+
+<!-- ======= FEATURES ======= -->
+<section>
+  <div class="si">
+    <div class="rv"><div class="sl">Why LiveCard</div></div>
+    <div class="rv d1"><div class="st">Not another e&#8209;card.<br>A moment that feels <em>alive.</em></div></div>
+    <div class="rv d2"><div class="sd">Every card is a standalone interactive experience — no app, no account to view. Just open and feel.</div></div>
+    <div class="fg">
+      <div class="fc rv d1"><span class="fi">🎨</span><h3>Breathing Backgrounds</h3><p>Soft watercolor blobs drift and pulse like a painting still being made. Each theme has its own palette of living colors.</p></div>
+      <div class="fc rv d2"><span class="fi">🌸</span><h3>Floating Petals</h3><p>Organic petals and bokeh particles fall gently through the scene, creating atmosphere no static card can match.</p></div>
+      <div class="fc rv d3"><span class="fi">🖼</span><h3>Photos → Art</h3><p>Tap any photo to cycle through oil painting, watercolor, pencil sketch, pop art, dreamy glow, and vintage styles.</p></div>
+      <div class="fc rv d4"><span class="fi">🖌</span><h3>Paint With Touch</h3><p>Click or drag anywhere to leave vibrant paint splashes. Every person who opens the card adds their own color.</p></div>
+      <div class="fc rv d5"><span class="fi">🔗</span><h3>Shareable Links</h3><p>Every card gets a unique URL. Share it like sharing a webpage — full-screen art on any device, any browser.</p></div>
+      <div class="fc rv d6"><span class="fi">✨</span><h3>NFC Tap Cards</h3><p>Coming soon — luxury physical cards with embedded NFC. Tap your phone to the card and the living experience opens instantly.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= HOW IT WORKS ======= -->
+<section>
+  <div class="si hw">
+    <div class="rv"><div class="sl">How It Works</div></div>
+    <div class="rv d1"><div class="st" style="margin:0 auto">Four steps. One unforgettable card.</div></div>
+    <div class="sg">
+      <div class="sp rv d1"><div class="sn">1</div><h4>Pick an Occasion</h4><p>Birthday, wedding, thank you & more</p></div>
+      <div class="sp rv d2"><div class="sn">2</div><h4>Upload Photos</h4><p>1–2 photos become interactive art</p></div>
+      <div class="sp rv d3"><div class="sn">3</div><h4>Customize</h4><p>Write your message, pick a living theme</p></div>
+      <div class="sp rv d4"><div class="sn">4</div><h4>Send</h4><p>Share a link or download. Magic delivered</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= LIVE CARD DEMO ======= -->
+<section>
+  <div class="si" style="text-align:center">
+    <div class="rv"><div class="sl">Feel It First</div></div>
+    <div class="rv d1"><div class="st" style="margin:0 auto">Touch the card. <em>Paint.</em></div></div>
+    <div class="rv d2"><div class="sd" style="margin:0 auto">This is what your recipient experiences. Click or drag inside the card to paint. Switch styles to transform the art.</div></div>
+    <div class="demo-wrap rv d3">
+      <div class="demo-card" id="demoCard">
+        <canvas id="demoC"></canvas>
+        <div class="demo-inner" id="demoInner">
+          <p class="di-msg">Happy Birthday,<br>Mom 💛</p>
+          <p class="di-sub">From someone who loves you</p>
+        </div>
+        <div class="demo-hint">touch to paint</div>
+      </div>
+      <div class="demo-filters">
+        <span class="demo-label">Art Style</span>
+        <button class="active" onclick="setDemoFilter('none',this)">Natural</button>
+        <button onclick="setDemoFilter('watercolor',this)">Watercolor</button>
+        <button onclick="setDemoFilter('oil',this)">Oil Paint</button>
+        <button onclick="setDemoFilter('sketch',this)">Sketch</button>
+        <button onclick="setDemoFilter('glow',this)">Dreamy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= THEMES ======= -->
+<section>
+  <div class="si">
+    <div class="rv"><div class="sl">Living Themes</div></div>
+    <div class="rv d1"><div class="st">Every theme has its own pulse.</div></div>
+    <div class="rv d2"><div class="sd">Each card breathes with a unique palette of animated colors, petal styles, and frame finishes.</div></div>
+    <div class="tg">
+      <div class="td rv d1"><div class="tc" id="tw"></div><div class="tm"><h4>Watercolor Garden</h4><p>Warm, soft, painterly</p><div class="cs"><i style="background:#E8A0B4"></i><i style="background:#C9B8D9"></i><i style="background:#A8B5A0"></i><i style="background:#F0C5A8"></i></div></div></div>
+      <div class="td rv d2"><div class="tc" id="ts"></div><div class="tm"><h4>Starlit Night</h4><p>Deep, celestial, golden</p><div class="cs"><i style="background:#1B2540"></i><i style="background:#D4A853"></i><i style="background:#8BA4C4"></i><i style="background:#C9C0D9"></i></div></div></div>
+      <div class="td rv d3"><div class="tc" id="tg"></div><div class="tm"><h4>Golden Hour</h4><p>Amber sunsets</p><div class="cs"><i style="background:#D4A853"></i><i style="background:#E8C080"></i><i style="background:#C47850"></i><i style="background:#F5E6D0"></i></div></div></div>
+      <div class="td rv d4"><div class="tc" id="tb"></div><div class="tm"><h4>Cherry Blossom</h4><p>Soft pinks, spring greens</p><div class="cs"><i style="background:#F4B4C8"></i><i style="background:#FCDCE8"></i><i style="background:#98C9A3"></i><i style="background:#FFF5F7"></i></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= PRICING TIERS ======= -->
+<section>
+  <div class="si">
+    <div class="rv"><div class="sl">Choose Your Experience</div></div>
+    <div class="rv d1"><div class="st">From digital to <em>physical.</em></div></div>
+    <div class="pg">
+      <div class="ti rv d1">
+        <div class="ti-i">💌</div><h3>Digital Card</h3>
+        <div class="pr">Free <small>/ your first card</small></div>
+        <div class="de">A living, breathing card shared as a link. Breathing backgrounds, floating petals, art filters, interactive paint.</div>
+        <ul class="tl"><li>2 living themes</li><li>1–2 photos with art filters</li><li>Shareable link</li><li>LiveCard watermark</li></ul>
+      </div>
+      <div class="ti ft rv d2">
+        <div class="ti-i">✨</div><h3>Premium Card</h3>
+        <div class="pr">$3.99 <small>/ per card</small></div>
+        <div class="de">Unlock all themes, remove watermark, add custom music, and get a permanent hosted link that never expires.</div>
+        <ul class="tl"><li>All living themes</li><li>No watermark</li><li>Custom background music</li><li>Permanent hosted URL</li><li>Download as HTML file</li></ul>
+      </div>
+      <div class="ti rv d3">
+        <div class="ti-i">💍</div><h3>NFC Tap Card</h3>
+        <div class="pr">$29.99 <small>/ physical + digital</small></div>
+        <div class="de">A luxury printed card with embedded NFC chip. Tap your phone to the card — the living experience opens instantly. Keepsake meets magic.</div>
+        <ul class="tl"><li>Everything in Premium</li><li>Foil-stamped physical card</li><li>Embedded NFC chip</li><li>Luxury envelope &amp; mailer</li><li>Ships in 3–5 days</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= OCCASIONS ======= -->
+<section>
+  <div class="si oc">
+    <div class="rv"><div class="sl">For Every Moment</div></div>
+    <div class="rv d1"><div class="st" style="margin:0 auto">One platform. Every occasion.</div></div>
+    <div class="ot rv d2">
+      <a>🎂 Birthday</a><a>💍 Wedding</a><a>👶 New Baby</a><a>💜 Thank You</a><a>🎄 Holiday</a>
+      <a>✨ Anniversary</a><a>🌼 Get Well</a><a>🎉 Congrats</a><a>🎓 Graduation</a><a>🙌 Just Because</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======= FAQ ======= -->
+<section>
+  <div class="si">
+    <div class="rv"><div class="sl">Questions</div></div>
+    <div class="rv d1"><div class="st">Everything you want to know.</div></div>
+    <div class="faq rv d2">
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">Do recipients need an account to view a card?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>No account needed — ever. Recipients just open the link you send them. The full interactive experience works instantly in any browser, on any device, no download required.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">What devices and browsers are supported?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>Any modern browser works — Chrome, Safari, Firefox, Edge — on desktop, tablet, or mobile. Cards use standard HTML canvas so no plugins or special software are needed.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">How long do card links stay active?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>Free cards: 30 days. Premium cards: permanently hosted, never expires. NFC Tap Cards include a permanent hosted link that lives as long as the physical card does.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">Can I use my own photos?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>Yes — upload up to 2 photos per card. Recipients can tap any photo to cycle through art styles: watercolor, oil painting, pencil sketch, pop art, dreamy glow, and vintage.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">When are NFC physical cards available?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>NFC Tap Cards launch alongside the app on Mother's Day 2026. Join the waitlist now for early access and priority ordering before we open to the public.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">Can I add music to my card?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>Yes — custom background audio is included on Premium and NFC Tap Card tiers. Choose from a curated music library or upload your own clip (MP3, up to 60 seconds).</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faqToggle(this)">Are my photos stored privately?<i class="faq-ic">+</i></button>
+        <div class="faq-a"><p>Your photos are stored securely and only accessible via your unique card link. We never share, sell, or use your images for any purpose other than rendering your card.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= PROOF ======= -->
+<section>
+  <div class="pf rv">
+    <div class="sl">The Reaction</div>
+    <p class="pq">"My grandmother opened it and started <b>painting on her phone screen</b>. She thought she was inside a real painting. She&nbsp;cried."</p>
+    <p class="pa">— The card that started it all</p>
+  </div>
+</section>
+
+<!-- ======= COUNTDOWN ======= -->
+<section style="padding-bottom:30px">
+  <div class="si" style="text-align:center">
+    <div class="rv"><div class="sl">Launching In</div></div>
+    <div class="cdt rv d1">
+      <div class="cdb"><span id="cdD">--</span><small>Days</small></div>
+      <div class="cbs">:</div>
+      <div class="cdb"><span id="cdH">--</span><small>Hours</small></div>
+      <div class="cbs">:</div>
+      <div class="cdb"><span id="cdM">--</span><small>Minutes</small></div>
+      <div class="cbs">:</div>
+      <div class="cdb"><span id="cdS">--</span><small>Seconds</small></div>
+    </div>
+    <p class="rv d2" style="font-size:.78rem;color:var(--txf);margin-top:18px;letter-spacing:2.5px">Mother's Day · May 10, 2026</p>
+  </div>
+</section>
+
+<!-- ======= CTA ======= -->
+<section class="cta" id="cta">
+  <div class="rv">
+    <div class="sl">Early Access</div>
+    <div class="st" style="text-align:center">Be the first to send<br>a card that <em>breathes.</em></div>
+    <p class="sd" style="margin:6px auto 0;text-align:center">Launching Mother's Day 2026. Early access members get their first card free.</p>
+    <form class="cf" id="cF" onsubmit="return hs(event,this)">
+      <input type="email" placeholder="your@email.com" required aria-label="Email">
+      <button type="submit">Join Waitlist</button>
+    </form>
+    <p class="cn">Free early access · No spam ever</p>
+    <div class="fok" id="cO">You're in! ✨ We'll reach out before launch.</div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <div class="fl">Live<i>Card</i> Studio</div>
+  <p>© 2026 LiveCard Studio. Cards that breathe.</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// 1. BREATHING WATERCOLOR BACKGROUND
+// ═══════════════════════════════════════════════════
+;(function(){
+  const c=document.getElementById('bgC'), x=c.getContext('2d');
+  let W,H;
+  function sz(){W=c.width=innerWidth; H=c.height=innerHeight}
+  sz(); addEventListener('resize',sz);
+
+  const pal=[
+    {r:212,g:168,b:83,a:.028},{r:196,g:114,b:127,a:.022},{r:168,g:181,b:160,a:.018},
+    {r:201,g:184,b:217,a:.016},{r:240,g:197,b:168,a:.014},{r:160,g:140,b:120,a:.011},
+    {r:100,g:130,b:160,a:.012},{r:220,g:170,b:190,a:.013},{r:170,g:200,b:180,a:.010},
+    {r:180,g:160,b:200,a:.011},{r:200,g:180,b:140,a:.009},{r:140,g:180,b:200,a:.010},
+    {r:230,g:195,b:160,a:.012},{r:175,g:155,b:195,a:.011},
+  ];
+  const blobs=pal.map(p=>({
+    x:Math.random()*2000, y:Math.random()*2000,
+    r:200+Math.random()*380,
+    vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.25,
+    c:p, ph:Math.random()*6.28,
+    bs:.0016+Math.random()*.003, ba:.13+Math.random()*.14
+  }));
+
+  window._bg=function(t){
+    x.fillStyle='#080706'; x.fillRect(0,0,W,H);
+    for(const b of blobs){
+      const br=1+Math.sin(t*b.bs+b.ph)*b.ba, rr=b.r*br;
+      b.x+=b.vx+Math.sin(t*.0008+b.ph)*.16;
+      b.y+=b.vy+Math.cos(t*.0006+b.ph)*.12;
+      if(b.x<-rr)b.x=W+rr; if(b.x>W+rr)b.x=-rr;
+      if(b.y<-rr)b.y=H+rr; if(b.y>H+rr)b.y=-rr;
+      const a=b.c.a*(.65+.35*Math.sin(t*.0016+b.ph));
+      const g=x.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
+      g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
+      g.addColorStop(.5,`rgba(${b.c.r},${b.c.g},${b.c.b},${a*.3})`);
+      g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
+      x.fillStyle=g; x.fillRect(0,0,W,H);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════════════════
+// 2. FLOATING PETALS + BOKEH
+// ═══════════════════════════════════════════════════
+;(function(){
+  const c=document.getElementById('ptC'), x=c.getContext('2d');
+  function sz(){c.width=innerWidth; c.height=innerHeight}
+  sz(); addEventListener('resize',sz);
+
+  const cols=['212,168,83','196,114,127','201,184,217','168,181,160',
+    '240,197,168','232,160,180','130,170,210','220,190,140','180,200,190','190,160,210'];
+  const P=[];
+  for(let i=0;i<48;i++){
+    P.push({
+      x:Math.random()*innerWidth,
+      y:Math.random()*innerHeight*3.5-innerHeight,
+      sz:1.5+Math.random()*8,
+      sy:.08+Math.random()*.34, sx:(Math.random()-.5)*.2,
+      rot:Math.random()*6.28, rs:(Math.random()-.5)*.016,
+      ws:.0006+Math.random()*.0018, ph:Math.random()*6.28,
+      col:cols[~~(Math.random()*cols.length)],
+      op:.08+Math.random()*.25,
+      sh:Math.random()>.35?'p':'c',
+      dp:.3+Math.random()*.7
+    });
+  }
+
+  window._pt=function(t){
+    x.clearRect(0,0,c.width,c.height);
+    const sY=pageYOffset||0;
+    for(const p of P){
+      p.y+=p.sy; p.x+=p.sx+Math.sin(t*p.ws+p.ph)*.5; p.rot+=p.rs;
+      if(p.y>innerHeight+sY+40){p.y=sY-30; p.x=Math.random()*innerWidth}
+      const dy=p.y-sY*(.15*p.dp);
+      if(dy<-40||dy>innerHeight+40) continue;
+      x.save(); x.translate(p.x,dy); x.rotate(p.rot);
+      x.globalAlpha=p.op*(.55+.45*Math.sin(t*.002+p.ph));
+      if(p.sh==='p'){
+        x.beginPath(); x.moveTo(0,-p.sz);
+        x.bezierCurveTo(p.sz*.8,-p.sz*.4, p.sz*.8,p.sz*.4, 0,p.sz);
+        x.bezierCurveTo(-p.sz*.8,p.sz*.4, -p.sz*.8,-p.sz*.4, 0,-p.sz);
+        x.fillStyle=`rgba(${p.col},${p.op})`; x.fill();
+      } else {
+        const g=x.createRadialGradient(0,0,0,0,0,p.sz);
+        g.addColorStop(0,`rgba(${p.col},${p.op})`);
+        g.addColorStop(1,`rgba(${p.col},0)`);
+        x.fillStyle=g; x.fillRect(-p.sz,-p.sz,p.sz*2,p.sz*2);
+      }
+      x.restore();
+    }
+  };
+})();
+
+// ═══════════════════════════════════════════════════
+// 3. MOUSE GLOW TRAIL
+// ═══════════════════════════════════════════════════
+;(function(){
+  const c=document.getElementById('glC'), x=c.getContext('2d');
+  function sz(){c.width=innerWidth; c.height=innerHeight}
+  sz(); addEventListener('resize',sz);
+
+  let mx=-999,my=-999; const trail=[];
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+  document.addEventListener('touchmove',e=>{const t=e.touches[0];mx=t.clientX;my=t.clientY},{passive:true});
+
+  window._gl=function(t){
+    x.clearRect(0,0,c.width,c.height);
+    if(mx<0)return;
+    trail.push({x:mx,y:my,t});
+    while(trail.length>30)trail.shift();
+    for(let i=0;i<trail.length;i++){
+      const p=trail[i], age=(t-p.t)/1000, fade=Math.max(0,1-age/.75);
+      if(fade<=0) continue;
+      const sz=50+i*5;
+      const g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,sz);
+      g.addColorStop(0,`rgba(212,168,83,${fade*.055})`);
+      g.addColorStop(.35,`rgba(196,114,127,${fade*.025})`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=g; x.fillRect(p.x-sz,p.y-sz,sz*2,sz*2);
+    }
+    const cg=x.createRadialGradient(mx,my,0,mx,my,110);
+    cg.addColorStop(0,'rgba(212,168,83,0.045)');
+    cg.addColorStop(.25,'rgba(196,114,127,0.02)');
+    cg.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=cg; x.fillRect(mx-110,my-110,220,220);
+  };
+})();
+
+// ═══════════════════════════════════════════════════
+// 4. ANIMATION LOOP
+// ═══════════════════════════════════════════════════
+;(function loop(t){window._bg(t);window._pt(t);window._gl(t);requestAnimationFrame(loop)})(0);
+
+// ═══════════════════════════════════════════════════
+// 5. MINI THEME CANVASES
+// ═══════════════════════════════════════════════════
+;(function(){
+  const defs={
+    tw:{bg:'#FDF6EC',blobs:[{r:232,g:160,b:180},{r:201,g:184,b:217},{r:168,g:181,b:160},{r:240,g:197,b:168},{r:196,g:114,b:127}]},
+    ts:{bg:'#0C1225',blobs:[{r:40,g:60,b:120},{r:212,g:168,b:83},{r:100,g:130,b:180},{r:140,g:130,b:180},{r:70,g:90,b:155}]},
+    tg:{bg:'#FBF5EA',blobs:[{r:212,g:168,b:83},{r:232,g:192,b:128},{r:196,g:120,b:80},{r:220,g:180,b:100},{r:200,g:160,b:90}]},
+    tb:{bg:'#FFF8FA',blobs:[{r:244,g:180,b:200},{r:252,g:220,b:232},{r:152,g:201,b:163},{r:230,g:170,b:190},{r:210,g:200,b:215}]}
+  };
+  for(const[id,def] of Object.entries(defs)){
+    const el=document.getElementById(id); if(!el)continue;
+    const cv=document.createElement('canvas'); cv.width=340; cv.height=160;
+    el.appendChild(cv); const ctx=cv.getContext('2d');
+    const mb=def.blobs.map(c=>({
+      x:Math.random()*340,y:Math.random()*160,r:45+Math.random()*65,
+      vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.4,c,ph:Math.random()*6.28
+    }));
+    const mp=[]; for(let i=0;i<10;i++) mp.push({
+      x:Math.random()*340,y:Math.random()*160,sz:1.2+Math.random()*2.8,
+      sy:.18+Math.random()*.4,rot:Math.random()*6.28,rs:(Math.random()-.5)*.02,
+      ph:Math.random()*6.28,op:.15+Math.random()*.25
+    });
+    (function draw(t){
+      ctx.fillStyle=def.bg; ctx.fillRect(0,0,340,160);
+      for(const b of mb){
+        const rr=b.r*(1+Math.sin(t*.003+b.ph)*.2);
+        b.x+=b.vx; b.y+=b.vy;
+        if(b.x<-rr)b.x=340+rr; if(b.x>340+rr)b.x=-rr;
+        if(b.y<-rr)b.y=160+rr; if(b.y>160+rr)b.y=-rr;
+        const a=.15+.07*Math.sin(t*.002+b.ph);
+        const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
+        g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
+        g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
+        ctx.fillStyle=g; ctx.fillRect(0,0,340,160);
+      }
+      for(const p of mp){
+        p.y+=p.sy; p.rot+=p.rs;
+        if(p.y>165){p.y=-5; p.x=Math.random()*340}
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha=p.op*(.55+.45*Math.sin(t*.003+p.ph));
+        ctx.beginPath(); ctx.moveTo(0,-p.sz);
+        ctx.bezierCurveTo(p.sz*.7,-p.sz*.4,p.sz*.7,p.sz*.4,0,p.sz);
+        ctx.bezierCurveTo(-p.sz*.7,p.sz*.4,-p.sz*.7,-p.sz*.4,0,-p.sz);
+        ctx.fillStyle=`rgba(${def.blobs[0].r},${def.blobs[0].g},${def.blobs[0].b},${p.op})`;
+        ctx.fill(); ctx.restore();
+      }
+      requestAnimationFrame(draw);
+    })(0);
+  }
+})();
+
+// ═══════════════════════════════════════════════════
+// 6. INTERACTIVE PAINT SPLASHES
+// ═══════════════════════════════════════════════════
+;(function(){
+  const cs=[
+    'rgba(219,84,130,.55)','rgba(130,60,200,.5)','rgba(50,180,120,.45)',
+    'rgba(240,140,40,.55)','rgba(50,130,230,.5)','rgba(230,50,70,.5)',
+    'rgba(255,200,40,.55)','rgba(100,200,180,.45)','rgba(210,80,180,.5)',
+    'rgba(80,170,255,.45)','rgba(255,120,80,.5)','rgba(160,100,220,.45)',
+    'rgba(212,168,83,.5)','rgba(196,114,127,.5)','rgba(168,181,160,.45)'
+  ];
+  function sp(px,py){
+    const e=document.createElement('div'); e.className='ps';
+    const s=90+Math.random()*180, c=cs[~~(Math.random()*cs.length)];
+    const rx=()=>30+Math.random()*40;
+    e.style.cssText=`left:${px-s/2}px;top:${py-s/2}px;width:${s}px;height:${s}px;`+
+      `background:radial-gradient(ellipse at ${rx()}% ${rx()}%,${c},transparent 55%);`+
+      `transform:rotate(${Math.random()*360}deg);`+
+      `border-radius:${35+Math.random()*25}% ${45+Math.random()*25}% ${35+Math.random()*25}% ${45+Math.random()*25}%`;
+    document.body.appendChild(e); setTimeout(()=>e.remove(),4000);
+    const nd=2+~~(Math.random()*3);
+    for(let i=0;i<nd;i++){
+      setTimeout(()=>{
+        const d=document.createElement('div'); d.className='pd';
+        const ds=6+Math.random()*26, c2=cs[~~(Math.random()*cs.length)];
+        d.style.cssText=`left:${px+(Math.random()-.5)*s-ds/2}px;top:${py+(Math.random()-.5)*s-ds/2}px;`+
+          `width:${ds}px;height:${ds}px;background:radial-gradient(circle,${c2},transparent 60%)`;
+        document.body.appendChild(d); setTimeout(()=>d.remove(),2200);
+      },i*30);
+    }
+  }
+  const skip=e=>e.target.closest('form,button,input,a,.nb');
+  document.addEventListener('click',e=>{if(skip(e))return; sp(e.clientX,e.clientY);
+    setTimeout(()=>sp(e.clientX+(Math.random()-.5)*130,e.clientY+(Math.random()-.5)*130),40)});
+  document.addEventListener('touchstart',e=>{if(skip(e))return; const t=e.touches[0]; sp(t.clientX,t.clientY)},{passive:true});
+  let dn=false,lt=0;
+  document.addEventListener('mousedown',e=>{if(!skip(e))dn=true});
+  document.addEventListener('mouseup',()=>dn=false);
+  document.addEventListener('mousemove',e=>{if(dn&&Date.now()-lt>45){lt=Date.now();sp(e.clientX,e.clientY)}});
+  document.addEventListener('touchmove',e=>{if(skip(e))return;
+    if(Date.now()-lt>45){lt=Date.now();const t=e.touches[0];sp(t.clientX,t.clientY)}},{passive:true});
+})();
+
+// ═══════════════════════════════════════════════════
+// 7. SCROLL REVEALS
+// ═══════════════════════════════════════════════════
+;(function(){
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})
+  },{threshold:.1,rootMargin:'0px 0px -25px 0px'});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+})();
+
+// ═══════════════════════════════════════════════════
+// 8. NAV BLUR ON SCROLL
+// ═══════════════════════════════════════════════════
+addEventListener('scroll',()=>{document.getElementById('nv').classList.toggle('s',pageYOffset>50)});
+
+// ═══════════════════════════════════════════════════
+// 9. FORM HANDLING — Formspree
+// Replace YOUR_FORM_ID with your ID from formspree.io
+// ═══════════════════════════════════════════════════
+async function hs(e,f){
+  e.preventDefault();
+  const em=f.querySelector('input').value; if(!em)return false;
+  const btn=f.querySelector('button');
+  btn.textContent='Sending…'; btn.disabled=true;
+  try{
+    const res=await fetch('https://formspree.io/f/YOUR_FORM_ID',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify({email:em})
+    });
+    f.style.display='none';
+    let ok=f.parentElement.querySelector('.fok');
+    if(!ok){ok=document.createElement('div');ok.className='fok';
+      f.parentElement.insertBefore(ok,f.nextSibling);}
+    ok.innerHTML=res.ok?"You're in! ✨ We'll notify you before launch.":'Something went wrong — please try again.';
+    ok.classList.add('on');
+  }catch{btn.textContent='Try Again';btn.disabled=false;}
+  return false;
+}
+
+// ═══════════════════════════════════════════════════
+// 10. LIVE CARD DEMO
+// ═══════════════════════════════════════════════════
+;(function(){
+  const card=document.getElementById('demoCard');
+  const cv=document.getElementById('demoC');
+  if(!card||!cv)return;
+
+  function sz(){cv.width=card.offsetWidth;cv.height=card.offsetHeight}
+  sz(); new ResizeObserver(sz).observe(card);
+  const ctx=cv.getContext('2d');
+
+  const blobs=[
+    {r:232,g:160,b:180},{r:201,g:184,b:217},{r:168,g:181,b:160},
+    {r:240,g:197,b:168},{r:196,g:114,b:127},{r:212,g:168,b:83}
+  ].map(c=>({
+    x:Math.random()*400,y:Math.random()*560,r:80+Math.random()*130,
+    vx:(Math.random()-.5)*.45,vy:(Math.random()-.5)*.38,c,ph:Math.random()*6.28
+  }));
+
+  const petals=[];
+  for(let i=0;i<18;i++) petals.push({
+    x:Math.random()*400,y:Math.random()*560,sz:.9+Math.random()*3.8,
+    sy:.14+Math.random()*.28,rot:Math.random()*6.28,rs:(Math.random()-.5)*.022,
+    ph:Math.random()*6.28,op:.1+Math.random()*.22
+  });
+
+  (function draw(t){
+    if(!cv.width)return requestAnimationFrame(draw);
+    const W=cv.width,H=cv.height;
+    ctx.fillStyle='#2A1F28'; ctx.fillRect(0,0,W,H);
+    for(const b of blobs){
+      const rr=b.r*(1+Math.sin(t*.0025+b.ph)*.22);
+      b.x+=b.vx+Math.sin(t*.0009+b.ph)*.25;
+      b.y+=b.vy+Math.cos(t*.0007+b.ph)*.2;
+      if(b.x<-rr)b.x=W+rr; if(b.x>W+rr)b.x=-rr;
+      if(b.y<-rr)b.y=H+rr; if(b.y>H+rr)b.y=-rr;
+      const a=.12+.06*Math.sin(t*.0018+b.ph);
+      const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,rr);
+      g.addColorStop(0,`rgba(${b.c.r},${b.c.g},${b.c.b},${a})`);
+      g.addColorStop(1,`rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+    for(const p of petals){
+      p.y+=p.sy; p.rot+=p.rs;
+      if(p.y>H+10){p.y=-10;p.x=Math.random()*W}
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha=p.op*(.5+.5*Math.sin(t*.002+p.ph));
+      ctx.beginPath(); ctx.moveTo(0,-p.sz);
+      ctx.bezierCurveTo(p.sz*.7,-p.sz*.4,p.sz*.7,p.sz*.4,0,p.sz);
+      ctx.bezierCurveTo(-p.sz*.7,p.sz*.4,-p.sz*.7,-p.sz*.4,0,-p.sz);
+      ctx.fillStyle='rgba(232,160,180,'+p.op+')'; ctx.fill(); ctx.restore();
+    }
+    requestAnimationFrame(draw);
+  })(0);
+
+  // Scoped paint splashes inside the card frame
+  const dc=['rgba(219,84,130,.7)','rgba(212,168,83,.65)','rgba(201,184,217,.6)',
+    'rgba(240,197,168,.65)','rgba(196,114,127,.65)','rgba(255,200,80,.65)',
+    'rgba(130,60,200,.6)','rgba(100,200,180,.55)'];
+  function dsp(cx,cy){
+    const rect=card.getBoundingClientRect();
+    const e=document.createElement('div');
+    const s=50+Math.random()*90, c=dc[~~(Math.random()*dc.length)];
+    const rx=()=>30+Math.random()*40;
+    e.style.cssText=`position:absolute;left:${cx-rect.left-s/2}px;top:${cy-rect.top-s/2}px;`+
+      `width:${s}px;height:${s}px;z-index:5;pointer-events:none;`+
+      `background:radial-gradient(ellipse at ${rx()}% ${rx()}%,${c},transparent 55%);`+
+      `transform:rotate(${Math.random()*360}deg);`+
+      `border-radius:${35+~~(Math.random()*25)}% ${45+~~(Math.random()*25)}% ${35+~~(Math.random()*25)}% ${45+~~(Math.random()*25)}%;`+
+      `opacity:0;animation:psA 3.5s ease-out forwards`;
+    card.appendChild(e); setTimeout(()=>e.remove(),3500);
+  }
+  let ddn=false,dlt=0;
+  card.addEventListener('click',e=>dsp(e.clientX,e.clientY));
+  card.addEventListener('mousedown',()=>ddn=true);
+  card.addEventListener('mouseup',()=>ddn=false);
+  card.addEventListener('mouseleave',()=>ddn=false);
+  card.addEventListener('mousemove',e=>{if(ddn&&Date.now()-dlt>55){dlt=Date.now();dsp(e.clientX,e.clientY)}});
+  card.addEventListener('touchstart',e=>{const t=e.touches[0];dsp(t.clientX,t.clientY)},{passive:true});
+  card.addEventListener('touchmove',e=>{
+    if(Date.now()-dlt>55){dlt=Date.now();const t=e.touches[0];dsp(t.clientX,t.clientY)}
+  },{passive:true});
+})();
+
+const demoFilters={
+  none:'none',
+  watercolor:'blur(0.4px) saturate(1.35) contrast(0.9)',
+  oil:'contrast(1.12) saturate(1.55) brightness(0.94)',
+  sketch:'grayscale(1) contrast(1.45) brightness(1.12)',
+  glow:'blur(0.35px) brightness(1.22) saturate(1.28)'
+};
+function setDemoFilter(k,btn){
+  const inner=document.getElementById('demoInner');
+  if(inner)inner.style.filter=demoFilters[k]||'none';
+  document.querySelectorAll('.demo-filters button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// 11. FAQ ACCORDION
+// ═══════════════════════════════════════════════════
+function faqToggle(btn){
+  const item=btn.parentElement;
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════
+// 12. COUNTDOWN TIMER
+// ═══════════════════════════════════════════════════
+;(function(){
+  const target=new Date('2026-05-10T00:00:00');
+  const el={d:document.getElementById('cdD'),h:document.getElementById('cdH'),
+    m:document.getElementById('cdM'),s:document.getElementById('cdS')};
+  function tick(){
+    const diff=target-Date.now();
+    if(diff<=0){for(const k in el)if(el[k])el[k].textContent='00';return;}
+    const pad=n=>String(n).padStart(2,'0');
+    if(el.d)el.d.textContent=pad(Math.floor(diff/864e5));
+    if(el.h)el.h.textContent=pad(Math.floor((diff%864e5)/36e5));
+    if(el.m)el.m.textContent=pad(Math.floor((diff%36e5)/6e4));
+    if(el.s)el.s.textContent=pad(Math.floor((diff%6e4)/1e3));
+  }
+  tick(); setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
