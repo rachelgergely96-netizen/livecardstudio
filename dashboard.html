@@ -163,6 +163,12 @@ body::before {
 }
 .shelf-card:hover .shelf-card-del { opacity: 1; }
 .shelf-card-del:hover { color: var(--rose); }
+.shelf-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.shelf-card-link:hover { color: inherit; }
 .shelf-empty {
   color: var(--text-muted);
   font-size: 0.85rem;
@@ -697,9 +703,11 @@ function loadCards() {
       el.style.setProperty('--card-color', col);
       el.innerHTML =
         '<button class="shelf-card-del" title="Delete" onclick="deleteCard(\'' + card.id + '\',event)">✕</button>' +
+        '<a href="/c/' + card.id + '" class="shelf-card-link">' +
         '<div class="shelf-card-icon">' + icon + '</div>' +
         '<div class="shelf-card-name">' + escHtml(card.recipient_name || 'Someone Special') + '</div>' +
-        '<div class="shelf-card-occasion">' + escHtml(card.occasion || '') + ' · ' + escHtml(card.theme || '') + '</div>';
+        '<div class="shelf-card-occasion">' + escHtml(card.occasion || '') + ' · ' + escHtml(card.theme || '') + '</div>' +
+        '</a>';
       grid.appendChild(el);
     });
   });
@@ -712,7 +720,7 @@ function deleteCard(id, e) {
 }
 
 function saveCardToDB() {
-  if (!currentUser) return;
+  if (!currentUser) return Promise.resolve(null);
   var payload = {
     user_id:        currentUser.id,
     occasion:       state.occasion,
@@ -722,7 +730,10 @@ function saveCardToDB() {
     theme:          state.theme,
     photos:         JSON.stringify(state.photos.map(function(p) { return p.dataUrl; }))
   };
-  sb.from('cards').insert(payload).then(function() { loadCards(); });
+  return sb.from('cards').insert(payload).select('id').single().then(function(res) {
+    if (res.data) loadCards();
+    return res.data ? res.data.id : null;
+  });
 }
 
 function escHtml(s) {
@@ -739,7 +750,8 @@ var state = {
   recipientName: '',
   senderName: '',
   message: '',
-  theme: 'watercolor'
+  theme: 'watercolor',
+  currentCardId: null   // set after first save (download or share) to avoid duplicate cards
 };
 
 // Default messages per occasion
@@ -859,6 +871,7 @@ var themes = {
 // ================================================================
 function goToStep(n) {
   state.step = n;
+  if (n === 1) state.currentCardId = null;
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById('step' + n).classList.add('active');
   document.querySelectorAll('.step-dot').forEach(function(d, i) {
@@ -1158,27 +1171,51 @@ function generatePreview() {
 }
 
 document.getElementById('btnDownload').addEventListener('click', function() {
-  var html = generateCardHTML();
-  var blob = new Blob([html], { type: 'text/html' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'livecard-for-' + (state.recipientName || 'you').toLowerCase().replace(/[^a-z0-9]/g, '-') + '.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  saveCardToDB();
-  showToast('Card downloaded! ✨');
+  function doDownload() {
+    var html = generateCardHTML();
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'livecard-for-' + (state.recipientName || 'you').toLowerCase().replace(/[^a-z0-9]/g, '-') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Card downloaded! ✨');
+  }
+  if (state.currentCardId) {
+    doDownload();
+  } else {
+    saveCardToDB().then(function(id) {
+      if (id) state.currentCardId = id;
+      doDownload();
+    });
+  }
 });
 
 document.getElementById('btnCopy').addEventListener('click', function() {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText('Your LiveCard is ready! Open the downloaded HTML file to view your living greeting card. ✨').then(function() {
-      showToast('Share text copied! Download the card to share the file.');
-    });
+  function copyShareLink(id) {
+    var shareUrl = window.location.origin + '/c/' + id;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(function() {
+        showToast('Share link copied! ✨');
+      }).catch(function() { showToast(shareUrl); });
+    } else {
+      showToast('Share link: ' + shareUrl);
+    }
+  }
+  if (state.currentCardId) {
+    copyShareLink(state.currentCardId);
   } else {
-    showToast('Download the card and share the HTML file directly.');
+    saveCardToDB().then(function(id) {
+      if (id) {
+        state.currentCardId = id;
+        copyShareLink(id);
+      } else {
+        showToast('Please sign in to share.');
+      }
+    });
   }
 });
 </script>

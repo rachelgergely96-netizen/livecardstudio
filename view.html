@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveCard — View Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0F0E0D;
+  color: #F0EBE3;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.view-wrap { width: 100%; max-width: 900px; }
+.view-loading, .view-error {
+  text-align: center;
+  padding: 48px 24px;
+}
+.view-error h2 { font-size: 1.2rem; margin-bottom: 8px; color: #C4727F; }
+.view-error p { font-size: 0.9rem; color: #9B9590; }
+.view-error a { color: #D4A853; text-decoration: none; margin-top: 16px; display: inline-block; }
+.view-card-frame {
+  width: 100%;
+  min-height: 80vh;
+  border: 1px solid #333130;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1A1918;
+}
+.view-card-frame iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 80vh;
+  border: none;
+}
+.view-footer {
+  text-align: center;
+  margin-top: 16px;
+}
+.view-footer a { font-size: 0.8rem; color: #6B6560; text-decoration: none; }
+.view-footer a:hover { color: #D4A853; }
+</style>
+</head>
+<body>
+<div class="view-wrap">
+  <div class="view-loading" id="loading">Loading your card…</div>
+  <div class="view-error" id="error" style="display:none">
+    <h2>This card isn't available</h2>
+    <p>It may have been removed or the link is incorrect.</p>
+    <a href="/">Go to LiveCard Studio</a>
+  </div>
+  <div class="view-card-frame" id="cardFrame" style="display:none"></div>
+</div>
+<div class="view-footer" id="footer" style="display:none">
+  <a href="/">Made with LiveCard Studio</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="card-render.js"></script>
+<script>
+(function() {
+  var SUPABASE_URL = 'https://oajeeondcepecnwbxtcu.supabase.co';
+  var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hamVlb25kY2VwZWNud2J4dGN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MzMxMTEsImV4cCI6MjA4NzMwOTExMX0.4lBIzEWjFIoSC5f4Lxb1ZBIo0KEYt46XaTPen5xWH_U';
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  function getCardId() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+    if (id) return id;
+    var path = window.location.pathname.replace(/^\/c\//, '').replace(/\/$/, '');
+    if (path && /^[0-9a-f-]{36}$/i.test(path)) return path;
+    return null;
+  }
+
+  var cardId = getCardId();
+  if (!cardId) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    return;
+  }
+
+  sb.from('cards').select('*').eq('id', cardId).single().then(function(res) {
+    document.getElementById('loading').style.display = 'none';
+    if (res.error || !res.data) {
+      document.getElementById('error').style.display = 'block';
+      return;
+    }
+    var card = res.data;
+    var html = window.LiveCardRender && window.LiveCardRender.buildCardHTML(card);
+    if (!html) {
+      document.getElementById('error').style.display = 'block';
+      return;
+    }
+    var frame = document.getElementById('cardFrame');
+    frame.style.display = 'block';
+    frame.innerHTML = '<iframe sandbox="allow-scripts" title="Living card"></iframe>';
+    frame.querySelector('iframe').srcdoc = html;
+    document.getElementById('footer').style.display = 'block';
+  });
+})();
+</script>
+</body>
+</html>

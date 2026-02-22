@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/login",     "destination": "/login.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" }
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/c/:id", "destination": "/view.html?id=:id" }
   ]
 }

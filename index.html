@@ -138,6 +138,13 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 .codex-note h4{font-size:.88rem;font-weight:500;margin-bottom:4px}
 .codex-note p{font-size:.66rem;font-weight:300;color:var(--tx2);line-height:1.7;max-width:500px;margin:0 auto}
 
+/* Codex live demos */
+.codex-demo-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:16px}
+.codex-demo-card{background:var(--mid);border-radius:16px}
+.codex-mic-btn{padding:12px 24px;border-radius:24px;font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:1.5px;color:#fff;background:rgba(201,169,110,.25);border:1px solid rgba(201,169,110,.4);cursor:pointer;backdrop-filter:blur(12px);transition:all .3s}
+.codex-mic-btn:hover{background:rgba(201,169,110,.4);transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,169,110,.2)}
+.codex-demo-desc{font-size:.72rem;font-weight:300;color:var(--tx2);line-height:1.6;max-width:420px;margin:0;text-align:center}
+
 /* ═══ CTA SECTION ═══ */
 .bottom-cta{position:relative;z-index:2;text-align:center;padding:60px 32px 80px}
 .bottom-cta h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:300;margin-bottom:6px}
@@ -360,7 +367,7 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 
       <div class="prompt-list">
 
-        <!-- PROMPT 1: Sound-Reactive -->
+        <!-- PROMPT 1: Sound-Reactive — Live demo -->
         <div class="prompt-card">
           <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
             <div class="ph-num">1</div>
@@ -369,43 +376,8 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Adds microphone input that analyzes audio frequencies in real-time and maps them to particle behavior — size, velocity, color, spawn rate. Bass hits expand particles, mids shift hue, highs trigger sparkle bursts.</div>
-            <div class="prompt-block" id="p1">Build a sound-reactive card module for LiveCard Studio.
-
-CONTEXT: LiveCard Studio is a living greeting card platform. Cards use HTML5 canvas with requestAnimationFrame particle systems. Each card has two canvas layers (background blobs + foreground particles). The existing engine uses a palette system with properties like bg color, blob colors, and particle configs.
-
-REQUIREMENTS:
-1. Create a SoundReactiveEngine class that:
-   - Uses navigator.mediaDevices.getUserMedia({audio:true}) to access the mic
-   - Creates an AnalyserNode with fftSize=256 via Web Audio API
-   - Extracts frequency data every frame into 3 bands:
-     * Bass (bins 0-8): drives particle SIZE (multiply base size by 1 + bassLevel * 2)
-     * Mids (bins 8-32): drives particle HUE shift (rotate hue by midLevel * 60deg)
-     * Highs (bins 32-64): drives SPARKLE BURST spawn rate (when highLevel > threshold, spawn 5-10 tiny fast-decay particles at random positions)
-   - Normalizes each band to 0.0-1.0 range with smoothing (lerp with previous frame, factor 0.15)
-   - Exposes { bass, mids, highs } as reactive state
-
-2. Create a visual frequency bar at the card bottom:
-   - 32 thin vertical bars, each representing a frequency bin
-   - Bar height = bin amplitude, color = gradient from card palette
-   - Render on the particle canvas layer with globalAlpha 0.3
-
-3. Add a bass-hit ring effect:
-   - When bass spikes above 0.7, draw an expanding ring from card center
-   - Ring starts at r=20, expands to r=150, opacity fades from 0.4 to 0
-   - Ring color from card palette, stroke width 2px, wobbly radius using sin(angle*3+time)
-
-4. Integration:
-   - Add "Enable Microphone" button overlay on the card (centered, pill-shaped, glass-morphism)
-   - Button disappears after mic permission granted
-   - When active, bass/mids/highs modify existing particle loop each frame
-   - When inactive, particles render normally
-   - Graceful fallback: if mic denied, show subtle tooltip "Mic access needed for sound-reactive mode"
-
-5. Mobile-first: Test with both getUserMedia on mobile Safari and Chrome. Handle the autoplay/user-gesture requirement.
-
-TECH: Vanilla JS, HTML5 Canvas 2D, Web Audio API. No frameworks. File should export a class that can be imported into the card engine.
-              <button class="copy-btn" onclick="copyPrompt(event,'p1')">Copy</button></div>
+            <div class="codex-demo-container" data-demo="sound-reactive"></div>
+            <p class="codex-demo-desc codex-demo-desc-1">Bass drives particle size, mids shift hue, highs trigger sparkles. Enable the mic and make some noise — you’ll see the frequency bars at the bottom and bass rings on big hits.</p>
             <div class="prompt-tags"><span class="pt-api">Web Audio API</span><span class="pt-canvas">Canvas 2D</span><span class="pt-sensor">MediaStream</span></div>
           </div></div>
         </div>
@@ -512,7 +484,7 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
           </div></div>
         </div>
 
-        <!-- PROMPT 6: Constellation Group Cards -->
+        <!-- PROMPT 6: Constellation Group Cards — Live demo -->
         <div class="prompt-card">
           <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
             <div class="ph-num">6</div>
@@ -521,8 +493,8 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Multiple people contribute; each becomes a star in a shared constellation. Tap any star to see photo and message.</div>
-            <div class="prompt-block" id="p6">Build constellation group card system: contributor form, star placement, tap-to-reveal modal, ambient animation. localStorage for prototype.<button class="copy-btn" onclick="copyPrompt(event,'p6')">Copy</button></div>
+            <div class="codex-demo-container" data-demo="constellation"></div>
+            <p class="codex-demo-desc">Every person becomes a star in your sky. Tap any star to see who it is — the star brightens, a ring of light expands, then the message rises. Watch for the shooting star.</p>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">localStorage</span><span class="pt-api">Touch Events</span></div>
           </div></div>
         </div>
@@ -824,5 +796,6 @@ bootVisibleCards();
 addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',sY>50)});
 document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('v')})},{threshold:.06,rootMargin:'0px 0px -20px 0px'}).observe(el)});
 </script>
+<script type="module" src="js/codex-demos.js"></script>
 </body>
 </html>
