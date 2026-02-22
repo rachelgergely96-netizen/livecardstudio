@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveCard Studio — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F0E0D;
+  --surface: #1A1918;
+  --surface2: #242220;
+  --border: #333130;
+  --border-hover: #4A4745;
+  --text: #F0EBE3;
+  --text-dim: #9B9590;
+  --text-muted: #6B6560;
+  --accent: #D4A853;
+  --accent-soft: rgba(212,168,83,0.12);
+  --accent-glow: rgba(212,168,83,0.25);
+  --rose: #C4727F;
+  --radius: 12px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(212,168,83,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(196,114,127,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(168,181,160,0.02) 0%, transparent 60%);
+}
+
+/* ===== TOP NAV ===== */
+.top-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.3px;
+  text-decoration: none;
+}
+.logo span { color: var(--rose); }
+
+.back-link {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--text-dim); }
+
+/* ===== AUTH CARD ===== */
+.auth-wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 40px 36px 36px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.06);
+}
+
+.auth-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 28px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ===== FORM ===== */
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form.hidden { display: none; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field label {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.field input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field input::placeholder { color: var(--text-muted); }
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent);
+  color: #0F0E0D;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-top: 4px;
+}
+
+.btn-primary:hover {
+  background: #E8C97A;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+}
+
+.btn-google:hover {
+  border-color: var(--border-hover);
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin: 4px 0;
+}
+.divider::before, .divider::after {
+  content:''; flex:1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===== EXTRAS ===== */
+.forgot-link {
+  text-align: right;
+  margin-top: -4px;
+}
+
+.forgot-link a, .auth-switch a {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-link a:hover, .auth-switch a:hover { color: var(--accent); }
+
+.auth-switch {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== STATUS MESSAGE ===== */
+.auth-msg {
+  font-size: 0.82rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+  display: none;
+}
+
+.auth-msg.error {
+  display: block;
+  background: rgba(196,114,127,0.12);
+  color: var(--rose);
+  border: 1px solid rgba(196,114,127,0.25);
+}
+
+.auth-msg.success {
+  display: block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(212,168,83,0.25);
+}
+
+/* ===== RESET VIEW ===== */
+#resetView { display: none; flex-direction: column; gap: 14px; }
+#resetView.active { display: flex; }
+
+.back-to-signin {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+}
+.back-to-signin:hover { color: var(--accent); }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 32px 22px 28px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/" class="logo">Live<span>Card</span> Studio</a>
+  <a href="/" class="back-link">← Back to home</a>
+</nav>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-subtitle">Sign in to create and send living cards</div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="authTabs">
+      <button class="tab-btn active" onclick="switchTab('signin')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <!-- Status message -->
+    <div class="auth-msg" id="authMsg"></div>
+
+    <!-- Sign In Form -->
+    <form class="auth-form" id="signinForm" onsubmit="handleSignIn(event)">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="siEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="siPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <div class="forgot-link">
+        <a href="#" onclick="showReset(event)">Forgot password?</a>
+      </div>
+      <button type="submit" class="btn-primary" id="signinBtn">Sign In</button>
+      <div class="divider">or</div>
+      <button type="button" class="btn-google" onclick="handleGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form class="auth-form hidden" id="signupForm" onsubmit="handleSignUp(event)">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="suEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="suPassword" placeholder="Minimum 6 characters" required autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn-primary" id="signupBtn">Create Account</button>
+      <div class="divider">or</div>
+      <button type="button" class="btn-google" onclick="handleGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+    </form>
+
+    <!-- Password Reset View -->
+    <div id="resetView">
+      <p style="font-size:0.85rem;color:var(--text-dim);text-align:center;line-height:1.5">
+        Enter your email and we'll send you a reset link.
+      </p>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="resetEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <button class="btn-primary" onclick="handleReset()">Send Reset Link</button>
+      <button class="back-to-signin" onclick="showSignIn()">← Back to sign in</button>
+    </div>
+
+    <!-- Switch link -->
+    <div class="auth-switch" id="authSwitch">
+      Don't have an account? <a href="#" onclick="switchTab('signup');return false">Create one free</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── Supabase init ──────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON = 'YOUR_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Redirect if already logged in ─────────────────────────────────────────
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    window.location.href = '/dashboard.html';
+  }
+});
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const isSignin = tab === 'signin';
+  document.getElementById('signinForm').classList.toggle('hidden', !isSignin);
+  document.getElementById('signupForm').classList.toggle('hidden', isSignin);
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', isSignin ? i === 0 : i === 1)
+  );
+  document.getElementById('authSwitch').innerHTML = isSignin
+    ? 'Don\'t have an account? <a href="#" onclick="switchTab(\'signup\');return false">Create one free</a>'
+    : 'Already have an account? <a href="#" onclick="switchTab(\'signin\');return false">Sign in</a>';
+  clearMsg();
+}
+
+// ── Show / hide reset view ─────────────────────────────────────────────────
+function showReset(e) {
+  e.preventDefault();
+  document.getElementById('signinForm').classList.add('hidden');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('authTabs').style.display = 'none';
+  document.getElementById('authSwitch').style.display = 'none';
+  document.getElementById('resetView').classList.add('active');
+  document.querySelector('.auth-title').textContent = 'Reset password';
+  clearMsg();
+}
+
+function showSignIn() {
+  document.getElementById('resetView').classList.remove('active');
+  document.getElementById('authTabs').style.display = '';
+  document.getElementById('authSwitch').style.display = '';
+  document.getElementById('signinForm').classList.remove('hidden');
+  document.querySelector('.auth-title').textContent = 'Welcome back';
+  clearMsg();
+}
+
+// ── Message helpers ────────────────────────────────────────────────────────
+function showMsg(text, type) {
+  const el = document.getElementById('authMsg');
+  el.textContent = text;
+  el.className = 'auth-msg ' + type;
+}
+
+function clearMsg() {
+  const el = document.getElementById('authMsg');
+  el.textContent = '';
+  el.className = 'auth-msg';
+}
+
+// ── Sign In ────────────────────────────────────────────────────────────────
+async function handleSignIn(e) {
+  e.preventDefault();
+  const btn = document.getElementById('signinBtn');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  clearMsg();
+
+  const { error } = await sb.auth.signInWithPassword({
+    email: document.getElementById('siEmail').value.trim(),
+    password: document.getElementById('siPassword').value
+  });
+
+  if (error) {
+    showMsg(error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+  // success → onAuthStateChange fires → redirect
+}
+
+// ── Sign Up ────────────────────────────────────────────────────────────────
+async function handleSignUp(e) {
+  e.preventDefault();
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating account…';
+  clearMsg();
+
+  const { error } = await sb.auth.signUp({
+    email: document.getElementById('suEmail').value.trim(),
+    password: document.getElementById('suPassword').value
+  });
+
+  if (error) {
+    showMsg(error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+  } else {
+    showMsg('Check your email for a confirmation link!', 'success');
+    btn.textContent = 'Email sent ✓';
+  }
+}
+
+// ── Google OAuth ───────────────────────────────────────────────────────────
+async function handleGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/dashboard.html' }
+  });
+  if (error) showMsg(error.message, 'error');
+}
+
+// ── Password Reset ─────────────────────────────────────────────────────────
+async function handleReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  if (!email) return showMsg('Please enter your email address.', 'error');
+  clearMsg();
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/login.html'
+  });
+
+  if (error) {
+    showMsg(error.message, 'error');
+  } else {
+    showMsg('Reset link sent! Check your inbox.', 'success');
+  }
+}
+</script>
+</body>
+</html>
