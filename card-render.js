@@ -150,6 +150,70 @@
     return '';
   }
 
+  function parseMessageData(card, occasion) {
+    var fallback = defaultMessages[occasion] || defaultMessages.birthday;
+    var out = {
+      title: '',
+      text: fallback,
+      sectionMessages: [],
+      musicStyle: 'music_box_birthday',
+      features: {
+        photoInteractions: true,
+        brushReveal: true,
+        paintCanvas: true,
+        confettiFinale: true
+      },
+      gift: null
+    };
+
+    var raw = card && card.message;
+    var parsed = null;
+
+    if (typeof raw === 'string') {
+      var trimmed = raw.trim();
+      if (trimmed && trimmed.charAt(0) === '{') {
+        try { parsed = JSON.parse(trimmed); } catch (_e) {}
+      }
+      if (!parsed && trimmed) out.text = raw;
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw;
+    }
+
+    if (!parsed) return out;
+
+    if (typeof parsed.title === 'string' && parsed.title.trim()) out.title = parsed.title.trim();
+    if (typeof parsed.text === 'string' && parsed.text.trim()) out.text = parsed.text;
+    if (typeof parsed.message === 'string' && parsed.message.trim()) out.text = parsed.message;
+    if (Array.isArray(parsed.sectionMessages)) {
+      out.sectionMessages = parsed.sectionMessages.filter(function(x) {
+        return typeof x === 'string' && x.trim();
+      });
+    }
+    if (parsed.musicStyle) {
+      out.musicStyle = String(parsed.musicStyle).toLowerCase().replace(/[\s-]+/g, '_');
+    }
+    if (parsed.features && typeof parsed.features === 'object') {
+      if (typeof parsed.features.photoInteractions === 'boolean') out.features.photoInteractions = parsed.features.photoInteractions;
+      if (typeof parsed.features.brushReveal === 'boolean') out.features.brushReveal = parsed.features.brushReveal;
+      if (typeof parsed.features.paintCanvas === 'boolean') out.features.paintCanvas = parsed.features.paintCanvas;
+      if (typeof parsed.features.confettiFinale === 'boolean') out.features.confettiFinale = parsed.features.confettiFinale;
+    }
+    if (parsed.gift && typeof parsed.gift === 'object') {
+      var amount = Number(parsed.gift.amount);
+      var gift = {
+        enabled: parsed.gift.enabled !== false,
+        brand: String(parsed.gift.brand || '').trim(),
+        amount: isNaN(amount) ? 0 : amount,
+        redemptionUrl: String(parsed.gift.redemptionUrl || parsed.gift.redemption_url || '').trim()
+      };
+      if (gift.enabled && (gift.brand || gift.amount > 0 || gift.redemptionUrl)) {
+        out.gift = gift;
+      }
+    }
+
+    return out;
+  }
+
   function escapeHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
@@ -165,12 +229,125 @@
     });
   }
 
+  var musicProfiles = {
+    music_box_birthday: { label: 'Music Box Birthday', themeType: 'celebration', volume: 0.8 },
+    ambient_warm: { label: 'Warm Ambient Pads', themeType: 'garden', volume: 0.72 },
+    gentle_piano: { label: 'Gentle Piano', themeType: 'garden', volume: 0.66 },
+    celestial_pads: { label: 'Celestial Pads', themeType: 'starfield', volume: 0.76 },
+    soft_guitar: { label: 'Soft Guitar', themeType: 'ocean', volume: 0.7 }
+  };
+
+  function resolveThemeTypeFromTheme(theme) {
+    var key = String(theme || '').toLowerCase();
+    if (!key) return 'starfield';
+    if (key.indexOf('ember') !== -1 || key.indexOf('lantern') !== -1) return 'fire';
+    if (key.indexOf('tide') !== -1 || key.indexOf('boat') !== -1 || key.indexOf('wish') !== -1) return 'ocean';
+    if (
+      key.indexOf('garden') !== -1 ||
+      key.indexOf('bloom') !== -1 ||
+      key.indexOf('petal') !== -1 ||
+      key.indexOf('sakura') !== -1 ||
+      key.indexOf('blossom') !== -1 ||
+      key.indexOf('firefly') !== -1 ||
+      key.indexOf('lotus') !== -1 ||
+      key.indexOf('dandelion') !== -1
+    ) {
+      return 'garden';
+    }
+    if (key.indexOf('golden') !== -1 || key.indexOf('birthday') !== -1 || key.indexOf('celebration') !== -1) {
+      return 'celebration';
+    }
+    return 'starfield';
+  }
+
+  function getMusicProfile(musicStyle, theme) {
+    var key = String(musicStyle || '').toLowerCase().replace(/[\s-]+/g, '_');
+    if (!key || key === 'none') return null;
+    if (hasOwn(musicProfiles, key)) return musicProfiles[key];
+    return {
+      label: 'Ambient Sound',
+      themeType: resolveThemeTypeFromTheme(theme),
+      volume: 0.72
+    };
+  }
+
+  function buildSoundInjection(recipient, musicStyle, theme) {
+    var profile = getMusicProfile(musicStyle, theme);
+    if (!profile) return { head: '', body: '' };
+
+    var safeRecipient = escapeHtml(recipient || 'you');
+    var promptLabel = escapeHtml(profile.label || 'ambient music');
+    var config = {
+      themeType: profile.themeType || 'starfield',
+      volume: typeof profile.volume === 'number' ? profile.volume : 0.72
+    };
+
+    var head = '<style>' +
+      '.lc-audio-banner{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:1200;display:flex;align-items:center;gap:10px;max-width:min(92vw,620px);padding:10px 14px;border-radius:999px;background:rgba(253,248,240,.94);border:1px solid rgba(200,121,65,.28);box-shadow:0 8px 24px rgba(0,0,0,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-family:"Cormorant Garamond",serif;font-size:.94rem;color:#4a3a32;transition:opacity .35s ease,transform .35s ease}' +
+      '.lc-audio-banner.dismissed{opacity:0;pointer-events:none;transform:translate(-50%,-12px)}' +
+      '.lc-audio-banner-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.lc-audio-btn{border:none;border-radius:999px;background:#c87941;color:#fff;padding:7px 13px;font-family:"Outfit",sans-serif;font-size:.64rem;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}' +
+      '.lc-audio-close{border:none;background:transparent;color:#8b6f5e;font-size:1.2rem;line-height:1;cursor:pointer;padding:0 2px}' +
+      '.lc-audio-toggle{position:fixed;left:16px;bottom:16px;z-index:1200;width:46px;height:46px;border:none;border-radius:50%;background:rgba(253,248,240,.95);border:1px solid rgba(200,121,65,.35);box-shadow:0 10px 24px rgba(0,0,0,.16);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#8b6f5e;cursor:pointer}' +
+      '.lc-audio-toggle.is-playing{color:#c87941;border-color:rgba(200,121,65,.6)}' +
+      '.lc-audio-prompt{position:fixed;left:72px;bottom:24px;z-index:1200;padding:7px 12px;border-radius:999px;background:rgba(253,248,240,.92);border:1px solid rgba(200,121,65,.24);font-family:"Cormorant Garamond",serif;font-size:.82rem;color:#5a4a3f;transition:opacity .25s ease}' +
+      '.lc-audio-prompt.hidden{opacity:0;pointer-events:none}' +
+      '@media(max-width:640px){.lc-audio-banner{top:10px;gap:8px;padding:8px 10px;font-size:.82rem}.lc-audio-btn{padding:6px 10px;font-size:.58rem;letter-spacing:1px}.lc-audio-toggle{width:42px;height:42px;left:12px;bottom:12px}.lc-audio-prompt{left:62px;bottom:18px;font-size:.76rem;padding:6px 10px}}' +
+      '</style>';
+
+    var script = '(function(){' +
+      'var cfg=' + JSON.stringify(config) + ';' +
+      'var banner=document.getElementById("lcAudioBanner");' +
+      'var playBtn=document.getElementById("lcAudioPlay");' +
+      'var dismissBtn=document.getElementById("lcAudioDismiss");' +
+      'var toggle=document.getElementById("lcAudioToggle");' +
+      'var prompt=document.getElementById("lcAudioPrompt");' +
+      'var storageKey="livecard_audio_muted";' +
+      'var engine=null,started=false,muted=false,tapTs=0;' +
+      'function getMuted(){try{return sessionStorage.getItem(storageKey)==="1";}catch(_e){return false}}' +
+      'function setMuted(v){try{sessionStorage.setItem(storageKey,v?"1":"0")}catch(_e){}}' +
+      'function ensureEngine(){if(!window.AmbientSoundEngine)return null;if(!engine){engine=new AmbientSoundEngine(cfg.themeType||"starfield");engine.setVolume(0)}return engine}' +
+      'function prime(){var e=ensureEngine();if(e&&e.ctx&&e.ctx.state!=="running"){e.ctx.resume().catch(function(){})}}' +
+      'function hideBanner(){if(banner)banner.classList.add("dismissed")}' +
+      'function setUI(isPlaying){if(toggle){toggle.classList.toggle("is-playing",!!isPlaying);toggle.setAttribute("aria-pressed",isPlaying?"true":"false")}if(playBtn)playBtn.textContent=isPlaying?"Pause":"Play";if(prompt)prompt.classList.add("hidden")}' +
+      'function applyVol(){if(engine)engine.setVolume(muted?0:Number(cfg.volume||0.72))}' +
+      'function startAudio(){var e=ensureEngine();if(!e){if(prompt){prompt.textContent="Audio unavailable in this browser.";prompt.classList.remove("hidden")}return}Promise.resolve(e.start()).then(function(){prime();muted=false;setMuted(false);started=true;applyVol();setUI(true);hideBanner()}).catch(function(){})}' +
+      'function stopAudio(){if(!engine)return;muted=true;setMuted(true);applyVol();setUI(false)}' +
+      'function toggleAudio(ev){if(ev){ev.preventDefault();ev.stopPropagation()}var now=Date.now();if(now-tapTs<240)return;tapTs=now;prime();if(!started||muted){startAudio()}else{stopAudio()}}' +
+      'muted=getMuted();' +
+      'if(toggle){toggle.addEventListener("click",toggleAudio);toggle.addEventListener("touchstart",toggleAudio,{passive:false})}' +
+      'if(playBtn){playBtn.addEventListener("click",toggleAudio);playBtn.addEventListener("touchstart",toggleAudio,{passive:false})}' +
+      'if(banner){banner.addEventListener("click",function(e){if(dismissBtn&&e.target===dismissBtn)return;toggleAudio(e)})}' +
+      'if(dismissBtn){dismissBtn.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();hideBanner();if(prompt)prompt.classList.add("hidden")})}' +
+      'document.addEventListener("pointerdown",prime,{capture:true,passive:true});' +
+      'document.addEventListener("touchstart",prime,{capture:true,passive:true});' +
+      'document.addEventListener("click",prime,{capture:true});' +
+      'document.addEventListener("visibilitychange",function(){if(!engine)return;if(document.hidden){engine.setVolume(0);return}prime();if(started&&!muted)engine.setVolume(Number(cfg.volume||0.72))});' +
+      'setUI(false);' +
+      'setTimeout(function(){if(prompt&&!started)prompt.classList.add("hidden")},14000);' +
+      '})();';
+
+    var body =
+      '<div class="lc-audio-banner" id="lcAudioBanner" role="status" aria-live="polite">' +
+        '<span class="lc-audio-banner-text">&#9835; This card sings for ' + safeRecipient + ' - tap to hear it</span>' +
+        '<button type="button" class="lc-audio-btn" id="lcAudioPlay">Play</button>' +
+        '<button type="button" class="lc-audio-close" id="lcAudioDismiss" aria-label="Dismiss sound prompt">&times;</button>' +
+      '</div>' +
+      '<button type="button" class="lc-audio-toggle" id="lcAudioToggle" aria-label="Toggle card sound" aria-pressed="false">&#9835;</button>' +
+      '<div class="lc-audio-prompt" id="lcAudioPrompt">Tap to hear ' + promptLabel + '</div>' +
+      '<script src="/js/ambient-sound-engine.js"><\/script>' +
+      '<script>' + script + '<\/script>';
+
+    return { head: head, body: body };
+  }
+
   function patchV2Template(rawTemplate, card) {
     var occasion = card.occasion || 'birthday';
-    var title = defaultTitles[occasion] || 'A Living Card For You';
+    var parsed = parseMessageData(card, occasion);
+    var title = parsed.title || defaultTitles[occasion] || 'A Living Card For You';
     var recipient = card.recipient_name || 'Someone Special';
     var sender = card.sender_name || 'With love';
-    var message = card.message || defaultMessages[occasion] || '';
+    var message = parsed.text || defaultMessages[occasion] || '';
     var photoSrc = getPrimaryPhoto(card);
     var html = rawTemplate;
 
@@ -190,6 +367,16 @@
           return 'function ' + fnName + '(){const f=document.getElementById("pf"),s=f.offsetWidth||280;pc.width=s;pc.height=s;function setOriginal(){if(typeof oD!=="undefined"){oD=pctx.getImageData(0,0,s,s)}if(typeof origData!=="undefined"){origData=pctx.getImageData(0,0,s,s)}}function fallback(){const gen=typeof genP==="function"?genP:(typeof genPhoto==="function"?genPhoto:null);if(gen){pctx.drawImage(gen(s,s),0,0)}setOriginal()}const src=window.__LIVECARD_PHOTO__;if(!src){fallback();return;}const img=new Image();img.onload=function(){const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;if(!iw||!ih){fallback();return;}const sc=Math.max(s/iw,s/ih),dw=iw*sc,dh=ih*sc,dx=(s-dw)/2,dy=(s-dh)/2;pctx.clearRect(0,0,s,s);pctx.drawImage(img,dx,dy,dw,dh);setOriginal()};img.onerror=fallback;img.src=src}';
         }
       );
+    }
+
+    var soundInjection = buildSoundInjection(recipient, parsed.musicStyle, card.theme);
+    if (soundInjection.head) {
+      if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, soundInjection.head + '</head>');
+      else html = soundInjection.head + html;
+    }
+    if (soundInjection.body) {
+      if (/<\/body>/i.test(html)) html = html.replace(/<\/body>/i, soundInjection.body + '</body>');
+      else html += soundInjection.body;
     }
 
     return html;
@@ -212,11 +399,13 @@
     if (isV2Theme(card.theme)) return '';
     var T = themes[card.theme] || themes.watercolor;
     var occasion = card.occasion || 'birthday';
+    var parsed = parseMessageData(card, occasion);
     var subtitle = defaultSubtitles[occasion] || 'wishing a very special';
-    var title = defaultTitles[occasion] || 'Happy Birthday';
+    var title = parsed.title || defaultTitles[occasion] || 'Happy Birthday';
     var recipient = card.recipient_name || 'Someone Special';
     var sender = card.sender_name || 'With love';
-    var message = (card.message || defaultMessages[occasion] || '').replace(/\n/g, '<br>');
+    var messagePlain = parsed.text || defaultMessages[occasion] || '';
+    var message = escapeHtml(messagePlain).replace(/\n/g, '<br>');
     var photos = getPhotos(card);
     var photoHTML = '';
     for (var i = 0; i < photos.length; i++) {
@@ -232,10 +421,25 @@
     var blobsJS = 'var blobDefs = ' + JSON.stringify(T.blobs) + ';';
     var petalsJS = 'var petalColors = ' + JSON.stringify(T.petals) + ';';
     var badgeColorsJS = JSON.stringify(T.badgeColors);
+    var typewriterTextJS = JSON.stringify(messagePlain);
+    var soundInjection = buildSoundInjection(recipient, parsed.musicStyle, card.theme);
+    var giftHTML = '';
+    if (parsed.gift && parsed.gift.enabled) {
+      var giftAmount = parsed.gift.amount > 0 ? ('$' + parsed.gift.amount.toFixed(2)) : 'Gift Included';
+      var giftCTA = parsed.gift.redemptionUrl
+        ? '<a class="gift-redeem" href="' + parsed.gift.redemptionUrl.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Redeem Gift</a>'
+        : '<button class="gift-redeem" type="button" disabled>Gift unlocks when sent</button>';
+      giftHTML =
+        '<div class="gift-wrap">' +
+          '<p class="gift-kicker">A little gift is tucked inside</p>' +
+          '<p class="gift-title">' + escapeHtml(parsed.gift.brand || 'Special Gift') + ' · ' + escapeHtml(giftAmount) + '</p>' +
+          giftCTA +
+        '</div>';
+    }
 
     return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1.0">' +
-      '<title>A Card For ' + recipient + '</title>' +
+      '<title>A Card For ' + escapeHtml(recipient) + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">' +
       '<svg style="position:absolute;width:0;height:0"><defs>' +
       '<filter id="oil-painting" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="turbulence" baseFrequency="0.015 0.02" numOctaves="3" seed="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="0.8" result="s"/><feColorMatrix in="s" type="saturate" values="1.4"/></filter>' +
@@ -284,6 +488,12 @@
       '.sig{margin-top:40px;font-family:"Dancing Script",cursive;font-size:2rem;color:' + T.accentColor + '}' +
       '.hts{margin-top:12px;font-size:1.2rem;opacity:.6;letter-spacing:10px}' +
       '.bf{text-align:center;padding:20px 0 50px;opacity:0;animation:fu 1.5s ease-out 3.3s forwards}' +
+      '.gift-wrap{max-width:520px;margin:20px auto 40px;padding:18px 16px;border-radius:14px;background:' + T.bg + 'e8;border:1px solid ' + T.accentColor + '33;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.1)}' +
+      '.gift-kicker{font-family:"Outfit",sans-serif;font-size:.66rem;letter-spacing:2px;text-transform:uppercase;opacity:.65}' +
+      '.gift-title{margin:8px 0 12px;font-family:"Playfair Display",serif;font-size:1.1rem}' +
+      '.gift-redeem{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:999px;padding:8px 14px;background:' + T.accentColor + ';color:#fff;text-decoration:none;font-family:"Outfit",sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase}' +
+      '.gift-redeem:disabled{opacity:.6;cursor:not-allowed}' +
+      '.type-cursor{display:inline-block;width:2px;height:1.1em;background:' + T.accentColor + ';vertical-align:text-bottom;animation:blink 1s steps(1,end) infinite}' +
       '.ps{position:fixed;pointer-events:none;z-index:10;opacity:0;animation:sin 4s ease-out forwards}' +
       '.pd{position:fixed;pointer-events:none;z-index:10;border-radius:50%;opacity:0;animation:din 2.5s ease-out forwards}' +
       '@keyframes fu{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}' +
@@ -292,27 +502,30 @@
       '@keyframes gs{0%,100%{transform:rotate(0)}50%{transform:rotate(15deg)}}' +
       '@keyframes tb{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-6px) scale(1.2)}}' +
       '@keyframes pp{0%,100%{border-color:' + T.accentColor + '33;box-shadow:none}50%{border-color:' + T.accentColor + '77;box-shadow:0 0 0 8px ' + T.accentColor + '11}}' +
+      '@keyframes blink{50%{opacity:0}}' +
       '@keyframes sin{0%{transform:scale(0) rotate(0);opacity:.9}15%{transform:scale(.5) rotate(15deg);opacity:.75}40%{opacity:.4}100%{transform:scale(1) rotate(40deg);opacity:0}}' +
       '@keyframes din{0%{transform:scale(0) translateY(0);opacity:.75}40%{opacity:.45}100%{transform:scale(1) translateY(18px);opacity:0}}' +
       '@media(max-width:640px){.gallery{gap:25px}.img-wrapper{width:230px}.frame{padding:10px}.content{padding:20px 15px 40px}.msg{font-size:1.1rem;padding:0 10px}.tp-inner{font-size:.82rem;padding:8px 16px}}' +
       '.powered{text-align:center;padding:10px 0 30px;font-family:"Outfit",sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;opacity:.3}' +
       '.powered a{color:inherit;text-decoration:none}' +
-      '</style></head><body>' +
+      '</style>' + soundInjection.head + '</head><body>' +
+      soundInjection.body +
       '<canvas id="bgCanvas"></canvas><canvas id="ptCanvas"></canvas>' +
       '<div class="content">' +
       '<div class="opening"><div class="wb"></div>' +
       '<p class="sub">' + subtitle + '</p>' +
-      '<h1 class="mt">' + title + '</h1>' +
-      '<p class="gn">' + recipient + '</p>' +
+      '<h1 class="mt">' + escapeHtml(title) + '</h1>' +
+      '<p class="gn">' + escapeHtml(recipient) + '</p>' +
       '<div class="wb2"></div></div>' +
       '<p class="ph"><span class="bi">&#127912;</span>&nbsp; touch anywhere to paint &nbsp;<span class="bi">&#128396;</span></p>' +
       '<div class="gallery">' + photoHTML + '</div>' +
       '<div class="tp"><div class="tp-inner"><span class="th">&#128072;</span> tap the paintings to transform them into art <span class="th">&#128072;</span></div></div>' +
       '<div class="fd"><div class="fl"></div><span class="fi">&#10047;</span><div class="fl"></div></div>' +
-      '<div class="ms"><p class="msg">' + message + '</p>' +
-      '<p class="sig">' + sender + '</p>' +
+      '<div class="ms"><p class="msg" id="finaleMsg">' + message + '</p>' +
+      '<p class="sig" id="finaleSig">' + escapeHtml(sender) + '</p>' +
       '<p class="hts">&#10084; &#10084; &#10084;</p></div>' +
       '<div class="bf"><svg width="50" height="50" viewBox="0 0 50 50" fill="none" style="animation:gs 10s ease-in-out infinite"><ellipse cx="25" cy="27" rx="20" ry="17" fill="' + T.bg + '" stroke="' + T.goldColor + '" stroke-width="1.5" opacity=".8"/><circle cx="15" cy="22" r="4" fill="' + T.accentColor + '" opacity=".6"/><circle cx="25" cy="17" r="3.5" fill="' + T.goldColor + '" opacity=".6"/><circle cx="34" cy="22" r="3.8" fill="' + T.accentColor + '88" opacity=".6"/></svg></div>' +
+      giftHTML +
       '<div class="powered">Made with <a href="/">LiveCard Studio</a></div>' +
       '</div>' +
       '<script>' +
@@ -350,6 +563,7 @@
       'document.addEventListener("mousemove",function(e){if(dn&&Date.now()-lt>45){lt=Date.now();sp(e.clientX,e.clientY)}});' +
       'document.addEventListener("touchmove",function(e){if(e.target.closest(".painting"))return;if(Date.now()-lt>45){lt=Date.now();var t=e.touches[0];sp(t.clientX,t.clientY)}})' +
       '})();' +
+      '(function(){var txt=' + typewriterTextJS + ';var msg=document.getElementById("finaleMsg");if(!msg||!txt)return;var sig=document.getElementById("finaleSig");msg.innerHTML="<span class=\\"type-cursor\\"></span>";var c=msg.querySelector(".type-cursor"),i=0;function step(){if(i>=txt.length){if(c)c.remove();if(sig)sig.style.opacity="1";return}var ch=txt.charAt(i);if(ch==="\\n"){c.insertAdjacentHTML("beforebegin","<br>")}else{c.insertAdjacentText("beforebegin",ch)}i++;var d=(ch==="."||ch===","||ch==="!")?75:(ch==="\\n"?110:22+Math.random()*16);setTimeout(step,d)}if(sig)sig.style.opacity=".25";setTimeout(step,320)})();' +
       '<\/script></body></html>';
   }
 

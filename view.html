@@ -103,9 +103,17 @@ body {
         document.getElementById('error').style.display = 'block';
         return;
       }
+      try {
+        // Render directly to avoid iframe audio restrictions on some mobile browsers.
+        document.open();
+        document.write(html);
+        document.close();
+        return;
+      } catch (_e) {}
+
       var frame = document.getElementById('cardFrame');
       frame.style.display = 'block';
-      frame.innerHTML = '<iframe sandbox="allow-scripts" title="Living card"></iframe>';
+      frame.innerHTML = '<iframe sandbox="allow-scripts allow-popups allow-downloads" allow="autoplay" title="Living card"></iframe>';
       frame.querySelector('iframe').srcdoc = html;
       document.getElementById('footer').style.display = 'block';
     }).catch(function() {

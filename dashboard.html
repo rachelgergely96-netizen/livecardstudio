@@ -3,1274 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LiveCard Studio — Create Living Greeting Cards</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+<title>LiveCard Studio - Create Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="card-render.js"></script>
 <style>
-:root {
-  --bg: #0F0E0D;
-  --surface: #1A1918;
-  --surface2: #242220;
-  --border: #333130;
-  --border-hover: #4A4745;
-  --text: #F0EBE3;
-  --text-dim: #9B9590;
-  --text-muted: #6B6560;
-  --accent: #D4A853;
-  --accent-soft: rgba(212,168,83,0.12);
-  --accent-glow: rgba(212,168,83,0.25);
-  --rose: #C4727F;
-  --rose-soft: rgba(196,114,127,0.12);
-  --cream: #FDF6EC;
-  --radius: 12px;
+:root{
+  --bg:#fdf8f0;--panel:#fff9f2;--line:rgba(200,160,120,.28);--text:#3a2f2a;--muted:#8b6f5e;
+  --brand:#c87941;--brand-soft:rgba(200,121,65,.12);--ok:#4f7b56;--danger:#b15757;
 }
-
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-weight: 300;
-  min-height: 100vh;
-  overflow-x: hidden;
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{
+  position:sticky;top:0;z-index:30;background:rgba(253,248,240,.94);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
 }
-
-/* Ambient background */
-body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background:
-    radial-gradient(ellipse at 15% 20%, rgba(212,168,83,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 80%, rgba(196,114,127,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(168,181,160,0.02) 0%, transparent 60%);
+.logo{font-family:Playfair Display,serif;color:var(--brand);font-size:1.35rem;text-decoration:none}
+.logo span{color:#9f6b4a}
+.user-actions{display:flex;gap:10px;align-items:center}
+.user-email{font-size:.78rem;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;
+  font:500 .78rem/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5a4a3f;
 }
-
-/* ===== HEADER ===== */
-.header {
-  position: relative; z-index:2;
-  padding: 18px 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+.btn:hover{border-color:rgba(200,121,65,.5);color:var(--brand)}
+.btn.brand{background:var(--brand);color:#fff;border-color:transparent}
+.btn.brand:hover{filter:brightness(1.04)}
+.page{max-width:1300px;margin:0 auto;padding:20px 14px 40px}
+.cardshelf{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:none;margin-bottom:16px;
 }
-.logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.35rem; font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.5px;
-  text-decoration: none;
+.cardshelf-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cardshelf h2{margin:0;font:600 1.1rem/1.2 Playfair Display,serif}
+.cardshelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.card-chip{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px}
+.card-chip-title{font:600 .86rem/1.2 Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-chip-sub{margin-top:4px;color:var(--muted);font-size:.72rem}
+.card-chip-actions{margin-top:8px;display:flex;gap:6px}
+.card-chip-actions button,.card-chip-actions a{
+  border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 8px;font-size:.68rem;color:#5a4a3f;text-decoration:none
 }
-.logo span { color: var(--rose); }
-
-.user-nav {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.wizard{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;
 }
-.user-email {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.wizard-head h1{margin:0;font:600 1.7rem/1.2 Playfair Display,serif}
+.wizard-head p{margin:6px 0 0;color:var(--muted);font-size:.9rem}
+.progress{margin-top:14px;height:8px;background:#f0e5d9;border-radius:999px;overflow:hidden}
+.progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),#d4a574);transition:width .25s ease}
+.step-track{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}
+.step-chip{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 8px;min-height:44px;
+  font:500 .7rem/1.2 Inter,sans-serif;color:#7a6555;text-transform:uppercase;letter-spacing:.05em;
 }
-.btn-signout {
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 14px;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-  transition: all 0.2s;
+.step-chip.active{border-color:rgba(200,121,65,.5);background:var(--brand-soft);color:var(--brand)}
+.wizard-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;margin-top:16px}
+.panel{display:none}
+.panel.active{display:block}
+.section-title{font:600 1.1rem/1.3 Playfair Display,serif;margin:0 0 10px}
+.occasion-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.occasion{
+  border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:center;cursor:pointer
 }
-.btn-signout:hover { border-color: var(--border-hover); color: var(--text-dim); }
-
-/* ===== MY CARDS SHELF ===== */
-#myCardsSection {
-  position: relative; z-index:1;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 36px 24px 0;
-  display: none;
+.occasion.active{border-color:rgba(200,121,65,.5);background:var(--brand-soft)}
+.occasion b{display:block;font-size:1.2rem}
+.occasion span{display:block;font-size:.76rem;margin-top:4px}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.field label{font:600 .72rem/1.2 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f5a4c}
+.field input,.field textarea,.field select{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;font:500 .9rem/1.4 Inter,sans-serif;color:#3a2f2a;
 }
-.shelf-heading {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.15rem;
-  color: var(--text);
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.field textarea{min-height:120px;resize:vertical}
+.dropzone{
+  margin-top:10px;border:1.5px dashed var(--line);background:#fff;border-radius:14px;padding:26px 16px;text-align:center;cursor:pointer
 }
-.shelf-heading span { font-size: 0.78rem; color: var(--text-muted); font-family: 'Outfit', sans-serif; }
-.shelf-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 14px;
-  margin-bottom: 36px;
+.dropzone.drag{border-color:rgba(200,121,65,.55);background:var(--brand-soft)}
+.photo-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
+.photo-item{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px}
+.photo-item img{width:100%;height:130px;object-fit:cover;border-radius:10px}
+.photo-actions{display:flex;gap:6px;margin-top:6px}
+.photo-actions button{flex:1}
+.theme-grid,.music-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.theme-card,.music-card{
+  border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;cursor:pointer
 }
-.shelf-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 14px 12px;
-  position: relative;
-  cursor: default;
-  transition: border-color 0.2s;
-  overflow: hidden;
+.theme-card.active,.music-card.active{border-color:rgba(200,121,65,.5);background:var(--brand-soft)}
+.swatches{display:flex;gap:4px;margin-bottom:8px}
+.swatches i{width:14px;height:14px;border-radius:50%;display:block}
+.toggle-row{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;margin-top:8px}
+.toggle-row span{font-size:.86rem}
+.gift-amt{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.gift-amt button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:.8rem}
+.gift-amt button.active{border-color:rgba(200,121,65,.5);background:var(--brand-soft);color:var(--brand)}
+.preview{
+  border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px;position:sticky;top:84px;height:max-content
 }
-.shelf-card::before {
-  content:''; position:absolute; inset:0;
-  opacity: 0.15;
-  background: var(--card-color, var(--accent));
-  pointer-events: none;
+.preview-frame{width:100%;height:500px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#faf5ef}
+.preview-frame iframe{width:100%;height:100%;border:none}
+.summary{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+.summary-row{display:flex;justify-content:space-between;font-size:.82rem;color:#5a4a3f;margin-top:6px}
+.summary-row:first-child{margin-top:0}
+.summary-row.total{font-weight:700;color:#3a2f2a;border-top:1px dashed var(--line);padding-top:6px}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.nav-right{display:flex;gap:8px}
+.toast{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#3a2f2a;color:#fff;padding:10px 14px;
+  border-radius:10px;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:50
 }
-.shelf-card:hover { border-color: var(--border-hover); }
-.shelf-card-icon { font-size: 1.4rem; margin-bottom: 6px; }
-.shelf-card-name {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shelf-card-occasion {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  margin-top: 3px;
-  text-transform: capitalize;
-}
-.shelf-card-del {
-  position: absolute;
-  top: 8px; right: 8px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  cursor: pointer;
-  padding: 2px 5px;
-  border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
-}
-.shelf-card:hover .shelf-card-del { opacity: 1; }
-.shelf-card-del:hover { color: var(--rose); }
-.shelf-card-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-.shelf-card-link:hover { color: inherit; }
-.shelf-empty {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  padding: 24px 0;
-  text-align: center;
-  grid-column: 1 / -1;
-}
-.shelf-divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 0 0 40px;
-}
-
-/* ===== MAIN LAYOUT ===== */
-.app {
-  position: relative; z-index:1;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 24px 80px;
-}
-
-/* ===== STEP NAVIGATION ===== */
-.steps-nav {
-  display: flex; justify-content: center; gap: 8px;
-  margin-bottom: 40px;
-}
-.step-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--border);
-  transition: all 0.4s ease;
-  cursor: pointer;
-}
-.step-dot.active { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); transform: scale(1.2); }
-.step-dot.completed { background: var(--rose); }
-
-.step-label {
-  text-align: center; margin-bottom: 30px;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.5rem; color: var(--text);
-  opacity: 0; animation: fadeIn 0.5s ease forwards;
-}
-.step-label small {
-  display: block; font-family: 'Outfit', sans-serif;
-  font-size: 0.8rem; color: var(--text-muted); font-weight: 300;
-  letter-spacing: 2px; text-transform: uppercase; margin-top: 6px;
-}
-
-/* ===== PANELS ===== */
-.panel {
-  display: none;
-  opacity: 0;
-  transform: translateY(15px);
-}
-.panel.active {
-  display: block;
-  animation: slideIn 0.4s ease forwards;
-}
-
-@keyframes slideIn { to { opacity:1; transform:translateY(0); } }
-@keyframes fadeIn { to { opacity:1; } }
-
-/* ===== STEP 1: OCCASION ===== */
-.occasion-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  max-width: 700px;
-  margin: 0 auto;
-}
-.occasion-card {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 10px; padding: 24px 16px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.occasion-card:hover {
-  border-color: var(--border-hover);
-  background: var(--surface2);
-  transform: translateY(-2px);
-}
-.occasion-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-.occasion-card .icon { font-size: 2rem; }
-.occasion-card .label {
-  font-size: 0.82rem; font-weight: 400;
-  letter-spacing: 1px; text-transform: uppercase;
-  color: var(--text-dim);
-}
-.occasion-card.selected .label { color: var(--accent); }
-
-/* ===== STEP 2: PHOTOS ===== */
-.upload-area {
-  max-width: 600px; margin: 0 auto;
-}
-.dropzone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 50px 30px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--surface);
-}
-.dropzone:hover, .dropzone.dragover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.dropzone-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
-.dropzone-text { color: var(--text-dim); font-size: 0.95rem; }
-.dropzone-text strong { color: var(--accent); font-weight: 500; }
-.dropzone-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
-
-.photo-previews {
-  display: flex; gap: 16px; justify-content: center;
-  margin-top: 20px; flex-wrap: wrap;
-}
-.photo-preview {
-  position: relative; width: 160px; height: 160px;
-  border-radius: 8px; overflow: hidden;
-  border: 2px solid var(--border);
-}
-.photo-preview img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-.photo-remove {
-  position: absolute; top: 6px; right: 6px;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: rgba(0,0,0,0.7); color: white;
-  border: none; cursor: pointer; font-size: 0.75rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
-}
-.photo-remove:hover { background: var(--rose); }
-
-/* ===== STEP 3: CUSTOMIZE ===== */
-.customize-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  max-width: 700px;
-  margin: 0 auto;
-}
-.customize-grid.full-width { grid-template-columns: 1fr; }
-
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label {
-  font-size: 0.75rem; font-weight: 500;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--text-muted);
-}
-.form-group input, .form-group textarea {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem; font-weight: 300;
-  transition: border-color 0.3s;
-  outline: none;
-  resize: vertical;
-}
-.form-group input:focus, .form-group textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.form-group textarea { min-height: 120px; line-height: 1.6; }
-
-/* Theme picker */
-.theme-section { margin-top: 10px; }
-.theme-section label { margin-bottom: 10px; }
-.theme-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 12px;
-}
-.theme-card {
-  padding: 14px 10px; text-align: center;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.theme-card:hover { border-color: var(--border-hover); transform: translateY(-1px); }
-.theme-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-.theme-dots {
-  display: flex; gap: 4px; justify-content: center; margin-bottom: 8px;
-}
-.theme-dots span {
-  width: 14px; height: 14px; border-radius: 50%;
-  display: inline-block;
-}
-.theme-name {
-  font-size: 0.75rem; font-weight: 400;
-  letter-spacing: 1px; text-transform: uppercase;
-  color: var(--text-dim);
-}
-.theme-card.selected .theme-name { color: var(--accent); }
-
-/* ===== STEP 4: PREVIEW / DOWNLOAD ===== */
-.preview-section {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
-}
-.preview-frame {
-  width: 100%;
-  height: 500px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--cream);
-  margin-bottom: 24px;
-}
-.preview-frame iframe {
-  width: 100%; height: 100%; border: none;
-}
-
-.action-buttons {
-  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
-}
-
-/* ===== BUTTONS ===== */
-.btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 28px;
-  border-radius: 8px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.85rem; font-weight: 500;
-  letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-}
-.btn-primary {
-  background: var(--accent);
-  color: var(--bg);
-}
-.btn-primary:hover {
-  background: #E0B860;
-  box-shadow: 0 4px 20px var(--accent-glow);
-  transform: translateY(-1px);
-}
-.btn-secondary {
-  background: transparent;
-  border: 1.5px solid var(--border);
-  color: var(--text-dim);
-}
-.btn-secondary:hover {
-  border-color: var(--text-dim);
-  color: var(--text);
-}
-.btn-rose {
-  background: var(--rose);
-  color: white;
-}
-.btn-rose:hover {
-  background: #D4828E;
-  box-shadow: 0 4px 20px var(--rose-soft);
-}
-
-.btn-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  max-width: 700px; margin: 30px auto 0;
-}
-
-/* Toast */
-.toast {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface2); color: var(--accent);
-  padding: 12px 24px; border-radius: 8px;
-  border: 1px solid var(--accent);
-  font-size: 0.85rem; font-weight: 400;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-  opacity: 0; transition: all 0.4s ease; z-index: 100;
-  pointer-events: none;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* Responsive */
-@media (max-width: 600px) {
-  .customize-grid { grid-template-columns: 1fr; }
-  .occasion-grid { grid-template-columns: repeat(3, 1fr); }
-  .header { padding: 14px 16px; }
-  .logo { font-size: 1.15rem; }
-  .user-email { display: none; }
-  .step-label { font-size: 1.2rem; }
-  .preview-frame { height: 400px; }
-}
+.toast.show{opacity:1}
+@media(max-width:1100px){.wizard-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.step-track{grid-template-columns:repeat(3,minmax(0,1fr))}.user-email{display:none}}
 </style>
 </head>
 <body>
-
-<div class="header">
+<header class="topbar">
   <a href="/" class="logo">Live<span>Card</span> Studio</a>
-  <div class="user-nav">
+  <div class="user-actions">
     <span class="user-email" id="userEmail"></span>
-    <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    <button class="btn" id="signOutBtn">Sign Out</button>
   </div>
-</div>
+</header>
 
-<!-- My Cards shelf (visible once signed in) -->
-<div id="myCardsSection">
-  <div class="shelf-heading">
-    My Cards
-    <span id="cardCount"></span>
-  </div>
-  <div class="shelf-grid" id="shelfGrid"></div>
-  <hr class="shelf-divider">
-</div>
+<main class="page">
+  <section class="cardshelf" id="myCardsSection">
+    <div class="cardshelf-head">
+      <h2>My Cards</h2>
+      <span id="cardCount" class="user-email"></span>
+    </div>
+    <div class="cardshelf-grid" id="shelfGrid"></div>
+  </section>
 
-<div class="app">
-  <!-- Step dots -->
-  <div class="steps-nav">
-    <div class="step-dot active" data-step="1"></div>
-    <div class="step-dot" data-step="2"></div>
-    <div class="step-dot" data-step="3"></div>
-    <div class="step-dot" data-step="4"></div>
-  </div>
+  <section class="wizard">
+    <div class="wizard-head">
+      <h1>Create A Living Card</h1>
+      <p>Follow the full workflow: occasion, photos, message, style, gift, preview.</p>
+      <div class="progress"><i id="progressFill"></i></div>
+      <div class="step-track" id="stepTrack"></div>
+    </div>
 
-  <!-- STEP 1: OCCASION -->
-  <div class="panel active" id="step1">
-    <div class="step-label">What's the occasion? <small>Choose a card type</small></div>
-    <div class="occasion-grid">
-      <div class="occasion-card" data-occasion="birthday">
-        <span class="icon">&#127874;</span>
-        <span class="label">Birthday</span>
-      </div>
-      <div class="occasion-card" data-occasion="wedding">
-        <span class="icon">&#128141;</span>
-        <span class="label">Wedding</span>
-      </div>
-      <div class="occasion-card" data-occasion="baby">
-        <span class="icon">&#128118;</span>
-        <span class="label">New Baby</span>
-      </div>
-      <div class="occasion-card" data-occasion="thankyou">
-        <span class="icon">&#128156;</span>
-        <span class="label">Thank You</span>
-      </div>
-      <div class="occasion-card" data-occasion="holiday">
-        <span class="icon">&#127876;</span>
-        <span class="label">Holiday</span>
-      </div>
-      <div class="occasion-card" data-occasion="anniversary">
-        <span class="icon">&#10024;</span>
-        <span class="label">Anniversary</span>
-      </div>
-      <div class="occasion-card" data-occasion="getwell">
-        <span class="icon">&#127804;</span>
-        <span class="label">Get Well</span>
-      </div>
-      <div class="occasion-card" data-occasion="congrats">
-        <span class="icon">&#127881;</span>
-        <span class="label">Congrats</span>
-      </div>
-    </div>
-    <div class="btn-nav"><div></div><button class="btn btn-primary" id="next1">Continue &#8594;</button></div>
-  </div>
+    <div class="wizard-grid">
+      <div>
+        <section class="panel active" data-step="1">
+          <h3 class="section-title">1. Choose Your Moment</h3>
+          <div class="occasion-grid" id="occasionGrid"></div>
+          <div class="field"><label>Recipient Name</label><input id="recipientName" placeholder="Who is this card for?"></div>
+          <div class="field"><label>Card Title</label><input id="cardTitle" placeholder="Internal title for your dashboard"></div>
+          <div class="field"><label>Your Name</label><input id="senderName" placeholder="Signature name"></div>
+        </section>
 
-  <!-- STEP 2: PHOTOS -->
-  <div class="panel" id="step2">
-    <div class="step-label">Add Your Photos <small>Upload 1-2 photos for your card</small></div>
-    <div class="upload-area">
-      <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">&#128247;</div>
-        <div class="dropzone-text">Drag photos here or <strong>click to browse</strong></div>
-        <div class="dropzone-sub">JPG or PNG &middot; Up to 2 photos &middot; Max 5MB each</div>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple hidden>
-      </div>
-      <div class="photo-previews" id="photoPreviews"></div>
-    </div>
-    <div class="btn-nav">
-      <button class="btn btn-secondary" id="back2">&#8592; Back</button>
-      <button class="btn btn-primary" id="next2">Continue &#8594;</button>
-    </div>
-  </div>
+        <section class="panel" data-step="2">
+          <h3 class="section-title">2. Add Your Photos</h3>
+          <div class="dropzone" id="dropzone">
+            <div style="font-size:1.5rem">📷</div>
+            <div style="margin-top:6px">Drop memories here or click to upload (max 12)</div>
+            <div style="margin-top:4px;color:var(--muted);font-size:.78rem">JPG, PNG, HEIC accepted</div>
+            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          </div>
+          <div class="photo-list" id="photoList"></div>
+        </section>
 
-  <!-- STEP 3: CUSTOMIZE -->
-  <div class="panel" id="step3">
-    <div class="step-label">Make It Yours <small>Personalize the message & style</small></div>
-    <div class="customize-grid">
-      <div class="form-group">
-        <label>Recipient Name</label>
-        <input type="text" id="recipientName" placeholder="e.g. Grandma Sylvia">
-      </div>
-      <div class="form-group">
-        <label>Your Name</label>
-        <input type="text" id="senderName" placeholder="e.g. With love, Sarah">
-      </div>
-    </div>
-    <div class="customize-grid full-width" style="margin-top:18px;">
-      <div class="form-group">
-        <label>Your Message</label>
-        <textarea id="messageText" placeholder="Write something beautiful..."></textarea>
-      </div>
-    </div>
-    <div class="customize-grid full-width theme-section" style="margin-top:18px;">
-      <div class="form-group">
-        <label>Card Theme</label>
-        <div class="theme-grid">
-          <div class="theme-card selected" data-theme="watercolor">
-            <div class="theme-dots">
-              <span style="background:#E8A0B4"></span>
-              <span style="background:#C9B8D9"></span>
-              <span style="background:#A8B5A0"></span>
-              <span style="background:#F0C5A8"></span>
-            </div>
-            <div class="theme-name">Watercolor Garden</div>
+        <section class="panel" data-step="3">
+          <h3 class="section-title">3. Write Your Message</h3>
+          <div class="field">
+            <label>Main Message</label>
+            <textarea id="messageText" placeholder="Write from the heart..."></textarea>
           </div>
-          <div class="theme-card" data-theme="starlit">
-            <div class="theme-dots">
-              <span style="background:#1B2540"></span>
-              <span style="background:#D4A853"></span>
-              <span style="background:#8BA4C4"></span>
-              <span style="background:#C9C0D9"></span>
-            </div>
-            <div class="theme-name">Starlit Night</div>
+          <div class="field">
+            <label>AI Assistant (placeholder)</label>
+            <button class="btn" id="aiSuggestBtn" type="button">Generate Suggestions</button>
           </div>
-          <div class="theme-card" data-theme="golden">
-            <div class="theme-dots">
-              <span style="background:#D4A853"></span>
-              <span style="background:#E8C080"></span>
-              <span style="background:#C47850"></span>
-              <span style="background:#F5E6D0"></span>
-            </div>
-            <div class="theme-name">Golden Hour</div>
+          <div class="field">
+            <label>Section Messages (optional)</label>
+            <div id="sectionMessages"></div>
           </div>
-          <div class="theme-card" data-theme="blossom">
-            <div class="theme-dots">
-              <span style="background:#F4B4C8"></span>
-              <span style="background:#FCDCE8"></span>
-              <span style="background:#98C9A3"></span>
-              <span style="background:#FFF5F7"></span>
-            </div>
-            <div class="theme-name">Cherry Blossom</div>
+        </section>
+
+        <section class="panel" data-step="4">
+          <h3 class="section-title">4. Choose Your Style</h3>
+          <div class="field"><label>Theme</label><div class="theme-grid" id="themeGrid"></div></div>
+          <div class="field"><label>Music</label><div class="music-grid" id="musicGrid"></div></div>
+          <div class="field"><label>Interactive Features</label>
+            <div class="toggle-row"><span>Photo interactions</span><input type="checkbox" id="featPhoto" checked></div>
+            <div class="toggle-row"><span>Brushstroke reveal</span><input type="checkbox" id="featBrush" checked></div>
+            <div class="toggle-row"><span>Paint canvas</span><input type="checkbox" id="featPaint" checked></div>
+            <div class="toggle-row"><span>Confetti finale</span><input type="checkbox" id="featConfetti" checked></div>
           </div>
-          <div class="theme-card" data-theme="aurora">
-            <div class="theme-dots">
-              <span style="background:#78C8B4"></span>
-              <span style="background:#60A8D0"></span>
-              <span style="background:#0A0E1A"></span>
-              <span style="background:#D0E8E0"></span>
-            </div>
-            <div class="theme-name">Aurora Dreams</div>
+        </section>
+
+        <section class="panel" data-step="5">
+          <h3 class="section-title">5. Add A Gift Inside (Optional)</h3>
+          <div class="toggle-row"><span>Include gift card</span><input type="checkbox" id="giftEnabled"></div>
+          <div class="field"><label>Brand</label><select id="giftBrand"></select></div>
+          <div class="field"><label>Amount</label>
+            <div class="gift-amt" id="giftAmounts"></div>
+            <input id="giftCustom" type="number" min="1" step="1" placeholder="Custom amount (USD)" style="margin-top:8px;display:none">
           </div>
-          <div class="theme-card" data-theme="lantern">
-            <div class="theme-dots">
-              <span style="background:#E8B464"></span>
-              <span style="background:#D4944C"></span>
-              <span style="background:#1A1420"></span>
-              <span style="background:#F0DCC0"></span>
-            </div>
-            <div class="theme-name">Lantern Festival</div>
+        </section>
+
+        <section class="panel" data-step="6">
+          <h3 class="section-title">6. Preview & Finish</h3>
+          <p style="margin:0;color:var(--muted)">Open full preview, download HTML, or generate a share link.</p>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="btnOpenPreview" type="button">Open Full Preview</button>
+            <button class="btn" id="btnDownload" type="button">Download HTML</button>
+            <button class="btn brand" id="btnCopyLink" type="button">Copy Share Link</button>
+            <button class="btn" id="btnComplete" type="button">Complete & Send (Beta)</button>
           </div>
-          <div class="theme-card" data-theme="bioluminescence">
-            <div class="theme-dots">
-              <span style="background:#5DD6B8"></span>
-              <span style="background:#56B4DE"></span>
-              <span style="background:#0A1220"></span>
-              <span style="background:#D9F6F0"></span>
-            </div>
-            <div class="theme-name">Deep Bioluminescence</div>
-          </div>
-          <div class="theme-card" data-theme="midnightrain">
-            <div class="theme-dots">
-              <span style="background:#6A8AB8"></span>
-              <span style="background:#4B5D8A"></span>
-              <span style="background:#0B1222"></span>
-              <span style="background:#D3DCF0"></span>
-            </div>
-            <div class="theme-name">Midnight Rain</div>
-          </div>
-          <div class="theme-card" data-theme="sakura">
-            <div class="theme-dots">
-              <span style="background:#E8D4D0"></span>
-              <span style="background:#D4B8B0"></span>
-              <span style="background:#C8A8A0"></span>
-              <span style="background:#F3E8E3"></span>
-            </div>
-            <div class="theme-name">Sakura Wind</div>
-          </div>
-          <div class="theme-card" data-theme="firefly">
-            <div class="theme-dots">
-              <span style="background:#B8C888"></span>
-              <span style="background:#A4B86C"></span>
-              <span style="background:#1A1E2E"></span>
-              <span style="background:#E0E8D0"></span>
-            </div>
-            <div class="theme-name">Firefly Meadow</div>
-          </div>
-          <div class="theme-card" data-theme="constellation">
-            <div class="theme-dots">
-              <span style="background:#C5B8D4"></span>
-              <span style="background:#8BA5C0"></span>
-              <span style="background:#0E0D18"></span>
-              <span style="background:#DCD6E8"></span>
-            </div>
-            <div class="theme-name">Constellation</div>
-          </div>
-          <div class="theme-card" data-theme="gardenbloom">
-            <div class="theme-dots">
-              <span style="background:#E8B4C0"></span>
-              <span style="background:#8BAF8D"></span>
-              <span style="background:#F6F3EC"></span>
-              <span style="background:#5E8B62"></span>
-            </div>
-            <div class="theme-name">Garden Bloom</div>
-          </div>
-          <div class="theme-card" data-theme="gentletide">
-            <div class="theme-dots">
-              <span style="background:#7BA5A8"></span>
-              <span style="background:#E0C8C0"></span>
-              <span style="background:#E5EDE8"></span>
-              <span style="background:#5A8588"></span>
-            </div>
-            <div class="theme-name">Gentle Tide</div>
-          </div>
-          <div class="theme-card" data-theme="goldenhour">
-            <div class="theme-dots">
-              <span style="background:#D4A574"></span>
-              <span style="background:#B8865A"></span>
-              <span style="background:#FDF3E8"></span>
-              <span style="background:#F0D6B0"></span>
-            </div>
-            <div class="theme-name">Golden Hour Sky</div>
-          </div>
-          <div class="theme-card" data-theme="iridescent">
-            <div class="theme-dots">
-              <span style="background:#60C8B0"></span>
-              <span style="background:#4098C0"></span>
-              <span style="background:#1A2418"></span>
-              <span style="background:#80C8A8"></span>
-            </div>
-            <div class="theme-name">Iridescent Butterflies</div>
-          </div>
-          <div class="theme-card" data-theme="lotus">
-            <div class="theme-dots">
-              <span style="background:#E8C898"></span>
-              <span style="background:#D4A070"></span>
-              <span style="background:#080C18"></span>
-              <span style="background:#C89860"></span>
-            </div>
-            <div class="theme-name">Lotus Ceremony</div>
-          </div>
-          <div class="theme-card" data-theme="paperboats">
-            <div class="theme-dots">
-              <span style="background:#D8C8E8"></span>
-              <span style="background:#B0A0C8"></span>
-              <span style="background:#0C101E"></span>
-              <span style="background:#C0B0D8"></span>
-            </div>
-            <div class="theme-name">Paper Boats</div>
-          </div>
-          <div class="theme-card" data-theme="petaldrift">
-            <div class="theme-dots">
-              <span style="background:#C4919B"></span>
-              <span style="background:#A66B78"></span>
-              <span style="background:#FDF6EC"></span>
-              <span style="background:#E7C8CE"></span>
-            </div>
-            <div class="theme-name">Petal Drift</div>
-          </div>
-          <div class="theme-card" data-theme="risingembers">
-            <div class="theme-dots">
-              <span style="background:#F0A030"></span>
-              <span style="background:#D88020"></span>
-              <span style="background:#0E0A08"></span>
-              <span style="background:#E89830"></span>
-            </div>
-            <div class="theme-name">Rising Embers</div>
-          </div>
-          <div class="theme-card" data-theme="wishbottles">
-            <div class="theme-dots">
-              <span style="background:#80D0E8"></span>
-              <span style="background:#60A8C8"></span>
-              <span style="background:#06081A"></span>
-              <span style="background:#80C8E0"></span>
-            </div>
-            <div class="theme-name">Wish Bottles</div>
-          </div>
-          <div class="theme-card" data-theme="dandelions">
-            <div class="theme-dots">
-              <span style="background:#E8D4A0"></span>
-              <span style="background:#C8B080"></span>
-              <span style="background:#1A1428"></span>
-              <span style="background:#D4C090"></span>
-            </div>
-            <div class="theme-name">Wishing Dandelions</div>
+        </section>
+
+        <div class="nav">
+          <button class="btn" id="btnBack" type="button">Back</button>
+          <div class="nav-right">
+            <button class="btn" id="btnSaveDraft" type="button">Save Draft</button>
+            <button class="btn brand" id="btnNext" type="button">Next</button>
           </div>
         </div>
       </div>
-    </div>
-    <div class="btn-nav">
-      <button class="btn btn-secondary" id="back3">&#8592; Back</button>
-      <button class="btn btn-primary" id="next3">Preview Card &#8594;</button>
-    </div>
-  </div>
 
-  <!-- STEP 4: PREVIEW & DOWNLOAD -->
-  <div class="panel" id="step4">
-    <div class="step-label">Your Living Card <small>Preview, download &amp; share</small></div>
-    <div class="preview-section">
-      <div class="preview-frame" id="previewFrame"></div>
-      <div class="action-buttons">
-        <button class="btn btn-primary" id="btnDownload">&#11015; Download Card</button>
-        <button class="btn btn-rose" id="btnCopy">&#128279; Copy Share Link</button>
-        <button class="btn btn-secondary" id="back4">&#8592; Edit</button>
-      </div>
+      <aside class="preview">
+        <div class="preview-frame" id="previewFrame"></div>
+        <div class="summary" id="summaryBox"></div>
+      </aside>
     </div>
-  </div>
-</div>
+  </section>
+</main>
 
 <div class="toast" id="toast"></div>
-
-<script src="card-render.js"></script>
-<script>
-// ================================================================
-// SUPABASE AUTH
-// ================================================================
-var SUPABASE_URL  = 'https://oajeeondcepecnwbxtcu.supabase.co';
-var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hamVlb25kY2VwZWNud2J4dGN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MzMxMTEsImV4cCI6MjA4NzMwOTExMX0.4lBIzEWjFIoSC5f4Lxb1ZBIo0KEYt46XaTPen5xWH_U';
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-var currentUser = null;
-
-// Auth guard — redirect to login if no session
-sb.auth.onAuthStateChange(function(event, session) {
-  if (!session) {
-    window.location.href = '/login.html';
-  } else {
-    currentUser = session.user;
-    initDashboard(session.user);
-  }
-});
-
-function initDashboard(user) {
-  var emailEl = document.getElementById('userEmail');
-  if (emailEl) emailEl.textContent = user.email;
-  loadCards();
-}
-
-function signOut() {
-  sb.auth.signOut().then(function() {
-    window.location.href = '/login.html';
-  });
-}
-
-// ── My Cards shelf ────────────────────────────────────────────────
-var occasionIcons = {
-  birthday:'🎂', wedding:'💍', baby:'🍼', thankyou:'💛',
-  holiday:'✨', anniversary:'🌹', getwell:'💐', congrats:'🎉'
-};
-var themeColors = {
-  watercolor:'#C9B8D9',
-  starlit:'#8BB8D8',
-  golden:'#D4A853',
-  blossom:'#C4727F',
-  aurora:'#78C8B4',
-  lantern:'#E8B464',
-  bioluminescence:'#5DD6B8',
-  midnightrain:'#6A8AB8',
-  sakura:'#D4B8B0',
-  firefly:'#B8C888',
-  constellation:'#C5B8D4',
-  gardenbloom:'#8BAF8D',
-  gentletide:'#7BA5A8',
-  goldenhour:'#D4A574',
-  iridescent:'#60C8B0',
-  lotus:'#D4A070',
-  paperboats:'#B0A0C8',
-  petaldrift:'#C4919B',
-  risingembers:'#F0A030',
-  wishbottles:'#80D0E8',
-  dandelions:'#E8D4A0'
-};
-
-function loadCards() {
-  if (!currentUser) return;
-  sb.from('cards').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).then(function(res) {
-    var section = document.getElementById('myCardsSection');
-    var grid = document.getElementById('shelfGrid');
-    var countEl = document.getElementById('cardCount');
-    if (res.error || !res.data || res.data.length === 0) {
-      if (section) section.style.display = 'none';
-      return;
-    }
-    section.style.display = 'block';
-    countEl.textContent = res.data.length + ' card' + (res.data.length !== 1 ? 's' : '');
-    grid.innerHTML = '';
-    res.data.forEach(function(card) {
-      var col = themeColors[card.theme] || themeColors.watercolor;
-      var icon = occasionIcons[card.occasion] || '💌';
-      var el = document.createElement('div');
-      el.className = 'shelf-card';
-      el.style.setProperty('--card-color', col);
-      el.innerHTML =
-        '<button class="shelf-card-del" title="Delete" onclick="deleteCard(\'' + card.id + '\',event)">✕</button>' +
-        '<a href="/c/' + card.id + '" class="shelf-card-link">' +
-        '<div class="shelf-card-icon">' + icon + '</div>' +
-        '<div class="shelf-card-name">' + escHtml(card.recipient_name || 'Someone Special') + '</div>' +
-        '<div class="shelf-card-occasion">' + escHtml(card.occasion || '') + ' · ' + escHtml(card.theme || '') + '</div>' +
-        '</a>';
-      grid.appendChild(el);
-    });
-  });
-}
-
-function deleteCard(id, e) {
-  e.stopPropagation();
-  if (!confirm('Delete this card?')) return;
-  sb.from('cards').delete().eq('id', id).then(function() { loadCards(); });
-}
-
-function saveCardToDB() {
-  if (!currentUser) return Promise.resolve(null);
-  var payload = {
-    user_id:        currentUser.id,
-    occasion:       state.occasion,
-    recipient_name: state.recipientName || 'Someone Special',
-    sender_name:    state.senderName,
-    message:        state.message,
-    theme:          state.theme,
-    photos:         JSON.stringify(state.photos.map(function(p) { return p.dataUrl; }))
-  };
-  return sb.from('cards').insert(payload).select('id').single().then(function(res) {
-    if (res.data) loadCards();
-    return res.data ? res.data.id : null;
-  });
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ================================================================
-// APP STATE
-// ================================================================
-var state = {
-  step: 1,
-  occasion: '',
-  photos: [],       // {dataUrl, name}
-  recipientName: '',
-  senderName: '',
-  message: '',
-  theme: 'watercolor',
-  currentCardId: null   // set after first save (download or share) to avoid duplicate cards
-};
-
-// Default messages per occasion
-var defaultMessages = {
-  birthday: "Wishing you a day painted with joy,\nwarmth, and all the colors of happiness.\n\nMay this year bring you\nbeautiful new brushstrokes\non the canvas of your life.",
-  wedding: "Two hearts, one beautiful story.\n\nMay your love be a masterpiece\nthat grows more exquisite\nwith every passing year.",
-  baby: "Welcome to the world, little one.\n\nYou are the most beautiful\nwork of art we've ever seen.\nThe world is brighter\nnow that you're here.",
-  thankyou: "Some people make the world\nmore beautiful just by being in it.\n\nThank you for being one of them.\nYour kindness is a gift\nI carry with me always.",
-  holiday: "Wishing you a season\nfilled with warmth, wonder,\nand moments that shimmer\nlike the most beautiful painting.\n\nMay the new year bring\nfresh colors to your world.",
-  anniversary: "Year after year,\nyour love paints something\nmore beautiful than the last.\n\nHere's to the masterpiece\nyou continue to create together.",
-  getwell: "Sending you gentle colors\nof warmth and healing.\n\nMay each day bring you\na little more brightness,\na little more strength,\nand the comfort of knowing\nyou are deeply loved.",
-  congrats: "What an incredible moment!\n\nYou've painted something\ntruly extraordinary,\nand the world is\nmore beautiful for it.\n\nCheers to you and\nall that's ahead."
-};
-
-var defaultSubtitles = {
-  birthday: 'wishing a very special',
-  wedding: 'celebrating the love of',
-  baby: 'welcoming with love',
-  thankyou: 'with heartfelt gratitude for',
-  holiday: 'warm wishes for',
-  anniversary: 'celebrating the love of',
-  getwell: 'sending healing thoughts to',
-  congrats: 'so proud of'
-};
-
-var defaultTitles = {
-  birthday: 'Happy Birthday',
-  wedding: 'Congratulations',
-  baby: 'Welcome Little One',
-  thankyou: 'Thank You',
-  holiday: 'Happy Holidays',
-  anniversary: 'Happy Anniversary',
-  getwell: 'Get Well Soon',
-  congrats: 'Congratulations'
-};
-
-// ================================================================
-// THEME DEFINITIONS
-// ================================================================
-var themes = {
-  watercolor: {
-    bg: '#FDF6EC',
-    textColor: '#8B6F5C',
-    accentColor: '#C4727F',
-    goldColor: '#D4A853',
-    borderTop: 'linear-gradient(90deg, transparent, #E8A0B4, #C9B8D9, #A8B5A0, transparent)',
-    borderBot: 'linear-gradient(90deg, transparent, #F0C5A8, #D4A853, #E8A0B4, transparent)',
-    blobs: [
-      {r:232,g:160,b:180,a:0.06},{r:201,g:184,b:217,a:0.05},{r:168,g:181,b:160,a:0.05},
-      {r:240,g:197,b:168,a:0.055},{r:212,g:168,b:83,a:0.035},{r:196,g:180,b:200,a:0.04},
-      {r:180,g:210,b:200,a:0.04},{r:220,g:170,b:190,a:0.045},{r:190,g:200,b:180,a:0.035}
-    ],
-    petals: ['rgba(232,160,180,','rgba(201,184,217,','rgba(212,168,83,','rgba(240,197,168,','rgba(168,181,160,','rgba(196,114,127,'],
-    petalShape: 'petal',
-    frame: 'linear-gradient(145deg,#D4A853,#E8C97A,#B8903E,#D4A853,#E8C97A)',
-    frameInner: '#F5EDE0',
-    badgeColors: ['#C4727F','#8B6F5C','#5B8FAF','#A09888','#E8467C','#6B7F62','#9B7CB8','#B8903E']
-  },
-  starlit: {
-    bg: '#0C1225',
-    textColor: '#C8C0D8',
-    accentColor: '#D4A853',
-    goldColor: '#8BA4C4',
-    borderTop: 'linear-gradient(90deg, transparent, #D4A853, #8BA4C4, #D4A853, transparent)',
-    borderBot: 'linear-gradient(90deg, transparent, #8BA4C4, #C9C0D9, #D4A853, transparent)',
-    blobs: [
-      {r:30,g:50,b:100,a:0.08},{r:80,g:100,b:160,a:0.05},{r:100,g:80,b:140,a:0.04},
-      {r:212,g:168,b:83,a:0.025},{r:60,g:80,b:130,a:0.06},{r:140,g:130,b:180,a:0.035},
-      {r:50,g:70,b:120,a:0.05},{r:90,g:110,b:160,a:0.04},{r:70,g:60,b:110,a:0.045}
-    ],
-    petals: ['rgba(212,168,83,','rgba(200,200,230,','rgba(140,170,210,','rgba(180,170,210,','rgba(255,230,160,','rgba(160,180,220,'],
-    petalShape: 'circle',
-    frame: 'linear-gradient(145deg,#3A3550,#4A4565,#2A2540,#3A3550,#4A4565)',
-    frameInner: '#1A1830',
-    badgeColors: ['#D4A853','#6B80A0','#8B7AB0','#A09888','#C4A050','#708090','#9B7CB8','#B8903E']
-  },
-  golden: {
-    bg: '#FBF5EA',
-    textColor: '#7A5C40',
-    accentColor: '#C47850',
-    goldColor: '#D4A853',
-    borderTop: 'linear-gradient(90deg, transparent, #D4A853, #E8C080, #C47850, transparent)',
-    borderBot: 'linear-gradient(90deg, transparent, #C47850, #D4A853, #E8C080, transparent)',
-    blobs: [
-      {r:212,g:168,b:83,a:0.06},{r:232,g:192,b:128,a:0.05},{r:196,g:120,b:80,a:0.04},
-      {r:245,g:230,b:208,a:0.06},{r:220,g:180,b:100,a:0.04},{r:200,g:150,b:100,a:0.035},
-      {r:240,g:210,b:160,a:0.045},{r:180,g:140,b:90,a:0.03},{r:230,g:200,b:140,a:0.04}
-    ],
-    petals: ['rgba(212,168,83,','rgba(232,192,128,','rgba(196,120,80,','rgba(245,230,208,','rgba(220,180,100,','rgba(200,160,110,'],
-    petalShape: 'circle',
-    frame: 'linear-gradient(145deg,#D4A853,#E8C97A,#B8903E,#D4A853,#E8C97A)',
-    frameInner: '#F8F0E0',
-    badgeColors: ['#C47850','#8B6F5C','#B8903E','#A09060','#D4A853','#907050','#C49060','#8B7040']
-  },
-  blossom: {
-    bg: '#FFF8FA',
-    textColor: '#8B6070',
-    accentColor: '#D4829A',
-    goldColor: '#98C9A3',
-    borderTop: 'linear-gradient(90deg, transparent, #F4B4C8, #98C9A3, #FCDCE8, transparent)',
-    borderBot: 'linear-gradient(90deg, transparent, #98C9A3, #F4B4C8, #FCDCE8, transparent)',
-    blobs: [
-      {r:244,g:180,b:200,a:0.06},{r:252,g:220,b:232,a:0.05},{r:152,g:201,b:163,a:0.04},
-      {r:255,g:240,b:245,a:0.05},{r:230,g:170,b:190,a:0.045},{r:180,g:220,b:190,a:0.035},
-      {r:250,g:200,b:215,a:0.04},{r:170,g:210,b:180,a:0.03},{r:240,g:190,b:205,a:0.04}
-    ],
-    petals: ['rgba(244,180,200,','rgba(252,220,232,','rgba(255,200,215,','rgba(230,170,190,','rgba(152,201,163,','rgba(250,190,210,'],
-    petalShape: 'petal',
-    frame: 'linear-gradient(145deg,#E8C0D0,#F0D0E0,#D0A8B8,#E8C0D0,#F0D0E0)',
-    frameInner: '#FFF5F7',
-    badgeColors: ['#D4829A','#98C9A3','#B08898','#A0B8A8','#E890A8','#80B090','#C090B0','#A8C0A0']
-  }
-};
-
-// ================================================================
-// STEP NAVIGATION
-// ================================================================
-function goToStep(n) {
-  state.step = n;
-  if (n === 1) state.currentCardId = null;
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('step' + n).classList.add('active');
-  document.querySelectorAll('.step-dot').forEach(function(d, i) {
-    d.classList.remove('active','completed');
-    if (i + 1 === n) d.classList.add('active');
-    else if (i + 1 < n) d.classList.add('completed');
-  });
-  if (n === 4) generatePreview();
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
-// Step dots click
-document.querySelectorAll('.step-dot').forEach(function(d) {
-  d.addEventListener('click', function() {
-    var s = parseInt(this.dataset.step);
-    if (s <= state.step || s === state.step + 1) goToStep(s);
-  });
-});
-
-// Nav buttons
-document.getElementById('next1').addEventListener('click', function() { if (state.occasion) goToStep(2); else showToast('Please choose an occasion'); });
-document.getElementById('next2').addEventListener('click', function() { if (state.photos.length > 0) goToStep(3); else showToast('Please upload at least one photo'); });
-document.getElementById('next3').addEventListener('click', function() {
-  state.recipientName = document.getElementById('recipientName').value || 'Someone Special';
-  state.senderName = document.getElementById('senderName').value || 'With love';
-  state.message = document.getElementById('messageText').value || defaultMessages[state.occasion] || defaultMessages.birthday;
-  goToStep(4);
-});
-document.getElementById('back2').addEventListener('click', function() { goToStep(1); });
-document.getElementById('back3').addEventListener('click', function() { goToStep(2); });
-document.getElementById('back4').addEventListener('click', function() { goToStep(3); });
-
-// ================================================================
-// OCCASION SELECTION
-// ================================================================
-document.querySelectorAll('.occasion-card').forEach(function(card) {
-  card.addEventListener('click', function() {
-    document.querySelectorAll('.occasion-card').forEach(function(c) { c.classList.remove('selected'); });
-    this.classList.add('selected');
-    state.occasion = this.dataset.occasion;
-    // Set default message
-    document.getElementById('messageText').value = defaultMessages[state.occasion] || '';
-  });
-});
-
-// ================================================================
-// PHOTO UPLOAD
-// ================================================================
-var dropzone = document.getElementById('dropzone');
-var fileInput = document.getElementById('fileInput');
-
-dropzone.addEventListener('click', function() { fileInput.click(); });
-dropzone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
-dropzone.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
-dropzone.addEventListener('drop', function(e) {
-  e.preventDefault(); this.classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
-});
-fileInput.addEventListener('change', function() { handleFiles(this.files); this.value = ''; });
-
-function handleFiles(files) {
-  for (var i = 0; i < files.length && state.photos.length < 2; i++) {
-    var file = files[i];
-    if (!file.type.match('image.*')) continue;
-    if (file.size > 5 * 1024 * 1024) { showToast('File too large (max 5MB)'); continue; }
-    (function(f) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        // Resize for embedding
-        var img = new Image();
-        img.onload = function() {
-          var canvas = document.createElement('canvas');
-          var max = 700;
-          var w = img.width, h = img.height;
-          if (w > max || h > max) {
-            if (w > h) { h = h * max / w; w = max; }
-            else { w = w * max / h; h = max; }
-          }
-          canvas.width = w; canvas.height = h;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          state.photos.push({ dataUrl: dataUrl, name: f.name });
-          renderPreviews();
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(f);
-    })(file);
-  }
-}
-
-function renderPreviews() {
-  var container = document.getElementById('photoPreviews');
-  container.innerHTML = '';
-  state.photos.forEach(function(p, i) {
-    var div = document.createElement('div');
-    div.className = 'photo-preview';
-    div.innerHTML = '<img src="' + p.dataUrl + '"><button class="photo-remove" data-idx="' + i + '">&times;</button>';
-    container.appendChild(div);
-  });
-  container.querySelectorAll('.photo-remove').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      state.photos.splice(parseInt(this.dataset.idx), 1);
-      renderPreviews();
-    });
-  });
-}
-
-// ================================================================
-// THEME SELECTION
-// ================================================================
-document.querySelectorAll('.theme-card').forEach(function(card) {
-  card.addEventListener('click', function() {
-    document.querySelectorAll('.theme-card').forEach(function(c) { c.classList.remove('selected'); });
-    this.classList.add('selected');
-    state.theme = this.dataset.theme;
-  });
-});
-
-// ================================================================
-// TOAST
-// ================================================================
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2500);
-}
-
-// ================================================================
-// CARD GENERATOR — builds standalone HTML
-// ================================================================
-function generateCardHTML() {
-  var card = {
-    occasion: state.occasion || 'birthday',
-    recipient_name: state.recipientName || 'Someone Special',
-    sender_name: state.senderName || 'With love',
-    message: state.message || defaultMessages[state.occasion] || defaultMessages.birthday,
-    theme: state.theme,
-    photos: state.photos.map(function(p) { return p.dataUrl; })
-  };
-  var render = window.LiveCardRender;
-  if (!render) return Promise.resolve('');
-  if (render.buildCardHTMLAsync) return render.buildCardHTMLAsync(card);
-  return Promise.resolve(render.buildCardHTML ? render.buildCardHTML(card) : '');
-}
-
-// ================================================================
-// PREVIEW & DOWNLOAD
-// ================================================================
-function generatePreview() {
-  var frame = document.getElementById('previewFrame');
-  frame.innerHTML = '<div style="padding:22px;text-align:center;color:var(--text-muted);font-size:.8rem;">Rendering preview...</div>';
-  generateCardHTML().then(function(html) {
-    if (!html) {
-      frame.innerHTML = '<div style="padding:22px;text-align:center;color:var(--rose);font-size:.8rem;">Could not render this theme.</div>';
-      return;
-    }
-    frame.innerHTML = '<iframe sandbox="allow-scripts"></iframe>';
-    var iframe = frame.querySelector('iframe');
-    iframe.srcdoc = html;
-  }).catch(function() {
-    frame.innerHTML = '<div style="padding:22px;text-align:center;color:var(--rose);font-size:.8rem;">Could not render this theme.</div>';
-  });
-}
-
-document.getElementById('btnDownload').addEventListener('click', function() {
-  function doDownload() {
-    generateCardHTML().then(function(html) {
-      if (!html) {
-        showToast('Could not render this theme.');
-        return;
-      }
-      var blob = new Blob([html], { type: 'text/html' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'livecard-for-' + (state.recipientName || 'you').toLowerCase().replace(/[^a-z0-9]/g, '-') + '.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('Card downloaded! ✨');
-    }).catch(function() {
-      showToast('Could not render this theme.');
-    });
-  }
-  if (state.currentCardId) {
-    doDownload();
-  } else {
-    saveCardToDB().then(function(id) {
-      if (id) state.currentCardId = id;
-      doDownload();
-    });
-  }
-});
-
-document.getElementById('btnCopy').addEventListener('click', function() {
-  function copyShareLink(id) {
-    var shareUrl = window.location.origin + '/c/' + id;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareUrl).then(function() {
-        showToast('Share link copied! ✨');
-      }).catch(function() { showToast(shareUrl); });
-    } else {
-      showToast('Share link: ' + shareUrl);
-    }
-  }
-  if (state.currentCardId) {
-    copyShareLink(state.currentCardId);
-  } else {
-    saveCardToDB().then(function(id) {
-      if (id) {
-        state.currentCardId = id;
-        copyShareLink(id);
-      } else {
-        showToast('Please sign in to share.');
-      }
-    });
-  }
-});
-</script>
+<script src="js/dashboard-wizard.js"></script>
 </body>
 </html>
-
-
