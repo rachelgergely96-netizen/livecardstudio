@@ -4,14 +4,31 @@ import { SignOutButton } from '@/components/auth/signout-button';
 import { CreateWizard } from '@/components/studio/create-wizard';
 import { auth } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
+import { buildCreateThemeUrl, parseCreateThemePreset } from '@/lib/themes/presets';
 
-export default async function CreatePage({ searchParams }: { searchParams?: { cardId?: string } }) {
+type CreateSearchParams = {
+  cardId?: string;
+  tier?: string;
+  quickTheme?: string;
+  premiumTheme?: string;
+  occasion?: string;
+};
+
+export default async function CreatePage({ searchParams }: { searchParams?: CreateSearchParams }) {
+  const preset = parseCreateThemePreset(searchParams);
   const session = await auth();
   if (!session?.user?.id) {
-    redirect('/login?callbackUrl=/create');
+    const callbackUrl = buildCreateThemeUrl(preset, { cardId: searchParams?.cardId });
+    redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   let initialCard: Record<string, unknown> | undefined;
+
+  if (!searchParams?.cardId && Object.keys(preset).length > 0) {
+    initialCard = {
+      ...preset
+    };
+  }
 
   if (searchParams?.cardId) {
     let card = null;

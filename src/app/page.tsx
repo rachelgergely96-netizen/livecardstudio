@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { ArrowRight, Gift, ImageIcon, Music2, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  BUILT_THEME_DEMOS,
+  getThemeDemoName,
+  getThemeDemoPreviewUrl,
+  getThemeDemoStartUrl
+} from '@/lib/themes/catalog';
+import { cardTierLabels } from '@/types/card';
 
 const steps = [
   {
@@ -51,6 +58,7 @@ export default function LandingPage() {
         </Link>
         <nav className="hidden gap-7 text-sm text-brand-muted md:flex">
           <a href="#how">How it works</a>
+          <a href="#themes">Theme demos</a>
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
         </nav>
@@ -155,6 +163,50 @@ export default function LandingPage() {
               src="/c/demo"
               className="mt-5 h-[520px] w-full rounded-2xl border border-[rgba(200,160,120,0.2)] bg-[#fffaf3]"
             />
+          </div>
+        </section>
+
+        <section id="themes" className="pt-14">
+          <p className="ui-label text-center">Theme Demo Gallery</p>
+          <h3 className="section-title mt-3 text-center text-4xl">Choose the visual world for your card</h3>
+          <p className="serif-copy mt-3 text-center text-xl text-brand-body">
+            Preview every built theme, then jump straight into creation with that style preselected.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {BUILT_THEME_DEMOS.map((theme) => {
+              const name = getThemeDemoName(theme);
+              const previewUrl = getThemeDemoPreviewUrl(theme);
+              const startUrl = getThemeDemoStartUrl(theme);
+
+              return (
+                <article key={theme.id} className="card-panel overflow-hidden p-4">
+                  <div
+                    className="h-28 rounded-xl"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
+                    }}
+                  />
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <h4 className="section-title text-2xl">{name}</h4>
+                    <span className="rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf3] px-2 py-1 text-xs text-brand-muted">
+                      {cardTierLabels[theme.tier]}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs uppercase tracking-[0.08em] text-brand-muted">{theme.collection}</p>
+                  <p className="serif-copy mt-2 text-lg text-brand-body">{theme.description}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link href={previewUrl} target="_blank">
+                      <Button tone="secondary" className="px-3 py-2 text-xs">
+                        View Demo
+                      </Button>
+                    </Link>
+                    <Link href={startUrl}>
+                      <Button className="px-3 py-2 text-xs">Start From This Theme</Button>
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
 
