@@ -5,7 +5,7 @@ import { CreateWizard } from '@/components/studio/create-wizard';
 import { auth } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 
-export default async function CreatePage({ searchParams }: { searchParams: { cardId?: string } }) {
+export default async function CreatePage({ searchParams }: { searchParams?: { cardId?: string } }) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/create');
@@ -13,7 +13,7 @@ export default async function CreatePage({ searchParams }: { searchParams: { car
 
   let initialCard: Record<string, unknown> | undefined;
 
-  if (searchParams.cardId) {
+  if (searchParams?.cardId) {
     const card = await prisma.card.findFirst({
       where: {
         id: searchParams.cardId,

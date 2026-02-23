@@ -6,9 +6,9 @@ import { auth } from '@/lib/auth/session';
 export default async function SignupPage({
   searchParams
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams?: { callbackUrl?: string };
 }) {
-  const callbackUrl = normalizeCallbackUrl(searchParams.callbackUrl, '/dashboard');
+  const callbackUrl = normalizeCallbackUrl(searchParams?.callbackUrl, '/dashboard');
   const session = await auth();
   if (session?.user?.id) {
     redirect(callbackUrl);

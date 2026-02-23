@@ -6,10 +6,17 @@ import { auth } from '@/lib/auth/session';
 export default async function LoginPage({
   searchParams
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams?: { callbackUrl?: string };
 }) {
-  const callbackUrl = normalizeCallbackUrl(searchParams.callbackUrl, '/dashboard');
-  const session = await auth();
+  const callbackUrl = normalizeCallbackUrl(searchParams?.callbackUrl, '/dashboard');
+  let session: Awaited<ReturnType<typeof auth>> | null = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error('Failed to resolve session on /login', error);
+  }
+
   if (session?.user?.id) {
     redirect(callbackUrl);
   }
