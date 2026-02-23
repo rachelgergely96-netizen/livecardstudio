@@ -14,18 +14,23 @@ export default async function CreatePage({ searchParams }: { searchParams?: { ca
   let initialCard: Record<string, unknown> | undefined;
 
   if (searchParams?.cardId) {
-    const card = await prisma.card.findFirst({
-      where: {
-        id: searchParams.cardId,
-        userId: session.user.id
-      },
-      include: {
-        photos: {
-          orderBy: { sortOrder: 'asc' }
+    let card = null;
+    try {
+      card = await prisma.card.findFirst({
+        where: {
+          id: searchParams.cardId,
+          userId: session.user.id
         },
-        giftCard: true
-      }
-    });
+        include: {
+          photos: {
+            orderBy: { sortOrder: 'asc' }
+          },
+          giftCard: true
+        }
+      });
+    } catch (error) {
+      console.error('Failed to load existing card for /create.', error);
+    }
 
     if (card) {
       initialCard = {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CardStatus } from '@prisma/client';
+import { CardStatus, Prisma } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/auth/signout-button';
 import { CopyLinkButton } from '@/components/dashboard/copy-link-button';
@@ -22,57 +22,77 @@ const sortMap: Record<string, 'asc' | 'desc'> = {
   mostviewed: 'desc'
 };
 
+const dashboardCardInclude = {
+  photos: {
+    select: {
+      base64Data: true,
+      processedUrl: true,
+      originalUrl: true
+    },
+    orderBy: { sortOrder: 'asc' as const },
+    take: 1
+  }
+} satisfies Prisma.CardInclude;
+
+type DashboardCard = Prisma.CardGetPayload<{
+  include: typeof dashboardCardInclude;
+}>;
+
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams: { filter?: string; sort?: string };
+  searchParams?: { filter?: string; sort?: string };
 }) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/dashboard');
   }
 
-  const activeFilter = searchParams.filter || 'all';
-  const activeSort = searchParams.sort || 'newest';
+  const activeFilter = searchParams?.filter || 'all';
+  const activeSort = searchParams?.sort || 'newest';
 
-  const cards = await prisma.card.findMany({
-    where: {
-      userId: session.user.id,
-      status: filterMap[activeFilter]
-    },
-    include: {
-      photos: {
-        select: {
-          base64Data: true,
-          processedUrl: true,
-          originalUrl: true
-        },
-        orderBy: { sortOrder: 'asc' },
-        take: 1
+  let cards: DashboardCard[] = [];
+  let statsCount = 0;
+  let statsViews = 0;
+  let sentThisMonth = 0;
+  let studioDataUnavailable = false;
+
+  try {
+    cards = await prisma.card.findMany({
+      where: {
+        userId: session.user.id,
+        status: filterMap[activeFilter]
+      },
+      include: dashboardCardInclude,
+      orderBy:
+        activeSort === 'mostviewed'
+          ? { viewCount: sortMap[activeSort] }
+          : {
+              createdAt: sortMap[activeSort]
+            }
+    });
+
+    const stats = await prisma.card.aggregate({
+      _count: { id: true },
+      _sum: { viewCount: true },
+      where: { userId: session.user.id }
+    });
+
+    sentThisMonth = await prisma.card.count({
+      where: {
+        userId: session.user.id,
+        publishedAt: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        }
       }
-    },
-    orderBy:
-      activeSort === 'mostviewed'
-        ? { viewCount: sortMap[activeSort] }
-        : {
-            createdAt: sortMap[activeSort]
-          }
-  });
+    });
 
-  const stats = await prisma.card.aggregate({
-    _count: { id: true },
-    _sum: { viewCount: true },
-    where: { userId: session.user.id }
-  });
-
-  const sentThisMonth = await prisma.card.count({
-    where: {
-      userId: session.user.id,
-      publishedAt: {
-        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      }
-    }
-  });
+    statsCount = stats._count.id;
+    statsViews = stats._sum.viewCount || 0;
+  } catch (error) {
+    studioDataUnavailable = true;
+    console.error('Failed to load dashboard data.', error);
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-8">
@@ -93,17 +113,24 @@ export default async function DashboardPage({
       <section className="mb-6 grid gap-3 md:grid-cols-3">
         <article className="card-panel p-4">
           <p className="ui-label">Total cards</p>
-          <p className="section-title mt-2 text-4xl">{stats._count.id}</p>
+          <p className="section-title mt-2 text-4xl">{statsCount}</p>
         </article>
         <article className="card-panel p-4">
           <p className="ui-label">Total views</p>
-          <p className="section-title mt-2 text-4xl">{stats._sum.viewCount || 0}</p>
+          <p className="section-title mt-2 text-4xl">{statsViews}</p>
         </article>
         <article className="card-panel p-4">
           <p className="ui-label">Cards sent this month</p>
           <p className="section-title mt-2 text-4xl">{sentThisMonth}</p>
         </article>
       </section>
+
+      {studioDataUnavailable ? (
+        <section className="mb-6 rounded-2xl border border-[rgba(200,160,120,0.28)] bg-[#fffaf3] p-4 text-sm text-brand-muted">
+          Dashboard data is temporarily unavailable due to server configuration. Check database/auth environment
+          variables and recent migrations.
+        </section>
+      ) : null}
 
       <section className="mb-5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2 text-sm">

@@ -63,6 +63,25 @@ export function SignupForm() {
     router.refresh();
   }
 
+  async function handleGoogleSignup() {
+    setLoading(true);
+    setStatus('');
+
+    const result = await signIn('google', {
+      callbackUrl,
+      redirect: false
+    });
+
+    setLoading(false);
+
+    if (result?.error || !result?.url) {
+      setStatus('Google sign-up is not available right now. Configure Google OAuth or sign up with email/password.');
+      return;
+    }
+
+    window.location.href = result.url;
+  }
+
   return (
     <div className="card-panel mx-auto w-full max-w-md p-7">
       <p className="ui-label">Create account</p>
@@ -105,12 +124,7 @@ export function SignupForm() {
         </Button>
       </form>
 
-      <Button
-        type="button"
-        tone="secondary"
-        className="mt-4 w-full"
-        onClick={() => signIn('google', { callbackUrl })}
-      >
+      <Button type="button" tone="secondary" className="mt-4 w-full" onClick={handleGoogleSignup} disabled={loading}>
         Continue with Google
       </Button>
 

@@ -41,7 +41,22 @@ export function LoginForm() {
   }
 
   async function handleGoogleLogin() {
-    await signIn('google', { callbackUrl });
+    setLoading(true);
+    setStatus('');
+
+    const result = await signIn('google', {
+      callbackUrl,
+      redirect: false
+    });
+
+    setLoading(false);
+
+    if (result?.error || !result?.url) {
+      setStatus('Google sign-in is not available right now. Use email/password or configure Google OAuth.');
+      return;
+    }
+
+    window.location.href = result.url;
   }
 
   async function handleMagicLink() {
@@ -62,7 +77,7 @@ export function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setStatus('Could not send the magic link email.');
+      setStatus('Could not send the magic link email. Configure email provider or use password login.');
       return;
     }
 

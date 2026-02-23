@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { Plan } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -8,6 +9,16 @@ import GoogleProvider from 'next-auth/providers/google';
 import { buildMagicLinkEmail, sendEmail } from '@/lib/integrations/email';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
+
+const authSecret =
+  env.NEXTAUTH_SECRET ||
+  createHash('sha256')
+    .update(`${env.DATABASE_URL || 'livecardstudio'}:${env.NEXTAUTH_URL || 'https://livecardstudio.com'}`)
+    .digest('hex');
+
+if (!env.NEXTAUTH_SECRET) {
+  console.warn('NEXTAUTH_SECRET is missing. Using deterministic fallback secret. Configure NEXTAUTH_SECRET in production.');
+}
 
 const providers: AuthOptions['providers'] = [
   CredentialsProvider({
@@ -21,23 +32,28 @@ const providers: AuthOptions['providers'] = [
         return null;
       }
 
-      const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-      if (!user?.passwordHash) {
+      try {
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        if (!user?.passwordHash) {
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        if (!isValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          plan: user.plan
+        };
+      } catch (error) {
+        console.error('Credentials authorize failed.', error);
         return null;
       }
-
-      const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-      if (!isValid) {
-        return null;
-      }
-
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        plan: user.plan
-      };
     }
   })
 ];
@@ -67,6 +83,7 @@ providers.push(
 );
 
 export const authOptions: AuthOptions = {
+  secret: authSecret,
   adapter: PrismaAdapter(prisma),
   providers,
   session: {
@@ -83,10 +100,14 @@ export const authOptions: AuthOptions = {
       }
 
       if (!token.id && token.email) {
-        const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.plan = dbUser.plan;
+        try {
+          const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.plan = dbUser.plan;
+          }
+        } catch (error) {
+          console.error('JWT callback user lookup failed.', error);
         }
       }
 
