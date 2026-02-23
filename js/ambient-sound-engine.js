@@ -61,6 +61,8 @@
       this.started = false;
       this.stopped = false;
       this._scheduled = [];
+      this._startPromise = null;
+      this._targetVolume = 0.8;
     }
 
     _ctx() {
@@ -125,22 +127,32 @@
     }
 
     start() {
-      if (this.stopped) return;
+      if (this.stopped) return Promise.resolve(false);
+      if (this.started) return Promise.resolve(true);
+      if (this._startPromise) return this._startPromise;
       const ctx = this._ctx();
-      if (ctx.state === 'suspended') ctx.resume();
+      const boot = () => {
+        if (this.stopped || this.started) return true;
+        this.started = true;
+        const t0 = ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(t0);
+        this.masterGain.gain.setValueAtTime(0, t0);
+        this.masterGain.gain.linearRampToValueAtTime(this._targetVolume, t0 + 0.25);
 
-      this.started = true;
-      const t0 = ctx.currentTime;
+        if (this.themeType === 'ocean') this._startOcean(ctx, t0);
+        else if (this.themeType === 'garden') this._startGarden(ctx, t0);
+        else if (this.themeType === 'fire') this._startFire(ctx, t0);
+        else if (this.themeType === 'starfield') this._startStarfield(ctx, t0);
+        else if (this.themeType === 'celebration') this._startCelebration(ctx, t0);
+        else this._startStarfield(ctx, t0);
+        return true;
+      };
 
-      this.masterGain.gain.setValueAtTime(0, t0);
-      this.masterGain.gain.linearRampToValueAtTime(1, t0 + 2);
-
-      if (this.themeType === 'ocean') this._startOcean(ctx, t0);
-      else if (this.themeType === 'garden') this._startGarden(ctx, t0);
-      else if (this.themeType === 'fire') this._startFire(ctx, t0);
-      else if (this.themeType === 'starfield') this._startStarfield(ctx, t0);
-      else if (this.themeType === 'celebration') this._startCelebration(ctx, t0);
-      else this._startStarfield(ctx, t0);
+      if (ctx.state === 'suspended') {
+        this._startPromise = ctx.resume().catch(() => {}).then(boot).finally(() => { this._startPromise = null; });
+        return this._startPromise;
+      }
+      return Promise.resolve(boot());
     }
 
     stop() {
@@ -166,6 +178,7 @@
 
     setVolume(value) {
       const v = Math.max(0, Math.min(1, Number(value)));
+      this._targetVolume = v;
       if (!this.masterGain) return;
       const t = this.ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(t);
