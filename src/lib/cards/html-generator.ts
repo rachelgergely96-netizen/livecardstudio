@@ -1,5 +1,5 @@
-import { Occasion, Theme, MusicStyle } from '@prisma/client';
-import { CardFeatures, defaultCardFeatures } from '@/types/card';
+import { CardTier, Occasion, QuickTheme, PremiumTheme, MusicStyle } from '@prisma/client';
+import { CardFeatures, defaultCardFeatures, getDefaultPremiumTheme, getDefaultQuickTheme } from '@/types/card';
 
 type InputPhoto = {
   src: string;
@@ -18,7 +18,9 @@ export type CardGenerationInput = {
   senderName?: string | null;
   title: string;
   occasion: Occasion;
-  theme: Theme;
+  tier: CardTier;
+  quickTheme?: QuickTheme;
+  premiumTheme?: PremiumTheme;
   message: string;
   sectionMessages?: string[];
   musicStyle: MusicStyle;
@@ -27,7 +29,21 @@ export type CardGenerationInput = {
   gift?: GiftData | null;
 };
 
-type ThemeTokens = {
+type QuickThemeTokens = {
+  bgA: string;
+  bgB: string;
+  text: string;
+  accent: string;
+  accentAlt: string;
+  envelopeTagline: string;
+  sealIcon: string;
+  envelopeBodyGradient: [string, string];
+  flapColor: string;
+  sealGradient: [string, string];
+  filters: Array<{ name: string; css: string }>;
+};
+
+type PremiumThemeTokens = {
   bgA: string;
   bgB: string;
   bgC: string;
@@ -38,7 +54,181 @@ type ThemeTokens = {
   border: string;
 };
 
-const THEMES: Record<Theme, ThemeTokens> = {
+const QUICK_THEMES: Record<QuickTheme, QuickThemeTokens> = {
+  AURORA_DREAMS: {
+    bgA: '#0A0E1A',
+    bgB: '#1A1E2E',
+    text: '#D3E6FA',
+    accent: '#78C8B4',
+    accentAlt: '#60A8D0',
+    envelopeTagline: 'we are under the same sky tonight',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#1A1E2E', '#141828'],
+    flapColor: '#1E2438',
+    sealGradient: ['#78C8B4', '#60A8D0'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Frost', css: 'saturate(0.88) brightness(1.08) contrast(1.04)' },
+      { name: 'Aurora Tint', css: 'hue-rotate(22deg) saturate(1.2)' },
+      { name: 'Ice Crystal', css: 'contrast(1.14) saturate(0.74) brightness(1.1)' },
+      { name: 'Polar Night', css: 'brightness(0.82) contrast(1.14) saturate(0.76)' }
+    ]
+  },
+  DEEP_BIOLUMINESCENCE: {
+    bgA: '#04081A',
+    bgB: '#0E1530',
+    text: '#D4EEFF',
+    accent: '#50B4DC',
+    accentAlt: '#3888C0',
+    envelopeTagline: 'from the deepest part of me',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#0E1530', '#081020'],
+    flapColor: '#121A38',
+    sealGradient: ['#50B4DC', '#3888C0'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Deep Blue', css: 'hue-rotate(14deg) saturate(1.14) brightness(0.9)' },
+      { name: 'Bioluminescent', css: 'saturate(1.3) brightness(1.06)' },
+      { name: 'Sea Glass', css: 'saturate(0.82) brightness(1.08)' },
+      { name: 'Abyssal', css: 'brightness(0.78) contrast(1.2) saturate(0.72)' }
+    ]
+  },
+  FIREFLY_MEADOW: {
+    bgA: '#1A1E2E',
+    bgB: '#2A2E3E',
+    text: '#EDF6D8',
+    accent: '#C8D88C',
+    accentAlt: '#A4B86C',
+    envelopeTagline: 'meet me in the meadow at dusk',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#2A2E3E', '#222638'],
+    flapColor: '#333850',
+    sealGradient: ['#C8D88C', '#A4B86C'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Twilight', css: 'hue-rotate(8deg) brightness(0.93)' },
+      { name: 'Firelit', css: 'sepia(0.18) saturate(1.2)' },
+      { name: 'Meadow Sketch', css: 'contrast(1.12) saturate(0.75)' },
+      { name: 'Golden Dusk', css: 'sepia(0.28) saturate(1.12) brightness(1.04)' }
+    ]
+  },
+  LANTERN_FESTIVAL: {
+    bgA: '#1A1420',
+    bgB: '#2E2228',
+    text: '#F8E4CB',
+    accent: '#E8B464',
+    accentAlt: '#D4944C',
+    envelopeTagline: 'a wish is rising for you',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#2E2228', '#221A22'],
+    flapColor: '#352830',
+    sealGradient: ['#E8B464', '#D4944C'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Warm Glow', css: 'sepia(0.24) saturate(1.18) brightness(1.05)' },
+      { name: 'Paper Lantern', css: 'contrast(0.96) saturate(0.96) brightness(1.08)' },
+      { name: 'Dusk Sketch', css: 'contrast(1.16) saturate(0.72)' },
+      { name: 'Festival', css: 'saturate(1.3) hue-rotate(-8deg)' }
+    ]
+  },
+  MIDNIGHT_RAIN: {
+    bgA: '#181B22',
+    bgB: '#2A2D38',
+    text: '#DDE6EF',
+    accent: '#7B9CB8',
+    accentAlt: '#A0AFC3',
+    envelopeTagline: 'I will wait in the rain for you',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#2A2D38', '#1E2028'],
+    flapColor: '#353845',
+    sealGradient: ['#7B9CB8', '#A0AFC3'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Rainy Glass', css: 'contrast(1.08) brightness(0.92)' },
+      { name: 'Blue Hour', css: 'hue-rotate(16deg) brightness(0.88) saturate(1.06)' },
+      { name: 'Noir', css: 'grayscale(0.6) contrast(1.2)' },
+      { name: 'Neon Haze', css: 'saturate(1.3) hue-rotate(20deg) contrast(1.06)' }
+    ]
+  },
+  SAKURA_WIND: {
+    bgA: '#F5F0E8',
+    bgB: '#EDE5D8',
+    text: '#4B3D37',
+    accent: '#D4919B',
+    accentAlt: '#B8707A',
+    envelopeTagline: 'the petals remember what words cannot',
+    sealIcon: '✦',
+    envelopeBodyGradient: ['#FAF5ED', '#EDE5D8'],
+    flapColor: '#E8D8D0',
+    sealGradient: ['#D4919B', '#B8707A'],
+    filters: [
+      { name: 'Original', css: 'none' },
+      { name: 'Ink Wash', css: 'saturate(0.82) brightness(1.06)' },
+      { name: 'Ukiyo-e', css: 'sepia(0.2) contrast(1.1) saturate(1.04)' },
+      { name: 'Soft Silk', css: 'brightness(1.08) saturate(0.9)' },
+      { name: 'Hanami', css: 'hue-rotate(-8deg) saturate(1.16)' }
+    ]
+  },
+  FIRST_DANCE: {
+    bgA: '#0F172A',
+    bgB: '#1A2236',
+    text: '#FCE8CE',
+    accent: '#D8B36B',
+    accentAlt: '#C99A46',
+    envelopeTagline: 'for your first dance, and every dance after',
+    sealIcon: '❤',
+    envelopeBodyGradient: ['#1A2236', '#111A2B'],
+    flapColor: '#202D44',
+    sealGradient: ['#D8B36B', '#C99A46'],
+    filters: [
+      { name: 'Romantic', css: 'sepia(0.22) saturate(1.14) brightness(1.03)' },
+      { name: 'Warm Glow', css: 'brightness(1.08) saturate(1.08)' },
+      { name: 'Film', css: 'contrast(1.12) saturate(0.86)' },
+      { name: 'Soft Focus', css: 'contrast(0.92) brightness(1.05) saturate(0.9)' },
+      { name: 'Classic', css: 'sepia(0.08) contrast(1.06)' }
+    ]
+  },
+  CHAMPAGNE_TOAST: {
+    bgA: '#20140D',
+    bgB: '#37261A',
+    text: '#FDEFD8',
+    accent: '#F0C06E',
+    accentAlt: '#DFA24B',
+    envelopeTagline: 'to the toast that starts it all',
+    sealIcon: '✧',
+    envelopeBodyGradient: ['#37261A', '#241A12'],
+    flapColor: '#463022',
+    sealGradient: ['#F0C06E', '#DFA24B'],
+    filters: [
+      { name: 'Golden Hour', css: 'sepia(0.25) saturate(1.18) brightness(1.08)' },
+      { name: 'Effervescent', css: 'saturate(1.3) brightness(1.04)' },
+      { name: 'Crystal', css: 'contrast(1.14) saturate(0.95) brightness(1.06)' },
+      { name: 'Toast', css: 'sepia(0.18) hue-rotate(-4deg) saturate(1.12)' },
+      { name: 'Celebration', css: 'saturate(1.35) contrast(1.07)' }
+    ]
+  },
+  RINGS_OF_LIGHT: {
+    bgA: '#100E1D',
+    bgB: '#241F3B',
+    text: '#EEE7FF',
+    accent: '#D3AF66',
+    accentAlt: '#9BC1FF',
+    envelopeTagline: 'bound in light, forever',
+    sealIcon: '◌',
+    envelopeBodyGradient: ['#241F3B', '#17132A'],
+    flapColor: '#2D2851',
+    sealGradient: ['#D3AF66', '#9BC1FF'],
+    filters: [
+      { name: 'Prismatic', css: 'saturate(1.28) hue-rotate(10deg)' },
+      { name: 'Diamond', css: 'contrast(1.18) brightness(1.08) saturate(0.96)' },
+      { name: 'Gold Band', css: 'sepia(0.26) saturate(1.14)' },
+      { name: 'Platinum', css: 'grayscale(0.25) contrast(1.1) brightness(1.05)' },
+      { name: 'Eternal', css: 'contrast(1.08) saturate(1.08) brightness(1.03)' }
+    ]
+  }
+};
+
+const PREMIUM_THEMES: Record<PremiumTheme, PremiumThemeTokens> = {
   WATERCOLOR: {
     bgA: '#fdf8f0',
     bgB: '#f8efe3',
@@ -59,15 +249,15 @@ const THEMES: Record<Theme, ThemeTokens> = {
     card: '#242743',
     border: 'rgba(196,176,212,0.35)'
   },
-  MODERN_MINIMAL: {
-    bgA: '#f8f7f5',
-    bgB: '#f3f1ed',
-    bgC: '#e9e5de',
-    text: '#2d2926',
-    accent: '#b8865d',
-    accentSoft: '#d4b99d',
-    card: '#ffffff',
-    border: 'rgba(110,90,70,0.22)'
+  MIDNIGHT_GARDEN: {
+    bgA: '#11111f',
+    bgB: '#1d1f31',
+    bgC: '#2a2f40',
+    text: '#f5f1f8',
+    accent: '#9ecb77',
+    accentSoft: '#d3e8b7',
+    card: '#222536',
+    border: 'rgba(158,203,119,0.35)'
   },
   BOTANICAL: {
     bgA: '#eef6eb',
@@ -79,16 +269,6 @@ const THEMES: Record<Theme, ThemeTokens> = {
     card: '#f7fbf4',
     border: 'rgba(102,135,95,0.26)'
   },
-  VINTAGE_FILM: {
-    bgA: '#f4eee3',
-    bgB: '#e9dcc8',
-    bgC: '#d9c4a8',
-    text: '#46382c',
-    accent: '#a26b49',
-    accentSoft: '#c9a27b',
-    card: '#fbf6ee',
-    border: 'rgba(140,104,77,0.28)'
-  },
   GOLDEN_HOUR: {
     bgA: '#fff4de',
     bgB: '#f7e0b7',
@@ -99,15 +279,15 @@ const THEMES: Record<Theme, ThemeTokens> = {
     card: '#fff9ef',
     border: 'rgba(208,138,50,0.32)'
   },
-  MIDNIGHT_GARDEN: {
-    bgA: '#11111f',
-    bgB: '#1d1f31',
-    bgC: '#2a2f40',
-    text: '#f5f1f8',
-    accent: '#9ecb77',
-    accentSoft: '#d3e8b7',
-    card: '#222536',
-    border: 'rgba(158,203,119,0.35)'
+  MODERN_MINIMAL: {
+    bgA: '#f8f7f5',
+    bgB: '#f3f1ed',
+    bgC: '#e9e5de',
+    text: '#2d2926',
+    accent: '#b8865d',
+    accentSoft: '#d4b99d',
+    card: '#ffffff',
+    border: 'rgba(110,90,70,0.22)'
   },
   PASTEL_DREAM: {
     bgA: '#fdf1f6',
@@ -118,12 +298,33 @@ const THEMES: Record<Theme, ThemeTokens> = {
     accentSoft: '#d4b8dc',
     card: '#fff8fd',
     border: 'rgba(176,130,184,0.28)'
+  },
+  ETERNAL_VOW: {
+    bgA: '#141120',
+    bgB: '#261f3d',
+    bgC: '#3c305b',
+    text: '#f6efff',
+    accent: '#d8b674',
+    accentSoft: '#cab4f2',
+    card: '#221b37',
+    border: 'rgba(216,182,116,0.33)'
+  },
+  GRAND_CELEBRATION: {
+    bgA: '#26120f',
+    bgB: '#3a1e19',
+    bgC: '#552b1e',
+    text: '#ffe9d0',
+    accent: '#f2be69',
+    accentSoft: '#f5d49f',
+    card: '#2e1a16',
+    border: 'rgba(242,190,105,0.34)'
   }
 };
 
 const OCCASION_COPY: Record<Occasion, string> = {
   BIRTHDAY: 'Happy Birthday',
   WEDDING: 'For Your Wedding Day',
+  ENGAGEMENT: 'For Your Engagement',
   ANNIVERSARY: 'Happy Anniversary',
   BABY_SHOWER: 'Celebrating New Life',
   GRADUATION: 'A Beautiful Milestone',
@@ -131,11 +332,38 @@ const OCCASION_COPY: Record<Occasion, string> = {
   MOTHERS_DAY: 'For Mom',
   FATHERS_DAY: 'For Dad',
   HOLIDAY: 'Seasonal Wishes',
+  NEW_YEARS: 'Happy New Year',
   THANK_YOU: 'With Gratitude',
   JUST_BECAUSE: 'Just Because',
   SYMPATHY: 'Holding You Close',
-  CONGRATULATIONS: 'Congratulations'
+  CONGRATULATIONS: 'Congratulations',
+  PROMOTION: 'Congratulations On Your Promotion'
 };
+
+const QUICK_TO_PREMIUM_MAP: Record<QuickTheme, PremiumTheme> = {
+  AURORA_DREAMS: 'CELESTIAL',
+  DEEP_BIOLUMINESCENCE: 'MIDNIGHT_GARDEN',
+  FIREFLY_MEADOW: 'BOTANICAL',
+  LANTERN_FESTIVAL: 'GOLDEN_HOUR',
+  MIDNIGHT_RAIN: 'MODERN_MINIMAL',
+  SAKURA_WIND: 'PASTEL_DREAM',
+  FIRST_DANCE: 'ETERNAL_VOW',
+  CHAMPAGNE_TOAST: 'GRAND_CELEBRATION',
+  RINGS_OF_LIGHT: 'ETERNAL_VOW'
+};
+
+function resolveQuickTheme(input: CardGenerationInput): QuickTheme {
+  return input.quickTheme || getDefaultQuickTheme(input.occasion);
+}
+
+function resolvePremiumTheme(input: CardGenerationInput): PremiumTheme {
+  if (input.tier === CardTier.PREMIUM) {
+    return input.premiumTheme || getDefaultPremiumTheme(input.occasion);
+  }
+
+  const quickTheme = resolveQuickTheme(input);
+  return QUICK_TO_PREMIUM_MAP[quickTheme] || 'WATERCOLOR';
+}
 
 function esc(value: string | null | undefined) {
   return String(value || '')
@@ -171,8 +399,9 @@ function sectionCopy(input: CardGenerationInput) {
 
 function photoCards(input: CardGenerationInput) {
   const sectionMessages = sectionCopy(input);
+  const photos = input.tier === CardTier.QUICK ? input.photos.slice(0, 1) : input.photos;
 
-  return input.photos
+  return photos
     .map((photo, idx) => {
       const sectionLine = sectionMessages[idx % sectionMessages.length];
 
@@ -234,6 +463,10 @@ function soundScript(musicStyle: MusicStyle) {
           GENTLE_PIANO: [261, 329, 392, 523],
           CELESTIAL_PADS: [196, 247, 294, 392],
           SOFT_GUITAR: [196, 247, 330, 392],
+          WALTZ_MUSIC_BOX: [196, 247, 294, 370, 330],
+          FESTIVE_ORCHESTRAL: [196, 262, 330, 392, 523],
+          ROMANTIC_HARP: [220, 277, 330, 440, 523],
+          WIND_CHIMES: [523, 587, 659, 784, 880],
           NONE: []
         };
 
@@ -428,7 +661,10 @@ function interactionScript(features: CardFeatures) {
 }
 
 export function generateCardHtml(input: CardGenerationInput) {
-  const theme = THEMES[input.theme] || THEMES.WATERCOLOR;
+  const premiumThemeKey = resolvePremiumTheme(input);
+  const quickThemeKey = resolveQuickTheme(input);
+  const theme = PREMIUM_THEMES[premiumThemeKey] || PREMIUM_THEMES.WATERCOLOR;
+  const quickTheme = QUICK_THEMES[quickThemeKey] || QUICK_THEMES.AURORA_DREAMS;
   const featureToggles = normalizeFeatures(input.features);
   const greeting = OCCASION_COPY[input.occasion] || 'A Living Card';
   const sender = input.senderName || 'With love';
@@ -441,14 +677,14 @@ export function generateCardHtml(input: CardGenerationInput) {
 <title>${esc(greeting)} for ${esc(input.recipientName)}</title>
 <style>
   :root {
-    --bg-a: ${theme.bgA};
-    --bg-b: ${theme.bgB};
-    --bg-c: ${theme.bgC};
-    --text: ${theme.text};
-    --accent: ${theme.accent};
-    --accent-soft: ${theme.accentSoft};
-    --card: ${theme.card};
-    --border: ${theme.border};
+    --bg-a: ${input.tier === CardTier.QUICK ? quickTheme.bgA : theme.bgA};
+    --bg-b: ${input.tier === CardTier.QUICK ? quickTheme.bgB : theme.bgB};
+    --bg-c: ${input.tier === CardTier.QUICK ? quickTheme.bgB : theme.bgC};
+    --text: ${input.tier === CardTier.QUICK ? quickTheme.text : theme.text};
+    --accent: ${input.tier === CardTier.QUICK ? quickTheme.accent : theme.accent};
+    --accent-soft: ${input.tier === CardTier.QUICK ? quickTheme.accentAlt : theme.accentSoft};
+    --card: ${input.tier === CardTier.QUICK ? 'rgba(8,8,8,0.44)' : theme.card};
+    --border: ${input.tier === CardTier.QUICK ? 'rgba(255,255,255,0.24)' : theme.border};
   }
 
   * { box-sizing: border-box; }
@@ -819,7 +1055,11 @@ export function generateCardHtml(input: CardGenerationInput) {
       <p class="kicker">Living card for the moments that matter</p>
       <h1 class="title">${esc(greeting)}</h1>
       <p class="recipient">${esc(input.recipientName)}</p>
-      <p class="subtitle">Every scroll is a memory, every detail crafted by hand just for you.</p>
+      <p class="subtitle">${
+        input.tier === CardTier.QUICK
+          ? esc(quickTheme.envelopeTagline)
+          : 'Every scroll is a memory, every detail crafted by hand just for you.'
+      }</p>
     </header>
 
     <main class="gallery">

@@ -1,6 +1,6 @@
 'use client';
 
-import { CardStatus, MusicStyle, Occasion, Theme } from '@prisma/client';
+import { CardStatus, MusicStyle, Occasion, CardTier, QuickTheme, PremiumTheme } from '@prisma/client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PhotoManager, type PhotoItem } from '@/components/studio/photo-manager';
@@ -8,7 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { formatUsd } from '@/lib/utils';
-import { defaultCardFeatures, occasionLabels, themeLabels } from '@/types/card';
+import {
+  cardTierLabels,
+  defaultCardFeatures,
+  getDefaultPremiumTheme,
+  getDefaultQuickTheme,
+  getOccasionRecommendations,
+  occasionLabels,
+  premiumThemeLabels,
+  quickThemeLabels,
+  resolveThemeLabel
+} from '@/types/card';
 
 type GiftCardInput = {
   brand: string;
@@ -23,7 +33,9 @@ type WizardCard = {
   title: string;
   recipientName: string;
   occasion: Occasion;
-  theme: Theme;
+  tier: CardTier;
+  quickTheme: QuickTheme;
+  premiumTheme: PremiumTheme;
   message: string;
   sectionMessages: string[];
   musicStyle: MusicStyle;
@@ -46,10 +58,11 @@ type GiftBrand = {
 
 const steps = [
   'Choose Your Moment',
-  'Add Photos',
-  'Write Message',
-  'Choose Style',
-  'Add a Gift',
+  'Choose Your Card Type',
+  'Add Your Photos',
+  'Write Your Message',
+  'Choose Your Style',
+  'Add a Gift Inside',
   'Preview & Checkout'
 ];
 
@@ -59,20 +72,32 @@ const musicOptions: MusicStyle[] = [
   'GENTLE_PIANO',
   'CELESTIAL_PADS',
   'SOFT_GUITAR',
+  'WALTZ_MUSIC_BOX',
+  'FESTIVE_ORCHESTRAL',
+  'ROMANTIC_HARP',
+  'WIND_CHIMES',
   'NONE'
 ];
 
+const quickThemeOptions = Object.keys(quickThemeLabels) as QuickTheme[];
+const premiumThemeOptions = Object.keys(premiumThemeLabels) as PremiumTheme[];
+
 function normalizeCard(input?: Partial<WizardCard>): WizardCard {
+  const occasion = input?.occasion || 'BIRTHDAY';
+  const tier = input?.tier || 'QUICK';
+
   return {
     id: input?.id,
     slug: input?.slug,
-    title: input?.title || "My Living Card",
+    title: input?.title || 'My Living Card',
     recipientName: input?.recipientName || '',
-    occasion: input?.occasion || 'BIRTHDAY',
-    theme: input?.theme || 'WATERCOLOR',
+    occasion,
+    tier,
+    quickTheme: input?.quickTheme || getDefaultQuickTheme(occasion),
+    premiumTheme: input?.premiumTheme || getDefaultPremiumTheme(occasion),
     message: input?.message || '',
     sectionMessages: input?.sectionMessages || [],
-    musicStyle: input?.musicStyle || 'MUSIC_BOX_BIRTHDAY',
+    musicStyle: input?.musicStyle || (tier === 'QUICK' ? 'NONE' : 'MUSIC_BOX_BIRTHDAY'),
     featureToggles: {
       ...defaultCardFeatures,
       ...(input?.featureToggles || {})
@@ -81,6 +106,10 @@ function normalizeCard(input?: Partial<WizardCard>): WizardCard {
     photos: input?.photos || [],
     giftCard: input?.giftCard || null
   };
+}
+
+function toMusicLabel(style: MusicStyle) {
+  return style.replaceAll('_', ' ');
 }
 
 export function CreateWizard({
@@ -98,10 +127,64 @@ export function CreateWizard({
   const [giftBrands, setGiftBrands] = useState<GiftBrand[]>([]);
   const [previewUrl, setPreviewUrl] = useState(card.slug ? `/c/${card.slug}` : '');
 
-  const cardCostCents = userPlan === 'PRO' ? 0 : 1900;
-  const giftCostCents = card.giftCard?.amount || 0;
+  const recommendations = getOccasionRecommendations(card.occasion);
+  const selectedThemeLabel = resolveThemeLabel({
+    tier: card.tier,
+    quickTheme: card.quickTheme,
+    premiumTheme: card.premiumTheme
+  });
 
+  const cardCostCents =
+    userPlan === 'PRO'
+      ? 0
+      : card.tier === 'QUICK'
+      ? userPlan === 'FREE'
+        ? 0
+        : 500
+      : 1900;
+
+  const giftCostCents = card.giftCard?.amount || 0;
   const totalCents = cardCostCents + giftCostCents;
+
+  function withOccasion(nextOccasion: Occasion) {
+    const nextRecommendations = getOccasionRecommendations(nextOccasion);
+    setCard((current) => ({
+      ...current,
+      occasion: nextOccasion,
+      quickTheme: nextRecommendations.quick.includes(current.quickTheme)
+        ? current.quickTheme
+        : nextRecommendations.quick[0],
+      premiumTheme: nextRecommendations.premium.includes(current.premiumTheme)
+        ? current.premiumTheme
+        : nextRecommendations.premium[0]
+    }));
+  }
+
+  function withTier(nextTier: CardTier) {
+    setCard((current) => ({
+      ...current,
+      tier: nextTier,
+      quickTheme: current.quickTheme || getDefaultQuickTheme(current.occasion),
+      premiumTheme: current.premiumTheme || getDefaultPremiumTheme(current.occasion),
+      musicStyle: nextTier === 'QUICK' ? 'NONE' : current.musicStyle === 'NONE' ? 'MUSIC_BOX_BIRTHDAY' : current.musicStyle
+    }));
+  }
+
+  function payloadForApi() {
+    return {
+      title: card.title,
+      recipientName: card.recipientName || 'Someone Special',
+      occasion: card.occasion,
+      tier: card.tier,
+      quickTheme: card.tier === 'QUICK' ? card.quickTheme : undefined,
+      premiumTheme: card.tier === 'PREMIUM' ? card.premiumTheme : undefined,
+      message: card.message || 'A note from the heart',
+      sectionMessages: card.sectionMessages,
+      musicStyle: card.musicStyle,
+      featureToggles: card.featureToggles,
+      giftCard: card.giftCard
+    };
+  }
 
   async function ensureCardExists() {
     if (card.id) return card.id;
@@ -109,17 +192,7 @@ export function CreateWizard({
     const response = await fetch('/api/cards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: card.title,
-        recipientName: card.recipientName || 'Someone Special',
-        occasion: card.occasion,
-        theme: card.theme,
-        message: card.message || 'A note from the heart',
-        sectionMessages: card.sectionMessages,
-        musicStyle: card.musicStyle,
-        featureToggles: card.featureToggles,
-        giftCard: card.giftCard
-      })
+      body: JSON.stringify(payloadForApi())
     });
 
     const payload = await response.json();
@@ -147,17 +220,7 @@ export function CreateWizard({
       const response = await fetch(`/api/cards/${cardId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: card.title,
-          recipientName: card.recipientName,
-          occasion: card.occasion,
-          theme: card.theme,
-          message: card.message,
-          sectionMessages: card.sectionMessages,
-          musicStyle: card.musicStyle,
-          featureToggles: card.featureToggles,
-          giftCard: card.giftCard
-        })
+        body: JSON.stringify(payloadForApi())
       });
 
       const payload = await response.json();
@@ -250,11 +313,14 @@ export function CreateWizard({
     if (step === 0) {
       return Boolean(card.recipientName.trim() && card.title.trim());
     }
-    if (step === 1) {
-      return card.photos.length > 0;
-    }
     if (step === 2) {
+      return card.tier === 'QUICK' ? card.photos.length === 1 : card.photos.length > 0;
+    }
+    if (step === 3) {
       return Boolean(card.message.trim());
+    }
+    if (step === 4) {
+      return card.tier === 'QUICK' ? Boolean(card.quickTheme) : Boolean(card.premiumTheme);
     }
     return true;
   }, [step, card]);
@@ -298,7 +364,7 @@ export function CreateWizard({
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setCard((current) => ({ ...current, occasion: value as Occasion }))}
+                    onClick={() => withOccasion(value as Occasion)}
                     className={`rounded-xl border px-3 py-2 text-left text-sm ${
                       card.occasion === value
                         ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
@@ -332,7 +398,42 @@ export function CreateWizard({
         ) : null}
 
         {step === 1 ? (
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            {(Object.keys(cardTierLabels) as CardTier[]).map((tier) => (
+              <button
+                key={tier}
+                type="button"
+                onClick={() => withTier(tier)}
+                className={`rounded-2xl border p-4 text-left ${
+                  card.tier === tier
+                    ? 'border-brand-copper bg-brand-copper/10'
+                    : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                }`}
+              >
+                <p className="ui-label">{cardTierLabels[tier]}</p>
+                {tier === 'QUICK' ? (
+                  <p className="mt-2 text-sm text-brand-body">
+                    One photo. Envelope reveal. Theme filters. Fast creation in under two minutes.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-brand-body">
+                    Multi-photo story. Music, paint canvas, and richer interactive experiences.
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {step === 2 ? (
           <div className="mt-6 space-y-4">
+            <p className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 px-3 py-2 text-sm text-brand-body">
+              {card.tier === 'QUICK'
+                ? 'Quick cards require exactly 1 photo.'
+                : userPlan === 'FREE'
+                ? 'Premium cards allow up to 4 photos on the Free plan.'
+                : 'Premium cards allow up to 12 photos.'}
+            </p>
             <PhotoManager
               photos={card.photos}
               onPhotosChange={(photos) => setCard((current) => ({ ...current, photos }))}
@@ -345,7 +446,7 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 2 ? (
+        {step === 3 ? (
           <div className="mt-6 space-y-4">
             <div>
               <label className="ui-label">Main message</label>
@@ -358,51 +459,81 @@ export function CreateWizard({
               <p className="mt-1 text-xs text-brand-muted">{card.message.length} characters</p>
             </div>
 
-            <div>
-              <label className="ui-label">Section messages (optional)</label>
-              {[0, 1, 2].map((index) => (
-                <Input
-                  key={index}
-                  className="mt-2"
-                  value={card.sectionMessages[index] || ''}
-                  onChange={(event) => {
-                    const next = [...card.sectionMessages];
-                    next[index] = event.target.value;
-                    setCard((current) => ({ ...current, sectionMessages: next }));
-                  }}
-                  placeholder={`Section ${index + 1} message`}
-                />
-              ))}
-            </div>
+            {card.tier === 'PREMIUM' ? (
+              <div>
+                <label className="ui-label">Section messages (optional)</label>
+                {[0, 1, 2].map((index) => (
+                  <Input
+                    key={index}
+                    className="mt-2"
+                    value={card.sectionMessages[index] || ''}
+                    onChange={(event) => {
+                      const next = [...card.sectionMessages];
+                      next[index] = event.target.value;
+                      setCard((current) => ({ ...current, sectionMessages: next }));
+                    }}
+                    placeholder={`Section ${index + 1} message`}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
-        {step === 3 ? (
-          <div className="mt-6 space-y-4">
+        {step === 4 ? (
+          <div className="mt-6 space-y-5">
+            <div>
+              <label className="ui-label">Recommended for {occasionLabels[card.occasion]}</label>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {(card.tier === 'QUICK' ? recommendations.quick : recommendations.premium).map((theme) => (
+                  <span key={theme} className="rounded-full border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] px-2.5 py-1">
+                    {card.tier === 'QUICK'
+                      ? quickThemeLabels[theme as QuickTheme]
+                      : premiumThemeLabels[theme as PremiumTheme]}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="ui-label">Theme</label>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                {Object.entries(themeLabels).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setCard((current) => ({ ...current, theme: value as Theme }))}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm ${
-                      card.theme === value
-                        ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
-                        : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {card.tier === 'QUICK'
+                  ? quickThemeOptions.map((theme) => (
+                      <button
+                        key={theme}
+                        type="button"
+                        onClick={() => setCard((current) => ({ ...current, quickTheme: theme }))}
+                        className={`rounded-xl border px-3 py-2 text-left text-sm ${
+                          card.quickTheme === theme
+                            ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
+                            : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
+                        }`}
+                      >
+                        {quickThemeLabels[theme]}
+                      </button>
+                    ))
+                  : premiumThemeOptions.map((theme) => (
+                      <button
+                        key={theme}
+                        type="button"
+                        onClick={() => setCard((current) => ({ ...current, premiumTheme: theme }))}
+                        className={`rounded-xl border px-3 py-2 text-left text-sm ${
+                          card.premiumTheme === theme
+                            ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
+                            : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
+                        }`}
+                      >
+                        {premiumThemeLabels[theme]}
+                      </button>
+                    ))}
               </div>
             </div>
 
             <div>
               <label className="ui-label">Music</label>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                {musicOptions.map((musicStyle) => (
+                {(card.tier === 'QUICK' ? (['NONE'] as MusicStyle[]) : musicOptions).map((musicStyle) => (
                   <button
                     key={musicStyle}
                     type="button"
@@ -413,7 +544,7 @@ export function CreateWizard({
                         : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
                     }`}
                   >
-                    {musicStyle.replaceAll('_', ' ')}
+                    {toMusicLabel(musicStyle)}
                   </button>
                 ))}
               </div>
@@ -448,7 +579,7 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 4 ? (
+        {step === 5 ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-3">
               <label className="flex items-center justify-between">
@@ -456,6 +587,7 @@ export function CreateWizard({
                 <input
                   type="checkbox"
                   checked={Boolean(card.giftCard)}
+                  disabled={userPlan === 'FREE'}
                   onChange={(event) => {
                     if (event.target.checked) {
                       setCard((current) => ({
@@ -473,6 +605,10 @@ export function CreateWizard({
                   }}
                 />
               </label>
+
+              {userPlan === 'FREE' ? (
+                <p className="mt-2 text-xs text-brand-copper">Gift cards are available on Premium and Pro plans.</p>
+              ) : null}
 
               {card.giftCard ? (
                 <div className="mt-3 space-y-3">
@@ -534,15 +670,16 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 5 ? (
+        {step === 6 ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
               <p className="ui-label">Order summary</p>
               <ul className="mt-2 space-y-1.5 text-sm text-brand-body">
-                <li>Card type: {occasionLabels[card.occasion]} for {card.recipientName || 'Recipient'}</li>
-                <li>Theme: {themeLabels[card.theme]}</li>
+                <li>Occasion: {occasionLabels[card.occasion]} for {card.recipientName || 'Recipient'}</li>
+                <li>Type: {cardTierLabels[card.tier]}</li>
+                <li>Theme: {selectedThemeLabel}</li>
                 <li>Photos: {card.photos.length}</li>
-                <li>Music: {card.musicStyle.replaceAll('_', ' ')}</li>
+                <li>Music: {toMusicLabel(card.musicStyle)}</li>
                 <li>Features: {Object.entries(card.featureToggles).filter(([, enabled]) => enabled).length} enabled</li>
                 {card.giftCard ? <li>Gift card: {card.giftCard.brand} {formatUsd(card.giftCard.amount)}</li> : null}
               </ul>
@@ -593,14 +730,15 @@ export function CreateWizard({
 
         <dl className="mt-4 space-y-2 text-sm text-brand-muted">
           <div className="flex justify-between gap-3"><dt>Occasion</dt><dd>{occasionLabels[card.occasion]}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Theme</dt><dd>{themeLabels[card.theme]}</dd></div>
+          <div className="flex justify-between gap-3"><dt>Type</dt><dd>{cardTierLabels[card.tier]}</dd></div>
+          <div className="flex justify-between gap-3"><dt>Theme</dt><dd>{selectedThemeLabel}</dd></div>
           <div className="flex justify-between gap-3"><dt>Photos</dt><dd>{card.photos.length}</dd></div>
           <div className="flex justify-between gap-3"><dt>Status</dt><dd>{card.status || 'DRAFT'}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Music</dt><dd>{card.musicStyle.replaceAll('_', ' ')}</dd></div>
+          <div className="flex justify-between gap-3"><dt>Music</dt><dd>{toMusicLabel(card.musicStyle)}</dd></div>
         </dl>
 
         <div className="mt-5 border-t border-[rgba(200,160,120,0.2)] pt-4 text-sm text-brand-body">
-          <div className="flex justify-between"><span>Premium card</span><span>{formatUsd(cardCostCents)}</span></div>
+          <div className="flex justify-between"><span>{card.tier === 'QUICK' ? 'Quick card' : 'Premium card'}</span><span>{formatUsd(cardCostCents)}</span></div>
           <div className="mt-1 flex justify-between"><span>Gift card</span><span>{formatUsd(giftCostCents)}</span></div>
           <div className="mt-2 flex justify-between text-base font-semibold text-brand-charcoal">
             <span>Total</span>

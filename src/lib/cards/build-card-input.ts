@@ -14,7 +14,9 @@ export function toCardGenerationInput(card: CardWithAssets): CardGenerationInput
     recipientName: card.recipientName,
     title: card.title,
     occasion: card.occasion,
-    theme: card.theme,
+    tier: card.tier,
+    quickTheme: card.quickTheme || undefined,
+    premiumTheme: card.premiumTheme || undefined,
     message,
     sectionMessages: Array.isArray(card.sectionMessages)
       ? card.sectionMessages.map((line) => String(line))

@@ -1,4 +1,4 @@
-import { CardStatus, Occasion, Theme, MusicStyle } from '@prisma/client';
+import { CardStatus, Occasion, CardTier, QuickTheme, PremiumTheme, MusicStyle } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, created, serverError, unauthorized, ok } from '@/lib/api';
@@ -6,15 +6,18 @@ import { createCardSlug } from '@/lib/cards/slug';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
+import { getDefaultPremiumTheme, getDefaultQuickTheme } from '@/types/card';
 
 const createCardSchema = z.object({
   title: z.string().min(2).max(120),
   recipientName: z.string().min(1).max(80),
   occasion: z.nativeEnum(Occasion),
-  theme: z.nativeEnum(Theme).default(Theme.WATERCOLOR),
+  tier: z.nativeEnum(CardTier).default(CardTier.QUICK),
+  quickTheme: z.nativeEnum(QuickTheme).optional(),
+  premiumTheme: z.nativeEnum(PremiumTheme).optional(),
   message: z.string().min(1).max(10000).default(''),
   sectionMessages: z.array(z.string().max(280)).optional(),
-  musicStyle: z.nativeEnum(MusicStyle).default(MusicStyle.MUSIC_BOX_BIRTHDAY),
+  musicStyle: z.nativeEnum(MusicStyle).default(MusicStyle.NONE),
   featureToggles: z
     .object({
       photoInteractions: z.boolean(),
@@ -33,7 +36,37 @@ const createCardSchema = z.object({
       currency: z.string().length(3).default('USD')
     })
     .optional()
+}).superRefine((value, ctx) => {
+  if (value.tier === CardTier.QUICK && !value.quickTheme) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['quickTheme'],
+      message: 'Quick cards require a quick theme.'
+    });
+  }
+
+  if (value.tier === CardTier.PREMIUM && !value.premiumTheme) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['premiumTheme'],
+      message: 'Premium cards require a premium theme.'
+    });
+  }
 });
+
+function resolveThemeSelection(payload: z.infer<typeof createCardSchema>) {
+  if (payload.tier === CardTier.QUICK) {
+    return {
+      quickTheme: payload.quickTheme || (getDefaultQuickTheme(payload.occasion) as QuickTheme),
+      premiumTheme: null
+    };
+  }
+
+  return {
+    quickTheme: null,
+    premiumTheme: payload.premiumTheme || (getDefaultPremiumTheme(payload.occasion) as PremiumTheme)
+  };
+}
 
 export async function GET() {
   try {
@@ -99,6 +132,11 @@ export async function POST(request: Request) {
 
     const payload = parsed.data;
     const slug = createCardSlug(`${payload.occasion}-${payload.recipientName}`);
+    const resolvedThemes = resolveThemeSelection(payload);
+
+    if (session.user.plan === 'FREE' && payload.giftCard) {
+      return badRequest('Gift cards require Premium or Pro plans.');
+    }
 
     if (payload.giftCard?.tremendousProductId && env.TREMENDOUS_API_KEY) {
       const product = await findGiftBrandById(payload.giftCard.tremendousProductId);
@@ -117,7 +155,9 @@ export async function POST(request: Request) {
         title: payload.title,
         recipientName: payload.recipientName,
         occasion: payload.occasion,
-        theme: payload.theme,
+        tier: payload.tier,
+        quickTheme: resolvedThemes.quickTheme,
+        premiumTheme: resolvedThemes.premiumTheme,
         message: payload.message,
         sectionMessages: payload.sectionMessages || [],
         musicStyle: payload.musicStyle,

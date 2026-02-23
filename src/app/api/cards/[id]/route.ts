@@ -1,16 +1,19 @@
-import { CardStatus, Occasion, Theme, MusicStyle } from '@prisma/client';
+import { CardStatus, Occasion, CardTier, QuickTheme, PremiumTheme, MusicStyle } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, notFound, ok, serverError, unauthorized } from '@/lib/api';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
+import { getDefaultPremiumTheme, getDefaultQuickTheme } from '@/types/card';
 
 const updateCardSchema = z.object({
   title: z.string().min(2).max(120).optional(),
   recipientName: z.string().min(1).max(80).optional(),
   occasion: z.nativeEnum(Occasion).optional(),
-  theme: z.nativeEnum(Theme).optional(),
+  tier: z.nativeEnum(CardTier).optional(),
+  quickTheme: z.nativeEnum(QuickTheme).optional(),
+  premiumTheme: z.nativeEnum(PremiumTheme).optional(),
   message: z.string().min(1).max(10000).optional(),
   sectionMessages: z.array(z.string().max(280)).optional(),
   musicStyle: z.nativeEnum(MusicStyle).optional(),
@@ -84,6 +87,26 @@ export async function PUT(request: Request, context: { params: { id: string } })
     }
 
     const payload = parsed.data;
+    const nextOccasion = payload.occasion || existing.occasion;
+    const nextTier = payload.tier || existing.tier;
+
+    const nextQuickTheme =
+      nextTier === CardTier.QUICK
+        ? payload.quickTheme === undefined
+          ? existing.quickTheme || (getDefaultQuickTheme(nextOccasion) as QuickTheme)
+          : payload.quickTheme
+        : null;
+
+    const nextPremiumTheme =
+      nextTier === CardTier.PREMIUM
+        ? payload.premiumTheme === undefined
+          ? existing.premiumTheme || (getDefaultPremiumTheme(nextOccasion) as PremiumTheme)
+          : payload.premiumTheme
+        : null;
+
+    if (session.user.plan === 'FREE' && payload.giftCard) {
+      return badRequest('Gift cards require Premium or Pro plans.');
+    }
 
     if (payload.giftCard?.tremendousProductId && env.TREMENDOUS_API_KEY) {
       const product = await findGiftBrandById(payload.giftCard.tremendousProductId);
@@ -101,7 +124,9 @@ export async function PUT(request: Request, context: { params: { id: string } })
         title: payload.title,
         recipientName: payload.recipientName,
         occasion: payload.occasion,
-        theme: payload.theme,
+        tier: nextTier,
+        quickTheme: nextQuickTheme,
+        premiumTheme: nextPremiumTheme,
         message: payload.message,
         sectionMessages: payload.sectionMessages,
         musicStyle: payload.musicStyle,

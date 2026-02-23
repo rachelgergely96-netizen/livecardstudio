@@ -34,7 +34,9 @@ export default async function CreatePage({ searchParams }: { searchParams: { car
         title: card.title,
         recipientName: card.recipientName,
         occasion: card.occasion,
-        theme: card.theme,
+        tier: card.tier,
+        quickTheme: card.quickTheme,
+        premiumTheme: card.premiumTheme,
         message: card.message,
         sectionMessages: Array.isArray(card.sectionMessages)
           ? card.sectionMessages.map((line) => String(line))

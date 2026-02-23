@@ -16,6 +16,7 @@ enum Plan {
 enum Occasion {
   BIRTHDAY
   WEDDING
+  ENGAGEMENT
   ANNIVERSARY
   BABY_SHOWER
   GRADUATION
@@ -23,21 +24,41 @@ enum Occasion {
   MOTHERS_DAY
   FATHERS_DAY
   HOLIDAY
+  NEW_YEARS
   THANK_YOU
   JUST_BECAUSE
   SYMPATHY
   CONGRATULATIONS
+  PROMOTION
 }
 
-enum Theme {
+enum CardTier {
+  QUICK
+  PREMIUM
+}
+
+enum QuickTheme {
+  AURORA_DREAMS
+  DEEP_BIOLUMINESCENCE
+  FIREFLY_MEADOW
+  LANTERN_FESTIVAL
+  MIDNIGHT_RAIN
+  SAKURA_WIND
+  FIRST_DANCE
+  CHAMPAGNE_TOAST
+  RINGS_OF_LIGHT
+}
+
+enum PremiumTheme {
   WATERCOLOR
   CELESTIAL
-  MODERN_MINIMAL
-  BOTANICAL
-  VINTAGE_FILM
-  GOLDEN_HOUR
   MIDNIGHT_GARDEN
+  BOTANICAL
+  GOLDEN_HOUR
+  MODERN_MINIMAL
   PASTEL_DREAM
+  ETERNAL_VOW
+  GRAND_CELEBRATION
 }
 
 enum MusicStyle {
@@ -46,6 +67,10 @@ enum MusicStyle {
   GENTLE_PIANO
   CELESTIAL_PADS
   SOFT_GUITAR
+  WALTZ_MUSIC_BOX
+  FESTIVE_ORCHESTRAL
+  ROMANTIC_HARP
+  WIND_CHIMES
   NONE
 }
 
@@ -88,10 +113,12 @@ model Card {
   title           String
   recipientName   String
   occasion        Occasion
-  theme           Theme       @default(WATERCOLOR)
+  tier            CardTier    @default(QUICK)
+  quickTheme      QuickTheme?
+  premiumTheme    PremiumTheme?
   message         String      @db.Text
   sectionMessages Json?
-  musicStyle      MusicStyle  @default(MUSIC_BOX_BIRTHDAY)
+  musicStyle      MusicStyle  @default(NONE)
   photos          Photo[]
   giftCard        GiftCard?
   status          CardStatus  @default(DRAFT)

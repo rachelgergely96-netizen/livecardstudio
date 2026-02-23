@@ -8,6 +8,7 @@ export const runtime = 'nodejs';
 
 const MAX_PHOTOS_PREMIUM = 12;
 const MAX_PHOTOS_FREE = 4;
+const MAX_PHOTOS_QUICK = 1;
 
 export async function POST(request: Request, context: { params: { id: string } }) {
   try {
@@ -32,7 +33,12 @@ export async function POST(request: Request, context: { params: { id: string } }
       return badRequest('No photos uploaded. Use form-data key "photos".');
     }
 
-    const tierCap = session.user.plan === 'FREE' ? MAX_PHOTOS_FREE : MAX_PHOTOS_PREMIUM;
+    const tierCap =
+      card.tier === 'QUICK'
+        ? MAX_PHOTOS_QUICK
+        : session.user.plan === 'FREE'
+        ? MAX_PHOTOS_FREE
+        : MAX_PHOTOS_PREMIUM;
     if (card.photos.length + fileEntries.length > tierCap) {
       return badRequest(`Photo limit exceeded. Your plan allows up to ${tierCap} photos.`);
     }

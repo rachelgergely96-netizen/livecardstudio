@@ -40,7 +40,18 @@ export async function POST(request: Request) {
       return notFound('Card not found');
     }
 
-    const cardAmount = card.user.plan === 'PRO' ? 0 : 1900;
+    if (card.user.plan === 'FREE' && card.giftCard) {
+      return badRequest('Gift cards require Premium or Pro plans.');
+    }
+
+    const cardAmount =
+      card.user.plan === 'PRO'
+        ? 0
+        : card.tier === 'QUICK'
+        ? card.user.plan === 'FREE'
+          ? 0
+          : 500
+        : 1900;
     const giftAmount = card.giftCard?.amount || 0;
 
     if (!env.STRIPE_SECRET_KEY) {
@@ -90,7 +101,7 @@ export async function POST(request: Request) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'LiveCardStudio Premium Card',
+              name: `LiveCardStudio ${card.tier === 'QUICK' ? 'Quick' : 'Premium'} Card`,
               description: `${card.occasion} card for ${card.recipientName}`
             },
             unit_amount: cardAmount
