@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(212, 165, 116, 0.22), transparent 36%),
+    radial-gradient(circle at 85% 5%, rgba(196, 176, 212, 0.22), transparent 35%),
+    linear-gradient(160deg, #fdf8f0 0%, #faf5f0 52%, #fdf8f0 100%);
+  color: #3a2f2a;
+  font-family: var(--font-cormorant), serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-inter), sans-serif;
+}
+
+::selection {
+  background: rgba(200, 121, 65, 0.22);
+  color: #3a2f2a;
+}
+
+.card-panel {
+  border: 1px solid rgba(200, 160, 120, 0.2);
+  background: rgba(255, 251, 246, 0.88);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgba(103, 76, 56, 0.12);
+}
+
+.wash-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(200, 121, 65, 0.13), transparent 40%),
+    radial-gradient(circle at 80% 65%, rgba(196, 176, 212, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(212, 165, 116, 0.16), transparent 50%);
+}
+
+.section-title {
+  font-family: var(--font-playfair), serif;
+  color: #3a2f2a;
+  letter-spacing: -0.01em;
+}
+
+.serif-copy {
+  font-family: var(--font-cormorant), serif;
+}
+
+.ui-label {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b6f5e;
+}

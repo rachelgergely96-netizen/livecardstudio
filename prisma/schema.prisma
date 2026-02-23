@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+  PRO
+}
+
+enum Occasion {
+  BIRTHDAY
+  WEDDING
+  ANNIVERSARY
+  BABY_SHOWER
+  GRADUATION
+  VALENTINES
+  MOTHERS_DAY
+  FATHERS_DAY
+  HOLIDAY
+  THANK_YOU
+  JUST_BECAUSE
+  SYMPATHY
+  CONGRATULATIONS
+}
+
+enum Theme {
+  WATERCOLOR
+  CELESTIAL
+  MODERN_MINIMAL
+  BOTANICAL
+  VINTAGE_FILM
+  GOLDEN_HOUR
+  MIDNIGHT_GARDEN
+  PASTEL_DREAM
+}
+
+enum MusicStyle {
+  MUSIC_BOX_BIRTHDAY
+  AMBIENT_WARM
+  GENTLE_PIANO
+  CELESTIAL_PADS
+  SOFT_GUITAR
+  NONE
+}
+
+enum CardStatus {
+  DRAFT
+  PREVIEW
+  PAID
+  PUBLISHED
+  ARCHIVED
+}
+
+enum GiftCardStatus {
+  PENDING
+  PURCHASED
+  REDEEMED
+  FAILED
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String    @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  plan             Plan      @default(FREE)
+  stripeCustomerId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  cards            Card[]
+  sessions         Session[]
+  accounts         Account[]
+}
+
+model Card {
+  id              String      @id @default(cuid())
+  slug            String      @unique
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  title           String
+  recipientName   String
+  occasion        Occasion
+  theme           Theme       @default(WATERCOLOR)
+  message         String      @db.Text
+  sectionMessages Json?
+  musicStyle      MusicStyle  @default(MUSIC_BOX_BIRTHDAY)
+  photos          Photo[]
+  giftCard        GiftCard?
+  status          CardStatus  @default(DRAFT)
+  htmlUrl         String?
+  ogImageUrl      String?
+  viewCount       Int         @default(0)
+  firstViewedAt   DateTime?
+  paintData       Json?
+  featureToggles  Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  publishedAt     DateTime?
+  paidAt          DateTime?
+  stripePaymentId String?
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([slug])
+  @@index([status])
+}
+
+model Photo {
+  id           String  @id @default(cuid())
+  cardId       String
+  card         Card    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  originalUrl  String
+  processedUrl String?
+  base64Data   String? @db.Text
+  caption      String?
+  sortOrder    Int     @default(0)
+  width        Int?
+  height       Int?
+
+  @@index([cardId, sortOrder])
+}
+
+model GiftCard {
+  id                String         @id @default(cuid())
+  cardId            String         @unique
+  card              Card           @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  brand             String
+  tremendousProductId String?
+  brandLogoUrl      String?
+  amount            Int
+  currency          String         @default("USD")
+  tremendousOrderId String?
+  redemptionUrl     String?
+  redemptionCode    String?
+  status            GiftCardStatus @default(PENDING)
+  purchasedAt       DateTime?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
