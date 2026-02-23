@@ -128,7 +128,12 @@
 
     start() {
       if (this.stopped) return Promise.resolve(false);
-      if (this.started) return Promise.resolve(true);
+      if (this.started) {
+        if (this.ctx && this.ctx.state !== 'running') {
+          return this.ctx.resume().catch(() => false).then(() => true);
+        }
+        return Promise.resolve(true);
+      }
       if (this._startPromise) return this._startPromise;
       const ctx = this._ctx();
       const boot = () => {
@@ -147,12 +152,12 @@
         else this._startStarfield(ctx, t0);
         return true;
       };
-
-      if (ctx.state === 'suspended') {
-        this._startPromise = ctx.resume().catch(() => {}).then(boot).finally(() => { this._startPromise = null; });
+      const started = boot();
+      if (ctx.state !== 'running') {
+        this._startPromise = ctx.resume().catch(() => {}).then(() => started).finally(() => { this._startPromise = null; });
         return this._startPromise;
       }
-      return Promise.resolve(boot());
+      return Promise.resolve(started);
     }
 
     stop() {
