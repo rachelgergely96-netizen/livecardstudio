@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Dance — LiveCardStudio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#0a0812;font-family:'Georgia',serif}
+canvas{display:block;position:fixed;top:0;left:0}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;pointer-events:none}
+.card-text{text-align:center;opacity:0;animation:fadeIn 3s ease 1s forwards}
+.card-title{font-size:clamp(2rem,5vw,3.5rem);color:rgba(255,230,200,0.9);font-style:italic;letter-spacing:0.05em;text-shadow:0 0 40px rgba(255,180,120,0.3)}
+.card-sub{font-size:clamp(0.8rem,2vw,1.1rem);color:rgba(255,200,170,0.5);margin-top:1rem;letter-spacing:0.3em;text-transform:uppercase;font-weight:300}
+.card-names{font-size:clamp(1.2rem,3vw,1.8rem);color:rgba(255,220,180,0.7);margin-top:2rem;font-style:italic}
+@keyframes fadeIn{to{opacity:1}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="overlay">
+  <div class="card-text">
+    <div class="card-title">First Dance</div>
+    <div class="card-sub">forever begins tonight</div>
+    <div class="card-names">Sarah & James</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, mx = 0.5, my = 0.5, t = 0;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+window.addEventListener('mousemove', e => { mx = e.clientX / W; my = e.clientY / H; });
+window.addEventListener('touchmove', e => { mx = e.touches[0].clientX / W; my = e.touches[0].clientY / H; });
+
+// ═══ STRING LIGHTS ═══
+class StringLight {
+  constructor(x, y, i) {
+    this.x = x; this.y = y; this.i = i;
+    this.baseY = y;
+    this.brightness = 0.6 + Math.random() * 0.4;
+    this.flickerSpeed = 0.5 + Math.random() * 2;
+    this.flickerPhase = Math.random() * Math.PI * 2;
+    this.hue = 30 + Math.random() * 20; // warm amber range
+    this.size = 3 + Math.random() * 2;
+    this.cableLen = 8 + Math.random() * 15;
+  }
+  update(time) {
+    this.y = this.baseY + Math.sin(time * 0.001 + this.i * 0.5) * 3;
+    const flicker = Math.sin(time * this.flickerSpeed * 0.01 + this.flickerPhase);
+    this.currentBrightness = this.brightness * (0.7 + flicker * 0.3);
+  }
+  draw(ctx) {
+    const b = this.currentBrightness;
+    // Glow
+    const g = ctx.createRadialGradient(this.x, this.y + this.cableLen, 0, this.x, this.y + this.cableLen, 60 * b);
+    g.addColorStop(0, `hsla(${this.hue}, 90%, 75%, ${0.3 * b})`);
+    g.addColorStop(0.3, `hsla(${this.hue}, 80%, 60%, ${0.1 * b})`);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(this.x - 60, this.y + this.cableLen - 60, 120, 120);
+    // Cable
+    ctx.strokeStyle = `rgba(80,60,40,${0.3 + b * 0.2})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x, this.y + this.cableLen);
+    ctx.stroke();
+    // Bulb
+    ctx.beginPath();
+    ctx.arc(this.x, this.y + this.cableLen, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.hue}, 95%, ${65 + b * 20}%, ${0.8 + b * 0.2})`;
+    ctx.fill();
+    // Hot spot
+    ctx.beginPath();
+    ctx.arc(this.x, this.y + this.cableLen - 1, this.size * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,240,${0.5 * b})`;
+    ctx.fill();
+  }
+}
+
+// ═══ ROSE PETALS ═══
+class RosePetal {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = -20 - Math.random() * H * 0.5;
+    this.size = 4 + Math.random() * 8;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.03;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = 0.3 + Math.random() * 0.8;
+    this.wobbleAmp = 0.5 + Math.random() * 1.5;
+    this.wobbleFreq = 0.01 + Math.random() * 0.02;
+    this.phase = Math.random() * Math.PI * 2;
+    this.opacity = 0.3 + Math.random() * 0.5;
+    // Pink/red/blush range
+    this.hue = 340 + Math.random() * 30;
+    this.sat = 50 + Math.random() * 40;
+    this.light = 55 + Math.random() * 25;
+  }
+  update(time) {
+    this.x += this.vx + Math.sin(time * this.wobbleFreq + this.phase) * this.wobbleAmp;
+    this.y += this.vy;
+    this.rotation += this.rotSpeed;
+    // Mouse influence
+    const dx = this.x - mx * W;
+    const dy = this.y - my * H;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 150) {
+      this.x += dx / dist * 0.5;
+      this.y += dy / dist * 0.3;
+    }
+    if (this.y > H + 30) this.reset();
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.globalAlpha = this.opacity;
+    // Draw petal shape
+    ctx.fillStyle = `hsl(${this.hue}, ${this.sat}%, ${this.light}%)`;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size);
+    ctx.bezierCurveTo(this.size * 0.8, -this.size * 0.6, this.size * 0.8, this.size * 0.3, 0, this.size * 0.5);
+    ctx.bezierCurveTo(-this.size * 0.8, this.size * 0.3, -this.size * 0.8, -this.size * 0.6, 0, -this.size);
+    ctx.fill();
+    // Vein
+    ctx.strokeStyle = `hsla(${this.hue}, ${this.sat}%, ${this.light - 15}%, 0.3)`;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size * 0.8);
+    ctx.lineTo(0, this.size * 0.3);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ═══ FLOOR SPARKLES ═══
+class FloorSparkle {
+  constructor() {
+    this.x = Math.random() * W;
+    this.y = H * 0.72 + Math.random() * H * 0.28;
+    this.size = 0.5 + Math.random() * 1.5;
+    this.phase = Math.random() * Math.PI * 2;
+    this.speed = 0.5 + Math.random() * 1.5;
+  }
+  draw(ctx, time) {
+    const b = Math.sin(time * 0.001 * this.speed + this.phase) * 0.5 + 0.5;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 220, 180, ${b * 0.4})`;
+    ctx.fill();
+  }
+}
+
+// ═══ AMBIENT DUST ═══
+class DustMote {
+  constructor() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = 0.5 + Math.random() * 1.5;
+    this.vx = (Math.random() - 0.5) * 0.2;
+    this.vy = -0.05 + Math.random() * 0.1;
+    this.phase = Math.random() * Math.PI * 2;
+    this.opacity = 0.1 + Math.random() * 0.2;
+  }
+  update(time) {
+    this.x += this.vx + Math.sin(time * 0.0005 + this.phase) * 0.1;
+    this.y += this.vy;
+    if (this.x < -10) this.x = W + 10;
+    if (this.x > W + 10) this.x = -10;
+    if (this.y < -10 || this.y > H + 10) { this.y = Math.random() * H; this.x = Math.random() * W; }
+  }
+  draw(ctx, time) {
+    const b = Math.sin(time * 0.002 + this.phase) * 0.5 + 0.5;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 230, 200, ${this.opacity * b})`;
+    ctx.fill();
+  }
+}
+
+// ═══ INIT ═══
+const stringLights = [];
+const stringCount = Math.max(15, Math.floor(W / 50));
+for (let i = 0; i < stringCount; i++) {
+  // Catenary curve for string lights
+  const frac = i / (stringCount - 1);
+  const x = frac * W;
+  const sag = Math.sin(frac * Math.PI) * 40;
+  const baseLineY = H * 0.12 + sag;
+  stringLights.push(new StringLight(x, baseLineY, i));
+}
+
+// Second row of lights - higher, gentler sag
+for (let i = 0; i < Math.floor(stringCount * 0.6); i++) {
+  const frac = 0.2 + (i / (stringCount * 0.6 - 1)) * 0.6;
+  const x = frac * W;
+  const sag = Math.sin((frac - 0.2) / 0.6 * Math.PI) * 25;
+  const baseLineY = H * 0.06 + sag;
+  stringLights.push(new StringLight(x, baseLineY, i + stringCount));
+}
+
+const petals = Array.from({length: 60}, () => new RosePetal());
+const sparkles = Array.from({length: 80}, () => new FloorSparkle());
+const dust = Array.from({length: 100}, () => new DustMote());
+
+// ═══ DRAW COUPLE SILHOUETTE ═══
+function drawCouple(ctx, time) {
+  const cx = W * 0.5 + Math.sin(time * 0.0003) * 5; // gentle sway
+  const cy = H * 0.55;
+  const scale = Math.min(W, H) * 0.0018;
+  
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  ctx.rotate(Math.sin(time * 0.0004) * 0.02); // tiny dance rotation
+  
+  // Shadow/glow beneath
+  const sg = ctx.createRadialGradient(0, 100, 0, 0, 100, 120);
+  sg.addColorStop(0, 'rgba(255,180,120,0.08)');
+  sg.addColorStop(1, 'transparent');
+  ctx.fillStyle = sg;
+  ctx.fillRect(-120, -20, 240, 240);
+  
+  // Figure 1 (left) - person in dress
+  ctx.fillStyle = 'rgba(15,10,20,0.9)';
+  ctx.beginPath();
+  // Head
+  ctx.arc(-20, -80, 14, 0, Math.PI * 2);
+  ctx.fill();
+  // Body/Dress
+  ctx.beginPath();
+  ctx.moveTo(-30, -65);
+  ctx.quadraticCurveTo(-35, -30, -55, 80);
+  ctx.lineTo(-50, 85);
+  ctx.quadraticCurveTo(-10, 70, 10, 85);
+  ctx.lineTo(15, 80);
+  ctx.quadraticCurveTo(-5, -30, -10, -65);
+  ctx.closePath();
+  ctx.fill();
+  // Arms
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(15,10,20,0.9)';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-15, -50);
+  ctx.quadraticCurveTo(5, -40, 15, -45);
+  ctx.stroke();
+  // Dress trail
+  ctx.fillStyle = 'rgba(15,10,20,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(-55, 80);
+  ctx.quadraticCurveTo(-70, 85, -65, 90);
+  ctx.quadraticCurveTo(-50, 88, -50, 85);
+  ctx.fill();
+  
+  // Figure 2 (right) - person in suit
+  ctx.fillStyle = 'rgba(15,10,20,0.9)';
+  ctx.beginPath();
+  // Head
+  ctx.arc(25, -85, 13, 0, Math.PI * 2);
+  ctx.fill();
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(15, -70);
+  ctx.lineTo(10, 80);
+  ctx.lineTo(20, 82);
+  ctx.lineTo(25, 10);
+  ctx.lineTo(30, 82);
+  ctx.lineTo(40, 80);
+  ctx.lineTo(35, -70);
+  ctx.closePath();
+  ctx.fill();
+  // Shoulders
+  ctx.beginPath();
+  ctx.moveTo(12, -65);
+  ctx.quadraticCurveTo(10, -60, 8, -50);
+  ctx.lineTo(12, -50);
+  ctx.lineTo(15, -65);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(38, -65);
+  ctx.quadraticCurveTo(42, -60, 44, -50);
+  ctx.lineTo(40, -50);
+  ctx.lineTo(37, -65);
+  ctx.fill();
+  // Arm reaching to partner
+  ctx.beginPath();
+  ctx.moveTo(15, -50);
+  ctx.quadraticCurveTo(5, -42, -5, -48);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+// ═══ DRAW CABLE STRING ═══
+function drawCableString(ctx, lights, row) {
+  if (lights.length < 2) return;
+  ctx.strokeStyle = `rgba(80,60,40,0.15)`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(lights[0].x, lights[0].y);
+  for (let i = 1; i < lights.length; i++) {
+    const prev = lights[i - 1];
+    const curr = lights[i];
+    const cpx = (prev.x + curr.x) / 2;
+    const cpy = (prev.y + curr.y) / 2 + 8;
+    ctx.quadraticCurveTo(prev.x, prev.y + 3, cpx, cpy);
+  }
+  ctx.stroke();
+}
+
+// ═══ ANIMATION LOOP ═══
+function animate(time) {
+  t = time;
+  ctx.clearRect(0, 0, W, H);
+  
+  // Background gradient - warm dark
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0812');
+  bg.addColorStop(0.4, '#100d18');
+  bg.addColorStop(0.7, '#0d0a14');
+  bg.addColorStop(1, '#080610');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Warm ambient glow from lights
+  const ambientGlow = ctx.createRadialGradient(W * 0.5, H * 0.15, 0, W * 0.5, H * 0.3, H * 0.7);
+  ambientGlow.addColorStop(0, 'rgba(255,180,100,0.06)');
+  ambientGlow.addColorStop(0.5, 'rgba(255,150,80,0.02)');
+  ambientGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = ambientGlow;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Dance floor glow
+  const floorGlow = ctx.createRadialGradient(W * 0.5, H * 0.85, 0, W * 0.5, H * 0.85, W * 0.4);
+  floorGlow.addColorStop(0, 'rgba(255,200,150,0.04)');
+  floorGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = floorGlow;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Draw cable strings
+  const row1 = stringLights.slice(0, stringCount);
+  const row2 = stringLights.slice(stringCount);
+  drawCableString(ctx, row1);
+  drawCableString(ctx, row2);
+  
+  // Update and draw string lights
+  stringLights.forEach(l => { l.update(time); l.draw(ctx); });
+  
+  // Draw floor sparkles
+  sparkles.forEach(s => s.draw(ctx, time));
+  
+  // Draw couple
+  drawCouple(ctx, time);
+  
+  // Update and draw petals
+  petals.forEach(p => { p.update(time); p.draw(ctx); });
+  
+  // Draw dust
+  dust.forEach(d => { d.update(time); d.draw(ctx, time); });
+  
+  // Spotlight on couple
+  const spot = ctx.createRadialGradient(W * 0.5, H * 0.35, 0, W * 0.5, H * 0.55, H * 0.4);
+  spot.addColorStop(0, 'rgba(255,220,180,0.04)');
+  spot.addColorStop(0.5, 'rgba(255,200,160,0.02)');
+  spot.addColorStop(1, 'transparent');
+  ctx.fillStyle = spot;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Vignette
+  const vig = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.25, W * 0.5, H * 0.5, W * 0.8);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(5,3,10,0.5)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+  
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

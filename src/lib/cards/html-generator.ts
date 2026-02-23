@@ -1,5 +1,7 @@
 import { CardTier, Occasion, QuickTheme, PremiumTheme, MusicStyle } from '@prisma/client';
 import { CardFeatures, defaultCardFeatures, getDefaultPremiumTheme, getDefaultQuickTheme } from '@/types/card';
+import { renderQuickThemeHtml } from '@/lib/templates/quick/render';
+import { renderPremiumWatercolorHtml } from '@/lib/templates/premium/watercolor';
 
 type InputPhoto = {
   src: string;
@@ -661,7 +663,48 @@ function interactionScript(features: CardFeatures) {
 }
 
 export function generateCardHtml(input: CardGenerationInput) {
+  if (input.tier === CardTier.QUICK) {
+    try {
+      return renderQuickThemeHtml({
+        slug: input.slug,
+        recipientName: input.recipientName,
+        senderName: input.senderName,
+        occasion: input.occasion,
+        quickTheme: input.quickTheme,
+        message: input.message,
+        photos: input.photos,
+        gift: input.gift
+      });
+    } catch (error) {
+      console.error('Quick theme template render failed, falling back to legacy renderer.', {
+        slug: input.slug,
+        quickTheme: input.quickTheme,
+        error
+      });
+    }
+  }
+
   const premiumThemeKey = resolvePremiumTheme(input);
+  if (input.tier === CardTier.PREMIUM && premiumThemeKey === 'WATERCOLOR') {
+    try {
+      return renderPremiumWatercolorHtml({
+        slug: input.slug,
+        recipientName: input.recipientName,
+        senderName: input.senderName,
+        occasion: input.occasion,
+        message: input.message,
+        photos: input.photos,
+        gift: input.gift
+      });
+    } catch (error) {
+      console.error('Premium watercolor template render failed, falling back to legacy renderer.', {
+        slug: input.slug,
+        premiumTheme: input.premiumTheme,
+        error
+      });
+    }
+  }
+
   const quickThemeKey = resolveQuickTheme(input);
   const theme = PREMIUM_THEMES[premiumThemeKey] || PREMIUM_THEMES.WATERCOLOR;
   const quickTheme = QUICK_THEMES[quickThemeKey] || QUICK_THEMES.AURORA_DREAMS;

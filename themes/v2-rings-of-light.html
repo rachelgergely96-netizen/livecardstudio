@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rings of Light — LiveCardStudio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#050510;font-family:'Georgia',serif}
+canvas{display:block;position:fixed;top:0;left:0}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:10vh;z-index:10;pointer-events:none}
+.card-text{text-align:center;opacity:0;animation:fadeIn 3s ease 2s forwards}
+.card-title{font-size:clamp(1.5rem,4vw,2.5rem);color:rgba(220,210,240,0.85);font-style:italic;letter-spacing:0.1em;text-shadow:0 0 30px rgba(180,160,255,0.3)}
+.card-sub{font-size:clamp(0.65rem,1.5vw,0.85rem);color:rgba(200,190,230,0.4);margin-top:0.6rem;letter-spacing:0.4em;text-transform:uppercase}
+@keyframes fadeIn{to{opacity:1}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="overlay">
+  <div class="card-text">
+    <div class="card-title">Two Lives, One Light</div>
+    <div class="card-sub">with this ring, I thee wed</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, mx = 0.5, my = 0.5;
+
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resize();
+addEventListener('resize', resize);
+addEventListener('mousemove', e => { mx = e.clientX / W; my = e.clientY / H; });
+addEventListener('touchmove', e => { mx = e.touches[0].clientX / W; my = e.touches[0].clientY / H; });
+
+// ═══ 3D MATH ═══
+function rotateX(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0], p[1]*c - p[2]*s, p[1]*s + p[2]*c]; }
+function rotateY(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c]; }
+function rotateZ(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0]*c - p[1]*s, p[0]*s + p[1]*c, p[2]]; }
+function project(p, cx, cy, fov) {
+  const z = p[2] + 500;
+  const scale = fov / z;
+  return [cx + p[0] * scale, cy + p[1] * scale, z, scale];
+}
+
+// ═══ TORUS MESH ═══
+function generateTorus(R, r, segR, segr) {
+  const verts = [];
+  const normals = [];
+  for (let i = 0; i <= segR; i++) {
+    const theta = (i / segR) * Math.PI * 2;
+    const ct = Math.cos(theta), st = Math.sin(theta);
+    for (let j = 0; j <= segr; j++) {
+      const phi = (j / segr) * Math.PI * 2;
+      const cp = Math.cos(phi), sp = Math.sin(phi);
+      const x = (R + r * cp) * ct;
+      const y = (R + r * cp) * st;
+      const z = r * sp;
+      verts.push([x, y, z]);
+      // Normal
+      const nx = cp * ct;
+      const ny = cp * st;
+      const nz = sp;
+      normals.push([nx, ny, nz]);
+    }
+  }
+  return { verts, normals, segR, segr };
+}
+
+const ring1 = generateTorus(80, 8, 80, 24);
+const ring2 = generateTorus(80, 8, 80, 24);
+
+// ═══ BLINN-PHONG LIGHTING ═══
+function shade(normal, viewDir, lightDir, color, specPow) {
+  const dot = Math.max(0, normal[0]*lightDir[0] + normal[1]*lightDir[1] + normal[2]*lightDir[2]);
+  // Half vector
+  const hx = lightDir[0] + viewDir[0];
+  const hy = lightDir[1] + viewDir[1];
+  const hz = lightDir[2] + viewDir[2];
+  const hLen = Math.sqrt(hx*hx + hy*hy + hz*hz) || 1;
+  const spec = Math.pow(Math.max(0, (normal[0]*hx + normal[1]*hy + normal[2]*hz) / hLen), specPow);
+  
+  // Fresnel rim
+  const ndv = Math.max(0, normal[0]*viewDir[0] + normal[1]*viewDir[1] + normal[2]*viewDir[2]);
+  const fresnel = Math.pow(1 - ndv, 3) * 0.6;
+  
+  const ambient = 0.15;
+  const diffuse = dot * 0.5;
+  const specular = spec * 0.8;
+  
+  return {
+    r: Math.min(255, color[0] * (ambient + diffuse) + 255 * specular + 200 * fresnel),
+    g: Math.min(255, color[1] * (ambient + diffuse) + 255 * specular + 180 * fresnel),
+    b: Math.min(255, color[2] * (ambient + diffuse) + 255 * specular + 255 * fresnel),
+    a: 0.85
+  };
+}
+
+// ═══ DIAMOND GEOMETRY ═══
+function generateDiamond() {
+  const crownFacets = 8;
+  const pavilionFacets = 8;
+  const tableR = 8;
+  const girdleR = 12;
+  const crownH = 6;
+  const pavilionH = 14;
+  const facets = [];
+  
+  // Crown facets
+  for (let i = 0; i < crownFacets; i++) {
+    const a1 = (i / crownFacets) * Math.PI * 2;
+    const a2 = ((i + 1) / crownFacets) * Math.PI * 2;
+    // Crown triangle
+    facets.push({
+      pts: [
+        [Math.cos(a1) * tableR, crownH, Math.sin(a1) * tableR],
+        [Math.cos(a1) * girdleR, 0, Math.sin(a1) * girdleR],
+        [Math.cos(a2) * girdleR, 0, Math.sin(a2) * girdleR]
+      ],
+      type: 'crown'
+    });
+    facets.push({
+      pts: [
+        [Math.cos(a1) * tableR, crownH, Math.sin(a1) * tableR],
+        [Math.cos(a2) * girdleR, 0, Math.sin(a2) * girdleR],
+        [Math.cos(a2) * tableR, crownH, Math.sin(a2) * tableR]
+      ],
+      type: 'crown'
+    });
+  }
+  // Pavilion facets
+  for (let i = 0; i < pavilionFacets; i++) {
+    const a1 = (i / pavilionFacets) * Math.PI * 2;
+    const a2 = ((i + 1) / pavilionFacets) * Math.PI * 2;
+    facets.push({
+      pts: [
+        [Math.cos(a1) * girdleR, 0, Math.sin(a1) * girdleR],
+        [0, -pavilionH, 0],
+        [Math.cos(a2) * girdleR, 0, Math.sin(a2) * girdleR]
+      ],
+      type: 'pavilion'
+    });
+  }
+  return facets;
+}
+const diamondFacets = generateDiamond();
+
+// ═══ PRISMATIC RAYS ═══
+class PrismaticRay {
+  constructor(i, total) {
+    this.angle = (i / total) * Math.PI * 2;
+    this.length = 80 + Math.random() * 60;
+    this.width = 1.5 + Math.random() * 2;
+    this.hue = (i / total) * 360;
+    this.speed = 0.0003 + Math.random() * 0.0002;
+    this.pulse = Math.random() * Math.PI * 2;
+  }
+}
+const prismaticRays = Array.from({length: 8}, (_, i) => new PrismaticRay(i, 8));
+
+// ═══ ORBIT PARTICLES ═══
+class OrbitParticle {
+  constructor(ringIdx, i, total) {
+    this.ringIdx = ringIdx;
+    this.angle = (i / total) * Math.PI * 2;
+    this.speed = 0.001 + Math.random() * 0.002;
+    this.radius = 85 + Math.random() * 15;
+    this.size = 1.5 + Math.random() * 2;
+    this.hue = 220 + Math.random() * 60;
+    this.trail = [];
+    this.trailMax = 15;
+  }
+  update(time) {
+    this.angle += this.speed;
+    const x = Math.cos(this.angle) * this.radius;
+    const y = Math.sin(this.angle) * this.radius;
+    this.trail.unshift({x, y});
+    if (this.trail.length > this.trailMax) this.trail.pop();
+  }
+}
+const orbitParticles1 = Array.from({length: 18}, (_, i) => new OrbitParticle(0, i, 18));
+const orbitParticles2 = Array.from({length: 18}, (_, i) => new OrbitParticle(1, i, 18));
+
+// ═══ AURORA BACKGROUND ═══
+function drawAurora(ctx, time) {
+  for (let i = 0; i < 5; i++) {
+    const cx = W * 0.5 + Math.sin(time * 0.0003 + i * 1.2) * W * 0.3;
+    const cy = H * 0.3 + Math.cos(time * 0.0004 + i * 0.8) * H * 0.2;
+    const rx = 200 + Math.sin(time * 0.0005 + i) * 80;
+    const ry = 100 + Math.cos(time * 0.0004 + i) * 40;
+    
+    const hue = 240 + Math.sin(time * 0.0002 + i * 0.5) * 40; // blue-purple range
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
+    g.addColorStop(0, `hsla(${hue}, 60%, 40%, ${0.04 + Math.sin(time * 0.001 + i) * 0.02})`);
+    g.addColorStop(0.5, `hsla(${hue + 20}, 50%, 30%, ${0.02})`);
+    g.addColorStop(1, 'transparent');
+    
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(rx / Math.max(rx, ry), ry / Math.max(rx, ry));
+    ctx.translate(-cx, -cy);
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - Math.max(rx,ry), cy - Math.max(rx,ry), Math.max(rx,ry) * 2, Math.max(rx,ry) * 2);
+    ctx.restore();
+  }
+}
+
+// ═══ STARS ═══
+const stars = Array.from({length: 200}, () => ({
+  x: Math.random() * 2000 - 500,
+  y: Math.random() * 2000 - 500,
+  size: 0.3 + Math.random() * 1.2,
+  phase: Math.random() * Math.PI * 2,
+  speed: 0.5 + Math.random() * 2
+}));
+
+// ═══ RENDER TORUS ═══
+function renderTorus(ctx, torus, rx, ry, rz, offsetX, offsetY, color, time) {
+  const cx = W / 2 + offsetX;
+  const cy = H / 2 + offsetY;
+  const fov = Math.min(W, H) * 0.8;
+  const lightDir = [0.5, 0.8, -0.5];
+  const lLen = Math.sqrt(lightDir[0]**2 + lightDir[1]**2 + lightDir[2]**2);
+  lightDir[0] /= lLen; lightDir[1] /= lLen; lightDir[2] /= lLen;
+  const viewDir = [0, 0, -1];
+  
+  const points = [];
+  for (let i = 0; i < torus.verts.length; i++) {
+    let p = torus.verts[i];
+    let n = torus.normals[i];
+    p = rotateX(p, rx); n = rotateX(n, rx);
+    p = rotateY(p, ry); n = rotateY(n, ry);
+    p = rotateZ(p, rz); n = rotateZ(n, rz);
+    const proj = project(p, cx, cy, fov);
+    const shaded = shade(n, viewDir, lightDir, color, 64);
+    points.push({ x: proj[0], y: proj[1], z: proj[2], scale: proj[3], ...shaded });
+  }
+  
+  // Draw as quads (simplified - draw points)
+  const segr = torus.segr + 1;
+  for (let i = 0; i < torus.segR; i++) {
+    for (let j = 0; j < torus.segr; j++) {
+      const idx = i * segr + j;
+      const p = points[idx];
+      if (!p) continue;
+      const size = Math.max(0.5, 2 * p.scale);
+      ctx.fillStyle = `rgba(${Math.round(p.r)},${Math.round(p.g)},${Math.round(p.b)},${p.a})`;
+      ctx.fillRect(p.x - size/2, p.y - size/2, size, size);
+    }
+  }
+}
+
+// ═══ RENDER DIAMOND ═══
+function renderDiamond(ctx, time) {
+  const cx = W / 2;
+  const cy = H / 2 - 15;
+  const fov = Math.min(W, H) * 0.8;
+  const dRot = time * 0.001;
+  
+  const projFacets = diamondFacets.map(f => {
+    const pts = f.pts.map(p => {
+      let r = rotateY(p, dRot);
+      r = rotateX(r, 0.3);
+      return project(r, cx, cy, fov);
+    });
+    const avgZ = (pts[0][2] + pts[1][2] + pts[2][2]) / 3;
+    return { pts, type: f.type, avgZ };
+  });
+  
+  projFacets.sort((a, b) => b.avgZ - a.avgZ);
+  
+  projFacets.forEach(f => {
+    const hueShift = Math.sin(time * 0.002 + f.avgZ * 0.01) * 30;
+    const baseHue = f.type === 'crown' ? 220 + hueShift : 260 + hueShift;
+    const lightness = f.type === 'crown' ? 70 : 55;
+    const alpha = 0.3 + Math.sin(time * 0.003 + f.avgZ * 0.02) * 0.1;
+    
+    ctx.beginPath();
+    ctx.moveTo(f.pts[0][0], f.pts[0][1]);
+    ctx.lineTo(f.pts[1][0], f.pts[1][1]);
+    ctx.lineTo(f.pts[2][0], f.pts[2][1]);
+    ctx.closePath();
+    ctx.fillStyle = `hsla(${baseHue}, 60%, ${lightness}%, ${alpha})`;
+    ctx.fill();
+    ctx.strokeStyle = `hsla(${baseHue}, 70%, 80%, ${alpha * 0.5})`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+  
+  // Diamond glow
+  const dg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+  dg.addColorStop(0, `rgba(200, 180, 255, ${0.15 + Math.sin(time * 0.002) * 0.05})`);
+  dg.addColorStop(1, 'transparent');
+  ctx.fillStyle = dg;
+  ctx.fillRect(cx - 40, cy - 40, 80, 80);
+}
+
+// ═══ RENDER PRISMATIC RAYS ═══
+function renderPrismaticRays(ctx, time) {
+  const cx = W / 2;
+  const cy = H / 2 - 15;
+  
+  prismaticRays.forEach(ray => {
+    const angle = ray.angle + time * ray.speed;
+    const brightness = 0.5 + Math.sin(time * 0.002 + ray.pulse) * 0.3;
+    const len = ray.length * brightness;
+    
+    const x2 = cx + Math.cos(angle) * len;
+    const y2 = cy + Math.sin(angle) * len;
+    
+    const g = ctx.createLinearGradient(cx, cy, x2, y2);
+    g.addColorStop(0, `hsla(${ray.hue + time * 0.02}, 80%, 70%, ${0.3 * brightness})`);
+    g.addColorStop(0.5, `hsla(${ray.hue + 30 + time * 0.02}, 70%, 60%, ${0.15 * brightness})`);
+    g.addColorStop(1, 'transparent');
+    
+    ctx.save();
+    ctx.lineWidth = ray.width;
+    ctx.strokeStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// ═══ RENDER ORBIT PARTICLES ═══
+function renderOrbitParticles(ctx, particles, rx, ry, rz, offsetX, offsetY, time) {
+  const cx = W / 2 + offsetX;
+  const cy = H / 2 + offsetY;
+  const fov = Math.min(W, H) * 0.8;
+  
+  particles.forEach(p => {
+    p.update(time);
+    // Draw trail
+    for (let i = p.trail.length - 1; i >= 0; i--) {
+      let pt = [p.trail[i].x, p.trail[i].y, 0];
+      pt = rotateX(pt, rx); pt = rotateY(pt, ry); pt = rotateZ(pt, rz);
+      const proj = project(pt, cx, cy, fov);
+      const alpha = (1 - i / p.trailMax) * 0.4;
+      const size = p.size * (1 - i / p.trailMax) * proj[3];
+      ctx.beginPath();
+      ctx.arc(proj[0], proj[1], Math.max(0.3, size), 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue}, 70%, 70%, ${alpha})`;
+      ctx.fill();
+    }
+  });
+}
+
+// ═══ INTERSECTION GLOW ═══
+function drawIntersectionGlow(ctx, time) {
+  const cx = W / 2;
+  const cy = H / 2;
+  const pulse = 0.3 + Math.sin(time * 0.002) * 0.15;
+  const size = 30 + Math.sin(time * 0.003) * 10;
+  
+  // Prismatic intersection glow
+  for (let i = 0; i < 3; i++) {
+    const hue = 220 + i * 40 + time * 0.02;
+    const g = ctx.createRadialGradient(cx + (i - 1) * 5, cy, 0, cx, cy, size);
+    g.addColorStop(0, `hsla(${hue}, 60%, 70%, ${pulse * 0.3})`);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - size, cy - size, size * 2, size * 2);
+  }
+}
+
+// ═══ ANIMATION LOOP ═══
+function animate(time) {
+  ctx.clearRect(0, 0, W, H);
+  
+  // Deep space background
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, W, H);
+  
+  // Breathing aurora
+  drawAurora(ctx, time);
+  
+  // Stars
+  stars.forEach(s => {
+    const b = 0.3 + Math.sin(time * 0.001 * s.speed + s.phase) * 0.3;
+    const px = ((s.x + time * 0.01) % (W + 500)) - 250;
+    const py = ((s.y + time * 0.005) % (H + 500)) - 250;
+    ctx.beginPath();
+    ctx.arc(px, py, s.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200, 200, 240, ${b})`;
+    ctx.fill();
+  });
+  
+  // Mouse influence on ring rotation
+  const mouseInfluence = (mx - 0.5) * 0.3;
+  const mouseInfluenceY = (my - 0.5) * 0.2;
+  
+  // Ring rotations - interlocking
+  const r1x = Math.PI * 0.5 + Math.sin(time * 0.0003) * 0.1 + mouseInfluenceY;
+  const r1y = time * 0.0004 + mouseInfluence;
+  const r1z = 0;
+  
+  const r2x = Math.PI * 0.5 + Math.cos(time * 0.0003) * 0.1 + mouseInfluenceY;
+  const r2y = time * 0.0004 + Math.PI * 0.5 + mouseInfluence;
+  const r2z = Math.PI * 0.3;
+  
+  // Render rings
+  renderTorus(ctx, ring1, r1x, r1y, r1z, -20, 10, [220, 200, 240], time); // platinum
+  renderTorus(ctx, ring2, r2x, r2y, r2z, 20, -10, [240, 220, 200], time); // rose gold
+  
+  // Orbit particles
+  renderOrbitParticles(ctx, orbitParticles1, r1x, r1y, r1z, -20, 10, time);
+  renderOrbitParticles(ctx, orbitParticles2, r2x, r2y, r2z, 20, -10, time);
+  
+  // Diamond at intersection
+  renderDiamond(ctx, time);
+  
+  // Prismatic rays
+  renderPrismaticRays(ctx, time);
+  
+  // Intersection glow
+  drawIntersectionGlow(ctx, time);
+  
+  // Global glow
+  const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.3);
+  glow.addColorStop(0, `rgba(180, 160, 255, ${0.03 + Math.sin(time * 0.001) * 0.01})`);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Vignette
+  const vig = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.2, W * 0.5, H * 0.5, W * 0.8);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(3,3,12,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+  
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

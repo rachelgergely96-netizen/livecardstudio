@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Champagne Toast — LiveCardStudio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#0a0812;font-family:'Georgia',serif}
+canvas{display:block;position:fixed;top:0;left:0}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12vh;z-index:10;pointer-events:none}
+.card-text{text-align:center;opacity:0;animation:fadeIn 3s ease 1.5s forwards}
+.card-title{font-size:clamp(1.8rem,4.5vw,3rem);color:rgba(232,200,122,0.9);font-style:italic;letter-spacing:0.08em;text-shadow:0 0 30px rgba(232,200,122,0.3)}
+.card-sub{font-size:clamp(0.7rem,1.8vw,0.95rem);color:rgba(232,200,122,0.4);margin-top:0.8rem;letter-spacing:0.35em;text-transform:uppercase}
+@keyframes fadeIn{to{opacity:1}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="overlay">
+  <div class="card-text">
+    <div class="card-title">To Love, To Laughter, To Happily Ever After</div>
+    <div class="card-sub">cheers to the happy couple</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, mx = 0.5, my = 0.5, t = 0;
+let lastClink = 0;
+const CLINK_INTERVAL = 8000;
+
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resize();
+addEventListener('resize', resize);
+addEventListener('mousemove', e => { mx = e.clientX / W; my = e.clientY / H; });
+addEventListener('touchmove', e => { mx = e.touches[0].clientX / W; my = e.touches[0].clientY / H; });
+
+// ═══ CHAMPAGNE FLUTE ═══
+function drawFlute(ctx, x, y, tilt, time, isLeft) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(tilt);
+  
+  const scale = Math.min(W, H) * 0.001;
+  ctx.scale(scale, scale);
+  
+  // Flute body - detailed glass geometry
+  const fluteH = 200;
+  const bowlW = 32;
+  const stemW = 4;
+  const baseW = 28;
+  
+  // Glass reflection gradient
+  const glassGrad = ctx.createLinearGradient(-bowlW, -fluteH, bowlW, 0);
+  glassGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
+  glassGrad.addColorStop(0.3, 'rgba(255,255,255,0.12)');
+  glassGrad.addColorStop(0.5, 'rgba(255,255,255,0.04)');
+  glassGrad.addColorStop(0.7, 'rgba(255,255,255,0.1)');
+  glassGrad.addColorStop(1, 'rgba(255,255,255,0.03)');
+  
+  // Bowl
+  ctx.beginPath();
+  ctx.moveTo(-bowlW, -fluteH);
+  ctx.bezierCurveTo(-bowlW, -fluteH + 30, -bowlW * 0.9, -fluteH * 0.35, -stemW, -fluteH * 0.3);
+  ctx.lineTo(-stemW, -20);
+  ctx.lineTo(-baseW, 0);
+  ctx.lineTo(baseW, 0);
+  ctx.lineTo(stemW, -20);
+  ctx.lineTo(stemW, -fluteH * 0.3);
+  ctx.bezierCurveTo(bowlW * 0.9, -fluteH * 0.35, bowlW, -fluteH + 30, bowlW, -fluteH);
+  ctx.closePath();
+  ctx.fillStyle = glassGrad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Liquid surface
+  const liquidLevel = -fluteH * 0.45;
+  const liquidTop = -fluteH * 0.75;
+  const topW = bowlW * 0.85;
+  const botW = bowlW * 0.5;
+  
+  const liqGrad = ctx.createLinearGradient(0, liquidTop, 0, liquidLevel);
+  liqGrad.addColorStop(0, 'rgba(255, 220, 100, 0.35)');
+  liqGrad.addColorStop(0.5, 'rgba(232, 190, 80, 0.25)');
+  liqGrad.addColorStop(1, 'rgba(200, 160, 60, 0.2)');
+  
+  ctx.beginPath();
+  ctx.moveTo(-topW, liquidTop);
+  ctx.bezierCurveTo(-topW, liquidTop + 20, -botW, liquidLevel - 10, -botW * 0.7, liquidLevel);
+  ctx.lineTo(botW * 0.7, liquidLevel);
+  ctx.bezierCurveTo(botW, liquidLevel - 10, topW, liquidTop + 20, topW, liquidTop);
+  // Liquid surface with meniscus
+  ctx.ellipse(0, liquidTop, topW, 4 + Math.sin(time * 0.003) * 1.5, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = liqGrad;
+  ctx.fill();
+  
+  // Surface shimmer
+  ctx.beginPath();
+  ctx.ellipse(0, liquidTop, topW * 0.8, 2, 0, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(255, 240, 180, ${0.1 + Math.sin(time * 0.004) * 0.05})`;
+  ctx.fill();
+  
+  // Rim highlight
+  ctx.beginPath();
+  ctx.ellipse(0, -fluteH, bowlW, 3, 0, -Math.PI * 0.8, Math.PI * 0.3);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  // Base highlight
+  ctx.beginPath();
+  ctx.ellipse(0, 0, baseW, 3, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+// ═══ BUBBLES / FIZZ ═══
+class Bubble {
+  constructor(fluteX, fluteY, tilt) {
+    this.fluteX = fluteX;
+    this.fluteY = fluteY;
+    this.tilt = tilt;
+    this.reset();
+  }
+  reset() {
+    const scale = Math.min(W, H) * 0.001;
+    const offset = (Math.random() - 0.5) * 30 * scale;
+    this.localX = offset;
+    this.localY = 0;
+    this.startY = this.fluteY + 30 * scale;
+    this.endY = this.fluteY - 120 * scale;
+    this.x = this.fluteX + offset;
+    this.y = this.startY;
+    this.size = 1 + Math.random() * 3;
+    this.speed = 0.3 + Math.random() * 0.8;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleAmp = 0.3 + Math.random() * 0.5;
+    this.opacity = 0.2 + Math.random() * 0.5;
+    this.growing = true;
+  }
+  update(time) {
+    this.y -= this.speed;
+    this.x = this.fluteX + this.localX + Math.sin(time * 0.005 + this.wobble) * this.wobbleAmp;
+    if (this.growing && this.size < 4) this.size += 0.01;
+    // Accelerate as they rise
+    this.speed += 0.005;
+    if (this.y < this.endY) this.reset();
+  }
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 240, 200, ${this.opacity})`;
+    ctx.fill();
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.8})`;
+    ctx.fill();
+  }
+}
+
+// ═══ FIZZ LINES ═══
+class FizzLine {
+  constructor(fluteX, fluteY) {
+    this.fluteX = fluteX;
+    this.fluteY = fluteY;
+    this.reset();
+  }
+  reset() {
+    const scale = Math.min(W, H) * 0.001;
+    this.x = this.fluteX + (Math.random() - 0.5) * 20 * scale;
+    this.y = this.fluteY + 10 * scale;
+    this.height = 5 + Math.random() * 15;
+    this.speed = 0.5 + Math.random() * 1;
+    this.opacity = 0.1 + Math.random() * 0.2;
+    this.endY = this.fluteY - 100 * scale;
+  }
+  update() {
+    this.y -= this.speed;
+    if (this.y < this.endY) this.reset();
+  }
+  draw(ctx) {
+    ctx.strokeStyle = `rgba(255, 230, 160, ${this.opacity})`;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x, this.y + this.height);
+    ctx.stroke();
+  }
+}
+
+// ═══ HEXAGONAL BOKEH ═══
+class Bokeh {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = 15 + Math.random() * 40;
+    this.opacity = 0.02 + Math.random() * 0.06;
+    this.hue = 35 + Math.random() * 25;
+    this.rotation = Math.random() * Math.PI;
+    this.pulse = Math.random() * Math.PI * 2;
+    this.speed = 0.5 + Math.random() * 1;
+  }
+  draw(ctx, time) {
+    const op = this.opacity * (0.6 + Math.sin(time * 0.001 * this.speed + this.pulse) * 0.4);
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI * 2 / 6) * i - Math.PI / 6;
+      const px = Math.cos(a) * this.size;
+      const py = Math.sin(a) * this.size;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = `hsla(${this.hue}, 80%, 65%, ${op})`;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ═══ GOLD LEAF ═══
+class GoldLeaf {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = -10 - Math.random() * H * 0.3;
+    this.size = 2 + Math.random() * 5;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.02;
+    this.vy = 0.2 + Math.random() * 0.4;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.shimmer = Math.random() * Math.PI * 2;
+  }
+  update(time) {
+    this.y += this.vy;
+    this.x += this.vx + Math.sin(time * 0.001 + this.wobble) * 0.3;
+    this.rotation += this.rotSpeed;
+    if (this.y > H + 20) this.reset();
+  }
+  draw(ctx, time) {
+    const shimmer = 0.3 + Math.sin(time * 0.003 + this.shimmer) * 0.3;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.scale(1, Math.cos(time * 0.003 + this.shimmer) * 0.5 + 0.5); // tumble effect
+    ctx.fillStyle = `rgba(232, 200, 100, ${shimmer})`;
+    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+    // metallic highlight
+    ctx.fillStyle = `rgba(255, 240, 180, ${shimmer * 0.5})`;
+    ctx.fillRect(-this.size / 4, -this.size / 4, this.size / 2, this.size / 2);
+    ctx.restore();
+  }
+}
+
+// ═══ CONFETTI (clink burst) ═══
+class Confetti {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.vx = (Math.random() - 0.5) * 8;
+    this.vy = -3 - Math.random() * 5;
+    this.size = 3 + Math.random() * 5;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.15;
+    this.hue = Math.random() < 0.5 ? 40 + Math.random() * 20 : 350 + Math.random() * 20;
+    this.life = 1;
+    this.gravity = 0.08;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += this.gravity;
+    this.vx *= 0.99;
+    this.rotation += this.rotSpeed;
+    this.life -= 0.008;
+  }
+  draw(ctx) {
+    if (this.life <= 0) return;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.fillStyle = `hsla(${this.hue}, 80%, 65%, ${this.life * 0.8})`;
+    ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
+    ctx.restore();
+  }
+}
+
+// ═══ SHOCKWAVE ═══
+class Shockwave {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.radius = 0;
+    this.maxRadius = Math.min(W, H) * 0.3;
+    this.life = 1;
+  }
+  update() {
+    this.radius += 4;
+    this.life = 1 - this.radius / this.maxRadius;
+  }
+  draw(ctx) {
+    if (this.life <= 0) return;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(232, 200, 122, ${this.life * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// ═══ LIGHT RAYS ═══
+function drawLightRays(ctx, x, y, time) {
+  const rayCount = 12;
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (Math.PI * 2 / rayCount) * i + time * 0.0002;
+    const length = 50 + Math.sin(time * 0.002 + i) * 20;
+    const width = 1 + Math.sin(time * 0.003 + i * 0.5) * 0.5;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const rg = ctx.createLinearGradient(0, 0, length, 0);
+    rg.addColorStop(0, `rgba(255, 220, 120, 0.15)`);
+    rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, -width, length, width * 2);
+    ctx.restore();
+  }
+}
+
+// ═══ CAUSTIC LIGHT PATCHES ═══
+function drawCaustics(ctx, time) {
+  for (let i = 0; i < 8; i++) {
+    const cx = W * 0.3 + Math.sin(time * 0.0008 + i * 1.5) * W * 0.3;
+    const cy = H * 0.5 + Math.cos(time * 0.0006 + i * 2) * H * 0.15;
+    const size = 30 + Math.sin(time * 0.002 + i) * 15;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, size);
+    g.addColorStop(0, `rgba(255, 230, 150, ${0.03 + Math.sin(time * 0.003 + i) * 0.015})`);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - size, cy - size, size * 2, size * 2);
+  }
+}
+
+// ═══ INIT ═══
+const fluteLeftX = () => W * 0.42;
+const fluteRightX = () => W * 0.58;
+const fluteY = () => H * 0.55;
+
+let bubblesLeft = [], bubblesRight = [], fizzLeft = [], fizzRight = [];
+const bokeh = Array.from({length: 25}, () => new Bokeh());
+const goldLeaves = Array.from({length: 30}, () => new GoldLeaf());
+let confetti = [];
+let shockwaves = [];
+let clinkFlash = 0;
+
+function initBubbles() {
+  bubblesLeft = Array.from({length: 25}, () => new Bubble(fluteLeftX(), fluteY(), -0.1));
+  bubblesRight = Array.from({length: 25}, () => new Bubble(fluteRightX(), fluteY(), 0.1));
+  fizzLeft = Array.from({length: 8}, () => new FizzLine(fluteLeftX(), fluteY()));
+  fizzRight = Array.from({length: 8}, () => new FizzLine(fluteRightX(), fluteY()));
+}
+initBubbles();
+
+function triggerClink(time) {
+  const cx = W * 0.5;
+  const cy = fluteY() - 60;
+  // Confetti burst
+  for (let i = 0; i < 30; i++) confetti.push(new Confetti(cx, cy));
+  // Shockwave
+  shockwaves.push(new Shockwave(cx, cy));
+  clinkFlash = 1;
+  lastClink = time;
+}
+
+// Click to clink
+addEventListener('click', () => triggerClink(t));
+
+// ═══ ANIMATION LOOP ═══
+function animate(time) {
+  t = time;
+  ctx.clearRect(0, 0, W, H);
+  
+  // Background
+  const bg = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.5, W * 0.8);
+  bg.addColorStop(0, '#15101e');
+  bg.addColorStop(0.5, '#0d0a14');
+  bg.addColorStop(1, '#080610');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Caustic light patches
+  drawCaustics(ctx, time);
+  
+  // Bokeh background
+  bokeh.forEach(b => b.draw(ctx, time));
+  
+  // Auto-clink every 8 seconds
+  if (time - lastClink > CLINK_INTERVAL) triggerClink(time);
+  
+  // Clink flash
+  if (clinkFlash > 0) {
+    ctx.fillStyle = `rgba(255, 240, 200, ${clinkFlash * 0.15})`;
+    ctx.fillRect(0, 0, W, H);
+    clinkFlash *= 0.95;
+    if (clinkFlash < 0.01) clinkFlash = 0;
+  }
+  
+  // Glass tilt based on mouse
+  const tiltLeft = -0.12 + (mx - 0.5) * 0.08;
+  const tiltRight = 0.12 + (mx - 0.5) * 0.08;
+  
+  // Light rays from glass tops
+  drawLightRays(ctx, fluteLeftX(), fluteY() - Math.min(W,H) * 0.18, time);
+  drawLightRays(ctx, fluteRightX(), fluteY() - Math.min(W,H) * 0.18, time);
+  
+  // Draw flutes
+  drawFlute(ctx, fluteLeftX(), fluteY(), tiltLeft, time, true);
+  drawFlute(ctx, fluteRightX(), fluteY(), tiltRight, time, false);
+  
+  // Update bubble positions to track flutes
+  bubblesLeft.forEach(b => { b.fluteX = fluteLeftX(); b.fluteY = fluteY(); b.update(time); b.draw(ctx); });
+  bubblesRight.forEach(b => { b.fluteX = fluteRightX(); b.fluteY = fluteY(); b.update(time); b.draw(ctx); });
+  fizzLeft.forEach(f => { f.fluteX = fluteLeftX(); f.fluteY = fluteY(); f.update(); f.draw(ctx); });
+  fizzRight.forEach(f => { f.fluteX = fluteRightX(); f.fluteY = fluteY(); f.update(); f.draw(ctx); });
+  
+  // Gold leaves
+  goldLeaves.forEach(l => { l.update(time); l.draw(ctx, time); });
+  
+  // Confetti
+  confetti = confetti.filter(c => c.life > 0);
+  confetti.forEach(c => { c.update(); c.draw(ctx); });
+  
+  // Shockwaves
+  shockwaves = shockwaves.filter(s => s.life > 0);
+  shockwaves.forEach(s => { s.update(); s.draw(ctx); });
+  
+  // Center warm glow
+  const centerGlow = ctx.createRadialGradient(W * 0.5, fluteY() - 50, 0, W * 0.5, fluteY(), W * 0.3);
+  centerGlow.addColorStop(0, 'rgba(232, 200, 122, 0.04)');
+  centerGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = centerGlow;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Vignette
+  const vig = ctx.createRadialGradient(W * 0.5, H * 0.45, W * 0.2, W * 0.5, H * 0.5, W * 0.85);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(5,3,10,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+  
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

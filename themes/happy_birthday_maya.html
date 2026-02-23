@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday Maya — LiveCardStudio Premium Watercolor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#faf7f2;font-family:'Georgia',serif}
+canvas#bg{display:block;position:fixed;top:0;left:0;z-index:1}
+canvas#fg{display:block;position:fixed;top:0;left:0;z-index:2;pointer-events:none}
+canvas#paint{display:block;position:fixed;top:0;left:0;z-index:3;cursor:crosshair;mix-blend-mode:multiply}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;pointer-events:none}
+.card-text{text-align:center;opacity:0;animation:fadeIn 2.5s ease 0.5s forwards}
+.card-title{font-size:clamp(2.5rem,7vw,5rem);color:rgba(120,60,80,0.75);font-style:italic;letter-spacing:0.02em;text-shadow:2px 2px 8px rgba(200,150,160,0.3);mix-blend-mode:multiply}
+.card-name{font-size:clamp(3rem,9vw,6.5rem);color:rgba(180,90,110,0.65);font-style:italic;letter-spacing:0.05em;text-shadow:3px 3px 12px rgba(200,140,160,0.25);margin-top:-0.2em;mix-blend-mode:multiply}
+.card-sub{font-size:clamp(0.7rem,1.8vw,1rem);color:rgba(140,100,110,0.4);margin-top:1.5rem;letter-spacing:0.4em;text-transform:uppercase;font-weight:normal}
+.card-msg{font-size:clamp(0.85rem,2vw,1.1rem);color:rgba(130,80,95,0.5);margin-top:2.5rem;font-style:italic;max-width:400px;line-height:1.8}
+.paint-hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);z-index:10;font-size:0.7rem;color:rgba(160,120,130,0.35);letter-spacing:0.3em;text-transform:uppercase;pointer-events:none;opacity:0;animation:fadeIn 3s ease 4s forwards}
+@keyframes fadeIn{to{opacity:1}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="fg"></canvas>
+<canvas id="paint"></canvas>
+<div class="overlay">
+  <div class="card-text">
+    <div class="card-title">Happy Birthday</div>
+    <div class="card-name">Maya</div>
+    <div class="card-sub">a watercolor wish, just for you</div>
+    <div class="card-msg">May your year bloom with color,<br>warmth, and beautiful surprises</div>
+  </div>
+</div>
+<div class="paint-hint">touch or click to paint</div>
+<script>
+const bgCanvas = document.getElementById('bg');
+const fgCanvas = document.getElementById('fg');
+const paintCanvas = document.getElementById('paint');
+const bgCtx = bgCanvas.getContext('2d');
+const fgCtx = fgCanvas.getContext('2d');
+const paintCtx = paintCanvas.getContext('2d');
+let W, H, mx = -1, my = -1, pmx = -1, pmy = -1;
+let isPainting = false;
+
+function resize() {
+  W = bgCanvas.width = fgCanvas.width = paintCanvas.width = innerWidth;
+  H = bgCanvas.height = fgCanvas.height = paintCanvas.height = innerHeight;
+  drawStaticBackground();
+}
+resize();
+addEventListener('resize', resize);
+
+// Paint interactions
+paintCanvas.addEventListener('mousedown', e => { isPainting = true; pmx = e.clientX; pmy = e.clientY; });
+paintCanvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; if (isPainting) paintStroke(e.clientX, e.clientY); pmx = e.clientX; pmy = e.clientY; });
+paintCanvas.addEventListener('mouseup', () => isPainting = false);
+paintCanvas.addEventListener('mouseleave', () => isPainting = false);
+paintCanvas.addEventListener('touchstart', e => { isPainting = true; const t = e.touches[0]; pmx = t.clientX; pmy = t.clientY; e.preventDefault(); });
+paintCanvas.addEventListener('touchmove', e => { const t = e.touches[0]; mx = t.clientX; my = t.clientY; if (isPainting) paintStroke(t.clientX, t.clientY); pmx = t.clientX; pmy = t.clientY; e.preventDefault(); });
+paintCanvas.addEventListener('touchend', () => isPainting = false);
+
+// ═══ WATERCOLOR PALETTE ═══
+const palette = [
+  { h: 340, s: 45, l: 72 }, // dusty rose
+  { h: 25, s: 55, l: 75 },  // peach
+  { h: 45, s: 50, l: 78 },  // warm gold
+  { h: 200, s: 35, l: 72 }, // dusty blue
+  { h: 280, s: 30, l: 75 }, // soft lavender
+  { h: 150, s: 30, l: 70 }, // sage
+  { h: 10, s: 50, l: 70 },  // coral
+  { h: 320, s: 35, l: 68 }, // mauve
+];
+
+// ═══ WATERCOLOR BLEED BLOB ═══
+class WatercolorBlob {
+  constructor(x, y, maxR, color, delay) {
+    this.x = x;
+    this.y = y;
+    this.maxR = maxR;
+    this.color = color;
+    this.delay = delay;
+    this.r = 0;
+    this.targetR = maxR;
+    this.opacity = 0;
+    this.targetOpacity = 0.06 + Math.random() * 0.08;
+    this.edges = [];
+    this.edgeCount = 12 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < this.edgeCount; i++) {
+      this.edges.push({
+        angle: (i / this.edgeCount) * Math.PI * 2,
+        radiusMult: 0.7 + Math.random() * 0.6,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.5 + Math.random() * 1.5
+      });
+    }
+    this.born = -1;
+  }
+  update(time) {
+    if (this.born === -1) this.born = time;
+    const age = time - this.born - this.delay;
+    if (age < 0) return;
+    
+    // Slow bleed expansion
+    const progress = Math.min(1, age / 5000);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    this.r = this.targetR * ease;
+    this.opacity = this.targetOpacity * ease * (1 - progress * 0.2);
+  }
+  draw(ctx, time) {
+    if (this.r < 1) return;
+    
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.globalAlpha = this.opacity;
+    
+    // Multiple passes for watercolor texture
+    for (let pass = 0; pass < 3; pass++) {
+      const passScale = 0.8 + pass * 0.15;
+      const passAlpha = 1 - pass * 0.2;
+      
+      ctx.beginPath();
+      for (let i = 0; i <= this.edgeCount; i++) {
+        const edge = this.edges[i % this.edgeCount];
+        const wobble = Math.sin(time * 0.001 * edge.wobbleSpeed + edge.wobble) * 0.1;
+        const r = this.r * edge.radiusMult * passScale * (1 + wobble);
+        const a = edge.angle + pass * 0.05;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        
+        if (i === 0) {
+          ctx.moveTo(px, py);
+        } else {
+          // Smooth curves between points
+          const prevEdge = this.edges[(i - 1) % this.edgeCount];
+          const prevR = this.r * prevEdge.radiusMult * passScale;
+          const prevA = prevEdge.angle + pass * 0.05;
+          const cpR = (prevR + r) / 2 * 1.1;
+          const cpA = (prevA + a) / 2;
+          ctx.quadraticCurveTo(
+            Math.cos(cpA) * cpR, Math.sin(cpA) * cpR,
+            px, py
+          );
+        }
+      }
+      ctx.closePath();
+      
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.r * passScale);
+      const c = this.color;
+      gradient.addColorStop(0, `hsla(${c.h}, ${c.s}%, ${c.l}%, ${passAlpha})`);
+      gradient.addColorStop(0.5, `hsla(${c.h}, ${c.s - 5}%, ${c.l + 5}%, ${passAlpha * 0.7})`);
+      gradient.addColorStop(0.8, `hsla(${c.h}, ${c.s - 10}%, ${c.l + 8}%, ${passAlpha * 0.4})`);
+      gradient.addColorStop(1, `hsla(${c.h}, ${c.s}%, ${c.l + 10}%, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+}
+
+// ═══ PAINT SPLATTER ═══
+class Splatter {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.drops = [];
+    const count = 5 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 5 + Math.random() * 30;
+      this.drops.push({
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        size: 1 + Math.random() * 4,
+        opacity: 0.15 + Math.random() * 0.25
+      });
+    }
+  }
+  draw(ctx) {
+    this.drops.forEach(d => {
+      ctx.beginPath();
+      ctx.arc(this.x + d.x, this.y + d.y, d.size, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${d.opacity})`;
+      ctx.fill();
+    });
+  }
+}
+
+// ═══ FLOATING PETALS (watercolor style) ═══
+class WatercolorPetal {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = -30 - Math.random() * H * 0.3;
+    this.size = 8 + Math.random() * 15;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.008;
+    this.vy = 0.15 + Math.random() * 0.35;
+    this.vx = (Math.random() - 0.5) * 0.2;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.color = palette[Math.floor(Math.random() * 4)]; // roses/peaches
+    this.opacity = 0.15 + Math.random() * 0.2;
+  }
+  update(time) {
+    this.y += this.vy;
+    this.x += this.vx + Math.sin(time * 0.001 + this.wobble) * 0.3;
+    this.rotation += this.rotSpeed;
+    if (this.y > H + 40) this.reset();
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.globalAlpha = this.opacity;
+    
+    // Watercolor petal - soft edges
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+    g.addColorStop(0, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, 0.6)`);
+    g.addColorStop(0.5, `hsla(${this.color.h}, ${this.color.s - 10}%, ${this.color.l + 5}%, 0.3)`);
+    g.addColorStop(1, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l + 10}%, 0)`);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size);
+    ctx.bezierCurveTo(this.size * 0.7, -this.size * 0.5, this.size * 0.6, this.size * 0.4, 0, this.size * 0.3);
+    ctx.bezierCurveTo(-this.size * 0.6, this.size * 0.4, -this.size * 0.7, -this.size * 0.5, 0, -this.size);
+    ctx.fillStyle = g;
+    ctx.fill();
+    
+    ctx.restore();
+  }
+}
+
+// ═══ PIGMENT PARTICLES (ambient) ═══
+class PigmentParticle {
+  constructor() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = 0.5 + Math.random() * 2;
+    this.color = palette[Math.floor(Math.random() * palette.length)];
+    this.opacity = 0.05 + Math.random() * 0.1;
+    this.phase = Math.random() * Math.PI * 2;
+    this.speed = 0.2 + Math.random() * 0.5;
+    this.drift = (Math.random() - 0.5) * 0.1;
+  }
+  update(time) {
+    this.x += this.drift + Math.sin(time * 0.0005 + this.phase) * 0.05;
+    this.y += Math.sin(time * 0.0003 + this.phase + 1) * 0.03;
+    if (this.x < -10) this.x = W + 10;
+    if (this.x > W + 10) this.x = -10;
+  }
+  draw(ctx, time) {
+    const pulse = 0.5 + Math.sin(time * 0.001 * this.speed + this.phase) * 0.5;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${this.opacity * pulse})`;
+    ctx.fill();
+  }
+}
+
+// ═══ INTERACTIVE PAINT STROKE ═══
+function paintStroke(x, y) {
+  if (pmx < 0) { pmx = x; pmy = y; return; }
+  
+  const color = palette[Math.floor(Math.random() * palette.length)];
+  const dist = Math.sqrt((x - pmx) ** 2 + (y - pmy) ** 2);
+  const speed = Math.min(dist, 30);
+  const brushSize = 15 + speed * 0.5;
+  
+  paintCtx.globalCompositeOperation = 'source-over';
+  
+  // Main stroke
+  const steps = Math.max(1, Math.floor(dist / 3));
+  for (let i = 0; i < steps; i++) {
+    const frac = i / steps;
+    const sx = pmx + (x - pmx) * frac;
+    const sy = pmy + (y - pmy) * frac;
+    
+    const g = paintCtx.createRadialGradient(sx, sy, 0, sx, sy, brushSize);
+    g.addColorStop(0, `hsla(${color.h}, ${color.s}%, ${color.l}%, 0.04)`);
+    g.addColorStop(0.3, `hsla(${color.h}, ${color.s - 5}%, ${color.l + 3}%, 0.025)`);
+    g.addColorStop(0.7, `hsla(${color.h}, ${color.s - 10}%, ${color.l + 8}%, 0.01)`);
+    g.addColorStop(1, 'transparent');
+    paintCtx.fillStyle = g;
+    paintCtx.beginPath();
+    paintCtx.arc(sx, sy, brushSize, 0, Math.PI * 2);
+    paintCtx.fill();
+  }
+  
+  // Occasional splatter
+  if (Math.random() < 0.15) {
+    splatters.push(new Splatter(x + (Math.random() - 0.5) * 20, y + (Math.random() - 0.5) * 20, color));
+  }
+}
+
+// ═══ STATIC BACKGROUND ═══
+function drawStaticBackground() {
+  // Paper texture base
+  bgCtx.fillStyle = '#faf7f2';
+  bgCtx.fillRect(0, 0, W, H);
+  
+  // Paper grain
+  for (let i = 0; i < W * H * 0.01; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H;
+    const size = Math.random() * 1.5;
+    bgCtx.fillStyle = `rgba(${200 + Math.random() * 30}, ${190 + Math.random() * 30}, ${180 + Math.random() * 30}, ${0.05 + Math.random() * 0.08})`;
+    bgCtx.fillRect(x, y, size, size);
+  }
+  
+  // Soft edge darkening (like real watercolor paper)
+  const edgeGrad = bgCtx.createRadialGradient(W/2, H/2, W * 0.25, W/2, H/2, W * 0.75);
+  edgeGrad.addColorStop(0, 'transparent');
+  edgeGrad.addColorStop(1, 'rgba(210,200,185,0.15)');
+  bgCtx.fillStyle = edgeGrad;
+  bgCtx.fillRect(0, 0, W, H);
+}
+
+// ═══ INIT ═══
+const blobs = [];
+// Create a wreath-like arrangement of blobs
+for (let i = 0; i < 20; i++) {
+  const angle = (i / 20) * Math.PI * 2;
+  const radiusX = W * 0.3;
+  const radiusY = H * 0.28;
+  const x = W / 2 + Math.cos(angle) * radiusX + (Math.random() - 0.5) * 80;
+  const y = H / 2 + Math.sin(angle) * radiusY + (Math.random() - 0.5) * 60;
+  const size = 60 + Math.random() * 100;
+  const color = palette[Math.floor(Math.random() * palette.length)];
+  blobs.push(new WatercolorBlob(x, y, size, color, i * 200));
+}
+
+// Corner accent blobs
+const corners = [
+  [W * 0.1, H * 0.1], [W * 0.9, H * 0.1],
+  [W * 0.1, H * 0.9], [W * 0.9, H * 0.9]
+];
+corners.forEach((c, i) => {
+  for (let j = 0; j < 3; j++) {
+    blobs.push(new WatercolorBlob(
+      c[0] + (Math.random() - 0.5) * 60,
+      c[1] + (Math.random() - 0.5) * 60,
+      80 + Math.random() * 60,
+      palette[Math.floor(Math.random() * palette.length)],
+      3000 + i * 500 + j * 300
+    ));
+  }
+});
+
+const petals = Array.from({length: 20}, () => new WatercolorPetal());
+const pigments = Array.from({length: 150}, () => new PigmentParticle());
+let splatters = [];
+
+// Pre-add some artistic splatters
+for (let i = 0; i < 15; i++) {
+  splatters.push(new Splatter(
+    Math.random() * W,
+    Math.random() * H,
+    palette[Math.floor(Math.random() * palette.length)]
+  ));
+}
+
+// ═══ ANIMATION LOOP ═══
+function animate(time) {
+  // Clear foreground only
+  fgCtx.clearRect(0, 0, W, H);
+  
+  // Update and draw blobs on foreground
+  blobs.forEach(b => {
+    b.update(time);
+    b.draw(fgCtx, time);
+  });
+  
+  // Draw pre-existing splatters on foreground
+  splatters.forEach(s => s.draw(fgCtx));
+  
+  // Floating petals
+  petals.forEach(p => {
+    p.update(time);
+    p.draw(fgCtx);
+  });
+  
+  // Pigment particles
+  pigments.forEach(p => {
+    p.update(time);
+    p.draw(fgCtx, time);
+  });
+  
+  // Subtle color wash that shifts over time
+  const washHue = 340 + Math.sin(time * 0.0002) * 20;
+  const wash = fgCtx.createRadialGradient(
+    W/2 + Math.sin(time * 0.0003) * W * 0.1,
+    H/2 + Math.cos(time * 0.0002) * H * 0.1,
+    0,
+    W/2, H/2, W * 0.5
+  );
+  wash.addColorStop(0, `hsla(${washHue}, 30%, 80%, 0.02)`);
+  wash.addColorStop(1, 'transparent');
+  fgCtx.fillStyle = wash;
+  fgCtx.fillRect(0, 0, W, H);
+  
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
