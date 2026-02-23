@@ -94,16 +94,23 @@ body {
       return;
     }
     var card = res.data;
-    var html = window.LiveCardRender && window.LiveCardRender.buildCardHTML(card);
-    if (!html) {
+    var render = window.LiveCardRender;
+    var renderPromise = render && render.buildCardHTMLAsync
+      ? render.buildCardHTMLAsync(card)
+      : Promise.resolve(render && render.buildCardHTML ? render.buildCardHTML(card) : '');
+    renderPromise.then(function(html) {
+      if (!html) {
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+      var frame = document.getElementById('cardFrame');
+      frame.style.display = 'block';
+      frame.innerHTML = '<iframe sandbox="allow-scripts" title="Living card"></iframe>';
+      frame.querySelector('iframe').srcdoc = html;
+      document.getElementById('footer').style.display = 'block';
+    }).catch(function() {
       document.getElementById('error').style.display = 'block';
-      return;
-    }
-    var frame = document.getElementById('cardFrame');
-    frame.style.display = 'block';
-    frame.innerHTML = '<iframe sandbox="allow-scripts" title="Living card"></iframe>';
-    frame.querySelector('iframe').srcdoc = html;
-    document.getElementById('footer').style.display = 'block';
+    });
   });
 })();
 </script>

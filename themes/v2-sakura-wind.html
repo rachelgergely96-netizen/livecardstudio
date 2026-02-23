@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>A Living Card For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Nunito+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Nunito Sans',sans-serif;overflow:hidden;width:100vw;height:100vh;touch-action:manipulation;-webkit-font-smoothing:antialiased;background:#F5F0E8}canvas{position:fixed;inset:0;z-index:0}
+.envelope-screen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F5F0E8;cursor:pointer;transition:opacity 1.4s cubic-bezier(.4,0,.2,1),transform 1.4s cubic-bezier(.4,0,.2,1)}.envelope-screen.opened{opacity:0;transform:scale(1.15);pointer-events:none}
+.env-wrap{position:relative;width:160px;height:130px}.env-body{width:160px;height:100px;background:linear-gradient(145deg,#FAF5ED,#EDE5D8);border-radius:5px;position:absolute;bottom:0;box-shadow:0 10px 50px rgba(60,50,40,.08);border:1px solid rgba(180,140,140,.1)}.env-flap{width:0;height:0;border-left:80px solid transparent;border-right:80px solid transparent;border-top:65px solid #E8D8D0;position:absolute;top:0;transition:transform 1s cubic-bezier(.4,0,.2,1);transform-origin:top center}.envelope-screen:hover .env-flap{transform:rotateX(50deg)}
+.env-seal{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#D4919B,#B8707A);position:absolute;top:38px;left:50%;transform:translateX(-50%);z-index:2;box-shadow:0 3px 18px rgba(180,100,110,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#F5F0E8;animation:seal 4s ease-in-out infinite}@keyframes seal{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.1)}}
+.env-hint{margin-top:2.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:#8B7B6B;opacity:0;animation:fi 2s ease 1s forwards}.env-from{margin-top:.8rem;font-family:'Cormorant Garamond',serif;font-size:.85rem;letter-spacing:.1em;color:#C4818B;opacity:0;animation:fi 2s ease 1.5s forwards}@keyframes fi{to{opacity:.7}}
+.card-exp{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 1.8s ease .6s;pointer-events:none;padding:2rem}.card-exp.active{opacity:1;pointer-events:auto}
+.photo-frame{position:relative;width:min(280px,75vw);height:min(280px,75vw);border-radius:22px;overflow:hidden;cursor:pointer;box-shadow:0 20px 80px rgba(60,50,40,.1);transition:transform .6s;margin-bottom:2rem;opacity:0;transform:translateY(25px);animation:rev 1.6s ease 1.8s forwards}@keyframes rev{to{opacity:1;transform:translateY(0)}}.photo-frame:hover{transform:scale(1.02)}.photo-canvas{width:100%;height:100%;display:block}
+.filter-label{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.8rem;color:#fff;background:rgba(60,50,40,.35);backdrop-filter:blur(10px);padding:5px 18px;border-radius:20px;pointer-events:none}.tap-hint{position:absolute;top:12px;right:12px;font-size:.6rem;color:#fff;background:rgba(60,50,40,.25);backdrop-filter:blur(8px);padding:3px 10px;border-radius:12px;opacity:0;animation:fi 1.5s ease 3.5s forwards}
+.msg{text-align:center;max-width:420px;opacity:0;transform:translateY(25px);animation:rev 1.6s ease 2.6s forwards}.msg-occ{font-size:.65rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:#C4818B;margin-bottom:.8rem}.msg-div{display:block;width:45px;height:1px;background:linear-gradient(to right,transparent,#C4818B,transparent);margin:0 auto 1rem}.msg-txt{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(1.15rem,3.8vw,1.75rem);line-height:1.65;color:#3D3535;margin-bottom:1.5rem}.msg-from{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:#B8707A}
+.branding{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:20;font-family:'Cormorant Garamond',serif;font-size:.72rem;color:#8B7B6B;opacity:0;letter-spacing:.08em;animation:fi 2s ease 4s forwards}.branding a{color:#C4818B;text-decoration:none}
+@media(max-height:700px){.photo-frame{width:min(200px,55vw);height:min(200px,55vw)}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="envelope-screen" id="env"><div class="env-wrap"><div class="env-flap"></div><div class="env-body"></div><div class="env-seal">桜</div></div><p class="env-hint">tap to open</p><p class="env-from">the petals remember what words cannot</p></div>
+<div class="card-exp" id="exp"><div class="photo-frame" id="pf"><canvas class="photo-canvas" id="pc"></canvas><div class="filter-label" id="fl">Original</div><div class="tap-hint">tap to transform</div></div><div class="msg"><p class="msg-occ">Thank You</p><span class="msg-div"></span><p class="msg-txt">Some gratitude is too big for words. So I'm sending you a wind full of blossoms instead — and hoping you feel what I mean.</p><p class="msg-from">— with the deepest bow of my heart</p></div></div>
+<div class="branding">made with <a href="#">LiveCardStudio</a> — cards that breathe</div>
+<script>
+const P=new Uint8Array(512),G=[];(function(){const p=[];for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}for(let i=0;i<512;i++)P[i]=p[i&255];for(let i=0;i<256;i++){const a=Math.random()*Math.PI*2;G[i]=[Math.cos(a),Math.sin(a)];}})();
+function fade(t){return t*t*t*(t*(t*6-15)+10)}function lerp(a,b,t){return a+(b-a)*t}function dot2(g,x,y){return g[0]*x+g[1]*y}
+function noise2D(x,y){const X=Math.floor(x)&255,Y=Math.floor(y)&255,xf=x-Math.floor(x),yf=y-Math.floor(y),u=fade(xf),v=fade(yf);return lerp(lerp(dot2(G[P[P[X]+Y]],xf,yf),dot2(G[P[P[X+1]+Y]],xf-1,yf),u),lerp(dot2(G[P[P[X]+Y+1]],xf,yf-1),dot2(G[P[P[X+1]+Y+1]],xf-1,yf-1),u),v)}
+function fbm(x,y,o=4){let v=0,a=.5,f=1;for(let i=0;i<o;i++){v+=a*noise2D(x*f,y*f);a*=.5;f*=2;}return v}
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');let W,H,t=0,mx=0,my=0,mxS=0,myS=0;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY},{passive:true});
+
+// Wind system - periodic gusts
+let windForce=0,windTarget=0,gustTimer=200;
+function updateWind(){
+  gustTimer--;
+  if(gustTimer<=0){windTarget=1+Math.random()*3;gustTimer=150+Math.random()*400;}
+  else if(gustTimer>50)windTarget*=.98;
+  windForce+=(windTarget-windForce)*.02;
+}
+
+// ═══ INK WASH BACKGROUND ═══
+class InkWash{
+  constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.R=140+Math.random()*300;this.tone=88+Math.random()*8;this.a=.03+Math.random()*.06;this.ph=Math.random()*Math.PI*2;this.sp=.0002+Math.random()*.0003;this.no=Math.random()*100}
+  draw(t){const b=Math.sin(t*this.sp+this.ph)*.15+1,r=this.R*b,nx=noise2D(this.no+t*.00006,0)*50,ny=noise2D(0,this.no+t*.00004)*35,x=this.x+nx,y=this.y+ny;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(30,12%,${this.tone}%,${this.a})`);g.addColorStop(.6,`hsla(30,10%,${this.tone-2}%,${this.a*.4})`);g.addColorStop(1,`hsla(30,8%,${this.tone}%,0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+}
+
+// ═══ BRANCH SILHOUETTES ═══
+function drawBranches(t){
+  ctx.save();
+  ctx.globalAlpha=.04+noise2D(t*.0001,0)*.01;
+  ctx.strokeStyle='#3D3535';
+  
+  // Main branch from top-right corner
+  const sway=noise2D(t*.0002,0)*8;
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(W+10,H*.05);
+  ctx.bezierCurveTo(W*.8,H*.08+sway,W*.65,H*.15+sway,W*.5,H*.22+sway);
+  ctx.stroke();
+  
+  // Sub-branches
+  const branches=[
+    [W*.8,H*.09,W*.72,H*.2,W*.65,H*.35],
+    [W*.65,H*.16,W*.6,H*.08,W*.5,H*.05],
+    [W*.55,H*.2,W*.48,H*.28,W*.4,H*.32],
+    [W*.7,H*.12,W*.75,H*.22,W*.72,H*.3],
+  ];
+  ctx.lineWidth=1.2;
+  branches.forEach(b=>{
+    ctx.beginPath();ctx.moveTo(b[0]+sway*.5,b[1]+sway*.3);
+    ctx.quadraticCurveTo(b[2]+sway*.3,b[3]+sway*.3,b[4]+sway*.2,b[5]+sway*.2);
+    ctx.stroke();
+  });
+  
+  // Smaller twigs
+  ctx.lineWidth=.5;
+  for(let i=0;i<8;i++){
+    const bx=W*(.45+Math.random()*.4);
+    const by=H*(.05+Math.random()*.25);
+    const len=15+Math.random()*30;
+    const ang=Math.PI*.3+Math.random()*Math.PI*.4;
+    ctx.beginPath();ctx.moveTo(bx+sway*.3,by+sway*.2);
+    ctx.lineTo(bx+Math.cos(ang)*len+sway*.2,by+Math.sin(ang)*len+sway*.1);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+// ═══ SAKURA PETALS (physics-driven) ═══
+class SakuraPetal{
+  constructor(dp){this.dp=dp;this.sc=[.35,.65,1][dp];this.aB=[.1,.2,.35][dp];this.reset(true)}
+  reset(init){
+    this.x=init?Math.random()*W:W*(.4+Math.random()*.8);
+    this.y=init?Math.random()*H:-10-Math.random()*100;
+    this.sz=(3+Math.random()*5)*this.sc;
+    this.vx=0;this.vy=(.05+Math.random()*.15)*this.sc;
+    this.rot=Math.random()*Math.PI*2;
+    this.rotV=(Math.random()-.5)*.02;
+    this.tilt=Math.random()*Math.PI*2;
+    this.tiltSp=.008+Math.random()*.015;
+    this.alpha=this.aB+Math.random()*.1;
+    this.type=Math.floor(Math.random()*5);
+    this.hue=[342,348,355,338,5][this.type];
+    this.sat=[35,28,22,40,18][this.type];
+    this.light=[85,90,92,82,94][this.type];
+    this.no=Math.random()*200;
+    this.mass=.5+Math.random()*.5;
+    this.dragCoeff=.02+Math.random()*.03;
+  }
+  update(t){
+    // Wind physics
+    const localWind=windForce*(0.5+noise2D(this.no+t*.0003,this.y*.003)*.5);
+    const windDrag=localWind*this.dragCoeff/this.mass;
+    this.vx+=(windDrag-this.vx*.01)*this.sc;
+    this.vy+=.005*this.mass; // gravity
+    this.vy=Math.min(this.vy,.8*this.sc);
+    
+    // Noise flutter
+    const flutter=noise2D(this.no+t*.0004,this.y*.005);
+    this.vx+=flutter*.05*this.sc;
+    this.vy+=noise2D(this.y*.005,this.no+t*.0003)*.02;
+    
+    this.x+=this.vx;this.y+=this.vy;
+    this.rot+=this.rotV+windForce*.005;
+    this.tilt+=this.tiltSp;
+    
+    if(this.y>H+20||this.x>W+30||this.x<-30)this.reset(false);
+  }
+  draw(t){
+    const tiltScale=Math.abs(Math.cos(this.tilt));
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    ctx.rotate(this.rot);
+    ctx.scale(1,tiltScale*.5+.5);
+    ctx.globalAlpha=this.alpha*(.7+tiltScale*.3);
+    
+    const h=this.hue+noise2D(t*.0002,this.no)*5;
+    ctx.fillStyle=`hsl(${h},${this.sat}%,${this.light}%)`;
+    ctx.beginPath();
+    ctx.moveTo(0,-this.sz*.6);
+    ctx.bezierCurveTo(this.sz*.5,-this.sz*.5,this.sz*.6,this.sz*.15,0,this.sz*.6);
+    ctx.bezierCurveTo(-this.sz*.6,this.sz*.15,-this.sz*.5,-this.sz*.5,0,-this.sz*.6);
+    ctx.fill();
+    
+    // Petal vein
+    ctx.strokeStyle=`hsla(${h-5},${this.sat-5}%,${this.light-10}%,.12)`;
+    ctx.lineWidth=.3;ctx.beginPath();ctx.moveTo(0,-this.sz*.35);
+    ctx.quadraticCurveTo(this.sz*.05,0,0,this.sz*.35);ctx.stroke();
+    
+    // Highlight
+    ctx.globalAlpha=this.alpha*.2*tiltScale;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.ellipse(-this.sz*.1,-this.sz*.15,this.sz*.22,this.sz*.14,-.3,0,Math.PI*2);ctx.fill();
+    
+    ctx.restore();
+  }
+}
+
+// ═══ WIND STREAKS ═══
+class WindStreak{
+  constructor(){this.reset()}
+  reset(){this.x=-20-Math.random()*100;this.y=Math.random()*H;this.len=30+Math.random()*80;this.speed=3+Math.random()*5;this.alpha=0;this.maxAlpha=.02+Math.random()*.03;this.life=0;this.maxLife=60+Math.random()*40;}
+  update(){
+    if(windForce<1){this.alpha*=.95;return;}
+    this.x+=this.speed*windForce*.5;this.life++;
+    const p=this.life/this.maxLife;
+    this.alpha=this.maxAlpha*(p<.2?p/.2:p>.7?1-(p-.7)/.3:1)*Math.min(1,windForce);
+    if(this.life>this.maxLife||this.x>W+50)this.reset();
+  }
+  draw(){
+    if(this.alpha<.001)return;
+    ctx.strokeStyle=`rgba(180,140,140,${this.alpha})`;ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(this.x,this.y);ctx.lineTo(this.x+this.len,this.y+noise2D(this.x*.01,this.y*.01)*3);ctx.stroke();
+  }
+}
+
+// ═══ GROUND PETALS (accumulated) ═══
+function drawGroundPetals(t){
+  ctx.save();ctx.globalAlpha=.03;
+  const breathe=Math.sin(t*.0003)*.1+1;
+  for(let i=0;i<12;i++){
+    const x=W*(i/12)+noise2D(i*10,t*.00005)*30;
+    const y=H-15+Math.random()*20;
+    const sz=2+Math.random()*3;
+    const h=[342,348,355][i%3];
+    ctx.fillStyle=`hsl(${h},30%,85%)`;
+    ctx.save();ctx.translate(x,y);ctx.rotate(i*.5+noise2D(i,t*.0001)*.2);
+    ctx.beginPath();ctx.moveTo(0,-sz*.4);
+    ctx.bezierCurveTo(sz*.4,-sz*.3,sz*.4,sz*.1,0,sz*.4);
+    ctx.bezierCurveTo(-sz*.4,sz*.1,-sz*.4,-sz*.3,0,-sz*.4);
+    ctx.fill();ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ═══ DUST MOTES ═══
+class Mote{
+  constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.sz=.3+Math.random()*.6;this.a=.04+Math.random()*.06;this.sp=.02+Math.random()*.04;this.an=Math.random()*Math.PI*2;this.no=Math.random()*200;this.tp=Math.random()*Math.PI*2;this.ts=.002+Math.random()*.004}
+  update(t){const n=noise2D(this.no+t*.0002,this.y*.01);this.x+=Math.cos(this.an+n*2)*this.sp+windForce*.1;this.y+=Math.sin(this.an+n)*this.sp;if(this.x<0)this.x=W;if(this.x>W)this.x=0;if(this.y<0)this.y=H;if(this.y>H)this.y=0}
+  draw(t){const tw=.3+Math.sin(t*this.ts+this.tp)*.7;ctx.globalAlpha=this.a*tw;ctx.fillStyle='rgba(180,140,120,.6)';ctx.beginPath();ctx.arc(this.x,this.y,this.sz,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+}
+
+// ═══ INIT ═══
+const inks=Array.from({length:8},()=>new InkWash);
+const pFar=Array.from({length:15},()=>new SakuraPetal(0));
+const pMid=Array.from({length:18},()=>new SakuraPetal(1));
+const pNear=Array.from({length:10},()=>new SakuraPetal(2));
+const streaks=Array.from({length:15},()=>new WindStreak);
+const motes=Array.from({length:40},()=>new Mote);
+const touchPetals=[];
+
+// ═══ RENDER ═══
+function render(){
+  t++;mxS+=(mx-mxS)*.03;myS+=(my-myS)*.03;
+  updateWind();
+  
+  ctx.fillStyle='rgba(245,240,232,.9)';ctx.fillRect(0,0,W,H);
+  if(t%4===0)for(let i=0;i<60;i++){ctx.fillStyle=`rgba(139,123,107,${Math.random()*.006})`;ctx.fillRect(Math.random()*W,Math.random()*H,1,1)}
+  
+  inks.forEach(i=>i.draw(t));
+  drawBranches(t);
+  drawGroundPetals(t);
+  pFar.forEach(p=>{p.update(t);p.draw(t)});
+  motes.forEach(m=>{m.update(t);m.draw(t)});
+  streaks.forEach(s=>{s.update();s.draw()});
+  pMid.forEach(p=>{p.update(t);p.draw(t)});
+  pNear.forEach(p=>{p.update(t);p.draw(t)});
+  touchPetals.forEach(p=>{p.update(t);p.draw(t)});
+  for(let i=touchPetals.length-1;i>=0;i--){if(touchPetals[i].y>H+20||touchPetals[i].x>W+30)touchPetals.splice(i,1);}
+  
+  requestAnimationFrame(render);
+}
+render();
+
+document.getElementById('env').addEventListener('click',()=>{document.getElementById('env').classList.add('opened');setTimeout(()=>{document.getElementById('exp').classList.add('active');document.getElementById('env').style.display='none'},700)});
+
+const pc=document.getElementById('pc'),pctx=pc.getContext('2d'),fl=document.getElementById('fl');
+const FILTERS=['Original','Ink Wash','Ukiyo-e','Soft Silk','Hanami'];let cf=0,oD;
+function genP(w,h){const o=document.createElement('canvas');o.width=w;o.height=h;const c=o.getContext('2d');const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#E8D4D0');bg.addColorStop(.3,'#D4B8B0');bg.addColorStop(.6,'#C8A8A0');bg.addColorStop(1,'#E0CCC4');c.fillStyle=bg;c.fillRect(0,0,w,h);for(let i=0;i<10;i++){const x=w*.15+Math.random()*w*.7,y=h*.15+Math.random()*h*.7,r=20+Math.random()*55,g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(${340+Math.random()*25},30%,80%,.4)`);g.addColorStop(1,`hsla(${340+Math.random()*25},30%,80%,0)`);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill()}for(let i=0;i<3e3;i++){c.fillStyle=`rgba(255,255,255,${Math.random()*.04})`;c.fillRect(Math.random()*w,Math.random()*h,1,1)}c.font='300 15px "Cormorant Garamond",serif';c.textAlign='center';c.fillStyle='rgba(60,50,50,.3)';c.fillText('your photo here',w/2,h*.83);c.font='300 10px "Nunito Sans",sans-serif';c.fillText('(tap to see art filters)',w/2,h*.89);return o}
+function initP(){const f=document.getElementById('pf'),s=f.offsetWidth||280;pc.width=s;pc.height=s;pctx.drawImage(genP(s,s),0,0);oD=pctx.getImageData(0,0,s,s)}
+function apF(n){const w=pc.width,h=pc.height;pctx.putImageData(oD,0,0);if(n==='Original')return;const id=pctx.getImageData(0,0,w,h),d=id.data;
+if(n==='Ink Wash'){for(let i=0;i<d.length;i+=4){const g=(d[i]+d[i+1]+d[i+2])/3;d[i]=Math.min(255,g*1.05+18);d[i+1]=Math.min(255,g+14);d[i+2]=Math.min(255,g*.95+10)}pctx.putImageData(id,0,0);pctx.fillStyle='rgba(245,240,232,.2)';pctx.fillRect(0,0,w,h);for(let i=0;i<4e3;i++){pctx.fillStyle=`rgba(60,50,40,${Math.random()*.025})`;pctx.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,1)}}
+else if(n==='Ukiyo-e'){for(let i=0;i<d.length;i+=4){for(let c=0;c<3;c++){d[i+c]=Math.round(d[i+c]/40)*40}d[i]=Math.min(255,d[i]+15);d[i+2]=Math.min(255,d[i+2]+10)}pctx.putImageData(id,0,0);for(let i=0;i<1500;i++){const x=Math.random()*w,y=Math.random()*h,len=4+Math.random()*8;pctx.strokeStyle=`rgba(60,50,40,${.01+Math.random()*.02})`;pctx.lineWidth=.5;pctx.beginPath();pctx.moveTo(x,y);pctx.lineTo(x+len,y+(Math.random()-.5)*2);pctx.stroke()}}
+else if(n==='Soft Silk'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*1.08+12);d[i+1]=Math.min(255,d[i+1]*1.02+8);d[i+2]=Math.min(255,d[i+2]*.96+10)}pctx.putImageData(id,0,0);pctx.globalAlpha=.22;for(let i=0;i<6;i++)pctx.drawImage(pc,(Math.random()-.5)*4,(Math.random()-.5)*4);pctx.globalAlpha=1;const v=pctx.createRadialGradient(w/2,h/2,w*.2,w/2,h/2,w*.55);v.addColorStop(0,'rgba(245,240,232,0)');v.addColorStop(1,'rgba(245,240,232,.25)');pctx.fillStyle=v;pctx.fillRect(0,0,w,h)}
+else if(n==='Hanami'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*1.12+18);d[i+1]=Math.min(255,d[i+1]*1.04+12);d[i+2]=Math.min(255,d[i+2]*1.02+15)}pctx.putImageData(id,0,0);pctx.globalAlpha=.2;for(let i=0;i<7;i++)pctx.drawImage(pc,(Math.random()-.5)*5,(Math.random()-.5)*5);pctx.globalAlpha=1;for(let i=0;i<15;i++){const x=Math.random()*w,y=Math.random()*h,sz=1.5+Math.random()*2.5;pctx.save();pctx.translate(x,y);pctx.rotate(Math.random()*Math.PI*2);pctx.globalAlpha=.08+Math.random()*.08;pctx.fillStyle=`hsl(${342+Math.random()*15},32%,85%)`;pctx.beginPath();pctx.moveTo(0,-sz*.5);pctx.bezierCurveTo(sz*.4,-sz*.4,sz*.4,sz*.1,0,sz*.5);pctx.bezierCurveTo(-sz*.4,sz*.1,-sz*.4,-sz*.4,0,-sz*.5);pctx.fill();pctx.restore()}}}
+document.getElementById('pf').addEventListener('click',e=>{cf=(cf+1)%FILTERS.length;pc.style.transition='opacity .3s';pc.style.opacity='.4';setTimeout(()=>{apF(FILTERS[cf]);fl.textContent=FILTERS[cf];pc.style.opacity='1'},250);spB(e.clientX,e.clientY)});
+function spB(x,y){windTarget=2+Math.random()*2;for(let i=0;i<8;i++){const p=new SakuraPetal(2);p.x=x+(Math.random()-.5)*60;p.y=y+(Math.random()-.5)*40;p.vx=(Math.random()-.5)*2;p.vy=-(0.3+Math.random()*.5);p.alpha=.3+Math.random()*.3;touchPetals.push(p)}}
+document.addEventListener('click',e=>{if(e.target.closest('.envelope-screen')||e.target.closest('.photo-frame'))return;spB(e.clientX,e.clientY)});
+document.fonts.ready.then(()=>setTimeout(initP,100));addEventListener('resize',()=>{resize();setTimeout(initP,100)});
+</script>
+</body>
+</html>

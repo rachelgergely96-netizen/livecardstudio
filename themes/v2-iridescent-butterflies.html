@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>A Living Card For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Nunito+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Nunito Sans',sans-serif;overflow:hidden;width:100vw;height:100vh;touch-action:manipulation;-webkit-font-smoothing:antialiased;background:#1A2418}canvas{position:fixed;inset:0;z-index:0}
+.envelope-screen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(#1A2418,#1E2820);cursor:pointer;transition:opacity 1.4s cubic-bezier(.4,0,.2,1),transform 1.4s cubic-bezier(.4,0,.2,1)}.envelope-screen.opened{opacity:0;transform:scale(1.15);pointer-events:none}
+.env-wrap{position:relative;width:160px;height:130px}.env-body{width:160px;height:100px;background:linear-gradient(145deg,#2A3828,#1E2A1C);border-radius:5px;position:absolute;bottom:0;box-shadow:0 10px 50px rgba(0,0,0,.3);border:1px solid rgba(140,200,180,.06)}.env-flap{width:0;height:0;border-left:80px solid transparent;border-right:80px solid transparent;border-top:65px solid #2E4030;position:absolute;top:0;transition:transform 1s cubic-bezier(.4,0,.2,1);transform-origin:top center}.envelope-screen:hover .env-flap{transform:rotateX(50deg)}
+.env-seal{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#60C8B0,#4098C0);position:absolute;top:38px;left:50%;transform:translateX(-50%);z-index:2;box-shadow:0 3px 20px rgba(64,152,192,.35);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#1A2418;animation:seal 4s ease-in-out infinite}@keyframes seal{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.1)}}
+.env-hint{margin-top:2.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:#6A8878;opacity:0;animation:fi 2s ease 1s forwards}.env-from{margin-top:.8rem;font-family:'Cormorant Garamond',serif;font-size:.85rem;letter-spacing:.1em;color:#80C8A8;opacity:0;animation:fi 2s ease 1.5s forwards}@keyframes fi{to{opacity:.7}}
+.card-exp{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 1.8s ease .6s;pointer-events:none;padding:2rem}.card-exp.active{opacity:1;pointer-events:auto}
+.photo-frame{position:relative;width:min(280px,75vw);height:min(280px,75vw);border-radius:22px;overflow:hidden;cursor:pointer;box-shadow:0 20px 80px rgba(0,0,0,.25),0 0 40px rgba(100,200,170,.04);transition:transform .6s;margin-bottom:2rem;opacity:0;transform:translateY(25px);animation:rev 1.6s ease 1.8s forwards}@keyframes rev{to{opacity:1;transform:translateY(0)}}.photo-frame:hover{transform:scale(1.02)}.photo-canvas{width:100%;height:100%;display:block}
+.filter-label{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.8rem;color:#D0E8D8;background:rgba(26,36,24,.5);backdrop-filter:blur(10px);padding:5px 18px;border-radius:20px;pointer-events:none}.tap-hint{position:absolute;top:12px;right:12px;font-size:.6rem;color:#D0E8D8;background:rgba(26,36,24,.4);backdrop-filter:blur(8px);padding:3px 10px;border-radius:12px;opacity:0;animation:fi 1.5s ease 3.5s forwards}
+.msg{text-align:center;max-width:420px;opacity:0;transform:translateY(25px);animation:rev 1.6s ease 2.6s forwards}.msg-occ{font-size:.65rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:#80C8A8;margin-bottom:.8rem}.msg-div{display:block;width:45px;height:1px;background:linear-gradient(to right,transparent,#80C8A8,transparent);margin:0 auto 1rem}.msg-txt{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(1.15rem,3.8vw,1.75rem);line-height:1.65;color:#D0E8D8;margin-bottom:1.5rem}.msg-from{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:#60C8B0}
+.branding{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:20;font-family:'Cormorant Garamond',serif;font-size:.72rem;color:rgba(96,200,176,.3);opacity:0;letter-spacing:.08em;animation:fi 2s ease 4s forwards}.branding a{color:#80C8A8;text-decoration:none}
+@media(max-height:700px){.photo-frame{width:min(200px,55vw);height:min(200px,55vw)}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="envelope-screen" id="env"><div class="env-wrap"><div class="env-flap"></div><div class="env-body"></div><div class="env-seal">❋</div></div><p class="env-hint">tap to open</p><p class="env-from">something beautiful is unfolding</p></div>
+<div class="card-exp" id="exp"><div class="photo-frame" id="pf"><canvas class="photo-canvas" id="pc"></canvas><div class="filter-label" id="fl">Original</div><div class="tap-hint">tap to transform</div></div><div class="msg"><p class="msg-occ">You're Becoming</p><span class="msg-div"></span><p class="msg-txt">Every version of you has been building toward this one. The wings were always there — you just hadn't opened them yet.</p><p class="msg-from">— watching you fly</p></div></div>
+<div class="branding">made with <a href="#">LiveCardStudio</a> — cards that breathe</div>
+<script>
+const P=new Uint8Array(512),G=[];(function(){const p=[];for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}for(let i=0;i<512;i++)P[i]=p[i&255];for(let i=0;i<256;i++){const a=Math.random()*Math.PI*2;G[i]=[Math.cos(a),Math.sin(a)];}})();
+function fade(t){return t*t*t*(t*(t*6-15)+10)}function lerp(a,b,t){return a+(b-a)*t}function dot2(g,x,y){return g[0]*x+g[1]*y}
+function noise2D(x,y){const X=Math.floor(x)&255,Y=Math.floor(y)&255,xf=x-Math.floor(x),yf=y-Math.floor(y),u=fade(xf),v=fade(yf);return lerp(lerp(dot2(G[P[P[X]+Y]],xf,yf),dot2(G[P[P[X+1]+Y]],xf-1,yf),u),lerp(dot2(G[P[P[X]+Y+1]],xf,yf-1),dot2(G[P[P[X+1]+Y+1]],xf-1,yf-1),u),v)}
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');let W,H,t=0,mx=0,my=0,mxS=0,myS=0;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY},{passive:true});
+
+// ═══ FOREST CANOPY BACKGROUND ═══
+function drawForestBg(t){
+  // Dappled green gradient
+  const g=ctx.createRadialGradient(W*.5,H*.35,0,W*.5,H*.5,W*.8);
+  g.addColorStop(0,'hsl(90,15%,22%)');g.addColorStop(.3,'hsl(100,18%,16%)');g.addColorStop(.7,'hsl(110,20%,12%)');g.addColorStop(1,'hsl(120,15%,8%)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+// ═══ ATMOSPHERIC WASHES ═══
+class ForestWash{
+  constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.R=100+Math.random()*250;this.h=80+Math.random()*50;this.s=10+Math.random()*18;this.l=10+Math.random()*12;this.a=.04+Math.random()*.06;this.ph=Math.random()*Math.PI*2;this.sp=.0002+Math.random()*.0003;this.no=Math.random()*100}
+  draw(t){const b=Math.sin(t*this.sp+this.ph)*.12+1,r=this.R*b,nx=noise2D(this.no+t*.00005,0)*40,ny=noise2D(0,this.no+t*.00004)*30,x=this.x+nx,y=this.y+ny,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(${this.h},${this.s}%,${this.l}%,${this.a})`);g.addColorStop(.5,`hsla(${this.h},${this.s-2}%,${this.l-1}%,${this.a*.35})`);g.addColorStop(1,`hsla(${this.h},${this.s}%,${this.l}%,0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+}
+
+// ═══ VOLUMETRIC LIGHT SHAFTS ═══
+function drawLightShafts(t){
+  ctx.save();ctx.globalCompositeOperation='screen';
+  const shafts=[
+    {x1:W*.3,y1:-20,x2:W*.2,y2:H,w:60,a:.018},
+    {x1:W*.5,y1:-20,x2:W*.55,y2:H,w:80,a:.022},
+    {x1:W*.72,y1:-20,x2:W*.78,y2:H,w:50,a:.015},
+    {x1:W*.15,y1:-20,x2:W*.08,y2:H,w:40,a:.01},
+    {x1:W*.88,y1:-20,x2:W*.92,y2:H,w:45,a:.012},
+  ];
+  shafts.forEach((s,i)=>{
+    const breathe=.7+Math.sin(t*.0003+i*1.5)*.3;
+    const sway=noise2D(i*5+t*.0001,0)*20;
+    const w=s.w*breathe;
+    const g=ctx.createLinearGradient(s.x1+sway,s.y1,s.x2+sway,s.y2);
+    g.addColorStop(0,`rgba(180,200,140,${s.a*breathe})`);
+    g.addColorStop(.2,`rgba(200,220,160,${s.a*breathe*.8})`);
+    g.addColorStop(.5,`rgba(180,200,140,${s.a*breathe*.4})`);
+    g.addColorStop(1,'rgba(180,200,140,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(s.x1+sway-w*.3,s.y1);ctx.lineTo(s.x1+sway+w*.3,s.y1);
+    ctx.lineTo(s.x2+sway+w,s.y2);ctx.lineTo(s.x2+sway-w,s.y2);
+    ctx.closePath();ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ═══ DUST MOTES IN LIGHT ═══
+class SunMote{
+  constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.sz=.3+Math.random()*.8;this.a=.04+Math.random()*.08;this.no=Math.random()*200;this.sp=.01+Math.random()*.025;this.an=Math.random()*Math.PI*2;this.tp=Math.random()*Math.PI*2;this.ts=.003+Math.random()*.006}
+  update(t){const n=noise2D(this.no+t*.0002,this.y*.008);this.x+=Math.cos(this.an+n*2)*this.sp;this.y+=Math.sin(this.an+n)*this.sp-.005;if(this.y<0){this.y=H;this.x=Math.random()*W;}}
+  draw(t){const tw=.2+Math.sin(t*this.ts+this.tp)*.8;
+  // Brighter when in light shaft zones
+  const inLight=(this.x>W*.15&&this.x<W*.35)||(this.x>W*.45&&this.x<W*.6)||(this.x>W*.68&&this.x<W*.82);
+  const boost=inLight?2.5:1;
+  ctx.globalAlpha=this.a*tw*boost;ctx.fillStyle=inLight?'rgba(230,240,180,.9)':'rgba(180,200,160,.6)';ctx.beginPath();ctx.arc(this.x,this.y,this.sz,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+}
+
+// ═══ BUTTERFLIES ═══
+class Butterfly{
+  constructor(dp){
+    this.dp=dp;this.sc=[.35,.6,1][dp];this.aBase=[.08,.18,.35][dp];
+    // Color palette — morpho blues, monarchs, swallowtails
+    const palettes=[
+      {h1:200,h2:230,s:65,l:55,name:'morpho'},   // blue morpho
+      {h1:170,h2:195,s:55,l:50,name:'teal'},      // teal
+      {h1:280,h2:310,s:45,l:55,name:'purple'},    // purple emperor
+      {h1:140,h2:170,s:50,l:45,name:'emerald'},   // emerald
+      {h1:190,h2:220,s:60,l:60,name:'azure'},     // azure
+    ];
+    this.palette=palettes[Math.floor(Math.random()*palettes.length)];
+    this.reset(true);
+  }
+  reset(init){
+    this.x=init?Math.random()*W:Math.random()<.5?-30:W+30;
+    this.y=init?H*.15+Math.random()*H*.6:H*.2+Math.random()*H*.5;
+    this.tx=this.x;this.ty=this.y;
+    this.sz=(6+Math.random()*6)*this.sc;
+    this.alpha=this.aBase;
+    this.no=Math.random()*200;
+    this.speed=.3+Math.random()*.5;
+    // Wing flap
+    this.flapPh=Math.random()*Math.PI*2;
+    this.flapSp=.06+Math.random()*.04;  // flap frequency
+    this.flapAmp=.8+Math.random()*.2;
+    this.bodyAngle=0;
+    this.dir=1; // facing direction
+    // Perching behavior
+    this.perchTimer=0;
+    this.isPerched=false;
+    this.perchDuration=0;
+  }
+  update(t){
+    // Pick new target periodically
+    const dx=this.tx-this.x,dy=this.ty-this.y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<20){
+      // Chance to perch
+      if(!this.isPerched&&Math.random()<.15){
+        this.isPerched=true;this.perchDuration=100+Math.random()*200;this.perchTimer=0;
+        this.flapSp=.01; // slow wing movement while perched
+      }else{
+        this.tx=Math.max(30,Math.min(W-30,this.x+(Math.random()-.5)*300));
+        this.ty=Math.max(H*.1,Math.min(H*.75,this.y+(Math.random()-.5)*200));
+      }
+    }
+    
+    if(this.isPerched){
+      this.perchTimer++;
+      if(this.perchTimer>this.perchDuration){
+        this.isPerched=false;
+        this.flapSp=.06+Math.random()*.04;
+        this.tx=this.x+(Math.random()-.5)*200;
+        this.ty=this.y-50-Math.random()*100;
+      }
+      return;
+    }
+    
+    // Flight with noise wobble
+    const nfx=noise2D(this.no+t*.0004,this.y*.004)*.6;
+    const nfy=noise2D(this.y*.004,this.no+t*.0003)*.4;
+    this.x+=(dx/(d||1)*this.speed+nfx)*this.sc;
+    this.y+=(dy/(d||1)*this.speed+nfy)*this.sc;
+    
+    // Update facing direction
+    if(Math.abs(dx)>2)this.dir=dx>0?1:-1;
+    this.bodyAngle=Math.atan2(dy,dx)*.15; // subtle body tilt toward movement
+    
+    // Mouse avoidance
+    const mdx=mxS-this.x,mdy=myS-this.y,md=Math.sqrt(mdx*mdx+mdy*mdy);
+    if(md<120){
+      this.x-=mdx*.005;this.y-=mdy*.005;
+      this.flapSp=Math.min(.12,this.flapSp+.002); // flap faster when startled
+    }else{
+      this.flapSp=Math.max(.06,this.flapSp-.0005);
+    }
+    
+    if(this.x<-60||this.x>W+60||this.y<-60||this.y>H+60)this.reset(false);
+  }
+  draw(t){
+    const flapAngle=Math.cos(t*this.flapSp+this.flapPh)*this.flapAmp;
+    const wingScale=Math.abs(Math.cos(t*this.flapSp+this.flapPh));
+    
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    ctx.rotate(this.bodyAngle);
+    ctx.scale(this.dir,1);
+    ctx.globalAlpha=this.alpha;
+    
+    // Wing iridescence — color shifts based on wing angle
+    const iridShift=wingScale*30;
+    const h1=this.palette.h1+iridShift;
+    const h2=this.palette.h2+iridShift;
+    const brightBoost=wingScale*.15;
+    
+    // Shadow underneath
+    ctx.globalAlpha=this.alpha*.1;
+    ctx.fillStyle='rgba(0,0,0,.3)';
+    ctx.beginPath();ctx.ellipse(0,this.sz*.6,this.sz*.7*wingScale,this.sz*.15,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=this.alpha;
+    
+    // Upper wings
+    const uwH=this.sz*1.2;const uwW=this.sz*.9*wingScale;
+    // Right upper wing
+    ctx.save();ctx.scale(wingScale*.5+.5,1);
+    const ug1=ctx.createRadialGradient(this.sz*.3,-uwH*.3,0,this.sz*.3,-uwH*.3,uwH);
+    ug1.addColorStop(0,`hsla(${h1},${this.palette.s+10}%,${this.palette.l+15+brightBoost*100}%,${.3+wingScale*.1})`);
+    ug1.addColorStop(.4,`hsla(${(h1+h2)/2},${this.palette.s}%,${this.palette.l+brightBoost*100}%,${.2+wingScale*.05})`);
+    ug1.addColorStop(.8,`hsla(${h2},${this.palette.s-5}%,${this.palette.l-5}%,${.12})`);
+    ug1.addColorStop(1,`hsla(${h2},${this.palette.s}%,${this.palette.l}%,0)`);
+    ctx.fillStyle=ug1;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(this.sz*.6,-uwH*.6,this.sz*1.1,-uwH*.8,this.sz*.8,-uwH);
+    ctx.bezierCurveTo(this.sz*.3,-uwH*1.05,this.sz*.1,-uwH*.5,0,0);
+    ctx.fill();
+    
+    // Wing vein
+    ctx.strokeStyle=`hsla(${h1},${this.palette.s-10}%,${this.palette.l+20}%,${.06*wingScale})`;
+    ctx.lineWidth=.3*this.sc;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(this.sz*.4,-uwH*.5,this.sz*.6,-uwH*.8);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(this.sz*.15,-uwH*.2);ctx.quadraticCurveTo(this.sz*.5,-uwH*.4,this.sz*.85,-uwH*.7);ctx.stroke();
+    ctx.restore();
+    
+    // Left upper wing (mirrored)
+    ctx.save();ctx.scale(-(wingScale*.5+.5),1);
+    ctx.fillStyle=ug1;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(this.sz*.6,-uwH*.6,this.sz*1.1,-uwH*.8,this.sz*.8,-uwH);
+    ctx.bezierCurveTo(this.sz*.3,-uwH*1.05,this.sz*.1,-uwH*.5,0,0);
+    ctx.fill();
+    ctx.strokeStyle=`hsla(${h1},${this.palette.s-10}%,${this.palette.l+20}%,${.06*wingScale})`;
+    ctx.lineWidth=.3*this.sc;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(this.sz*.4,-uwH*.5,this.sz*.6,-uwH*.8);ctx.stroke();
+    ctx.restore();
+    
+    // Lower wings
+    const lwH=this.sz*.7;
+    ctx.save();ctx.scale(wingScale*.5+.5,1);
+    const lg1=ctx.createRadialGradient(this.sz*.25,lwH*.2,0,this.sz*.3,lwH*.3,lwH);
+    lg1.addColorStop(0,`hsla(${h2+10},${this.palette.s+5}%,${this.palette.l+10+brightBoost*80}%,${.25+wingScale*.08})`);
+    lg1.addColorStop(.6,`hsla(${h2},${this.palette.s}%,${this.palette.l}%,${.12})`);
+    lg1.addColorStop(1,`hsla(${h2},${this.palette.s}%,${this.palette.l}%,0)`);
+    ctx.fillStyle=lg1;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(this.sz*.7,lwH*.3,this.sz*.8,lwH*.7,this.sz*.4,lwH);
+    ctx.bezierCurveTo(this.sz*.1,lwH*.8,0,lwH*.3,0,0);
+    ctx.fill();
+    ctx.restore();
+    
+    ctx.save();ctx.scale(-(wingScale*.5+.5),1);
+    ctx.fillStyle=lg1;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(this.sz*.7,lwH*.3,this.sz*.8,lwH*.7,this.sz*.4,lwH);
+    ctx.bezierCurveTo(this.sz*.1,lwH*.8,0,lwH*.3,0,0);
+    ctx.fill();
+    ctx.restore();
+    
+    // Body
+    ctx.fillStyle=`hsla(${this.palette.h1-20},20%,20%,${.2*this.alpha})`;
+    ctx.beginPath();ctx.ellipse(0,0,this.sz*.08,this.sz*.35,0,0,Math.PI*2);ctx.fill();
+    
+    // Antennae
+    ctx.strokeStyle=`hsla(${this.palette.h1-20},15%,30%,${.1*this.alpha})`;
+    ctx.lineWidth=.3*this.sc;
+    ctx.beginPath();ctx.moveTo(0,-this.sz*.3);ctx.quadraticCurveTo(this.sz*.15,-this.sz*.6,this.sz*.2,-this.sz*.65);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-this.sz*.3);ctx.quadraticCurveTo(-this.sz*.15,-this.sz*.6,-this.sz*.2,-this.sz*.65);ctx.stroke();
+    
+    // Wing shimmer highlight
+    if(wingScale>.6){
+      ctx.globalAlpha=this.alpha*wingScale*.08;
+      ctx.fillStyle=`hsla(${h1+30},70%,85%,1)`;
+      ctx.beginPath();ctx.ellipse(this.sz*.2*this.dir,-uwH*.4,this.sz*.15,this.sz*.25,.2,0,Math.PI*2);ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+}
+
+// ═══ POLLEN / SPORES ═══
+class Pollen{
+  constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.sz=.3+Math.random()*.6;this.a=.04+Math.random()*.07;this.no=Math.random()*200;this.sp=.012+Math.random()*.02;this.an=Math.random()*Math.PI*2;this.tp=Math.random()*Math.PI*2;this.ts=.002+Math.random()*.005}
+  update(t){const n=noise2D(this.no+t*.0002,this.y*.008);this.x+=Math.cos(this.an+n*3)*this.sp;this.y+=Math.sin(this.an+n*2)*this.sp-.003;if(this.y<0){this.y=H;this.x=Math.random()*W;}}
+  draw(t){const tw=.3+Math.sin(t*this.ts+this.tp)*.7;ctx.globalAlpha=this.a*tw;ctx.fillStyle='rgba(220,230,180,.7)';ctx.beginPath();ctx.arc(this.x,this.y,this.sz,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+}
+
+// ═══ WILDFLOWER SILHOUETTES ═══
+function drawWildflowers(t){
+  ctx.save();ctx.globalAlpha=.06;
+  const groundY=H*.9;
+  // Ground
+  ctx.fillStyle='hsl(100,12%,6%)';ctx.fillRect(0,groundY-5,W,H-groundY+5);
+  
+  for(let x=0;x<W;x+=8+Math.random()*12){
+    const wind=noise2D(x*.003+t*.0002,0)*6;
+    const h=20+noise2D(x*.005,0)*45;
+    ctx.strokeStyle=`hsl(${90+noise2D(x*.01,0)*20},15%,${10+Math.random()*8}%)`;
+    ctx.lineWidth=.5+Math.random()*.5;
+    ctx.beginPath();ctx.moveTo(x,groundY);
+    ctx.quadraticCurveTo(x+wind*.3,groundY-h*.5,x+wind,groundY-h);
+    ctx.stroke();
+    // Occasional flower head
+    if(Math.random()<.06&&h>30){
+      const fx=x+wind,fy=groundY-h;
+      const petals=4+Math.floor(Math.random()*3);
+      const ps=2+Math.random()*2;
+      const fh=[340,45,280,60,320][Math.floor(Math.random()*5)];
+      ctx.fillStyle=`hsla(${fh},30%,55%,.06)`;
+      for(let p=0;p<petals;p++){
+        const pa=(p/petals)*Math.PI*2+noise2D(x,t*.0001)*.2;
+        ctx.beginPath();ctx.ellipse(fx+Math.cos(pa)*ps,fy+Math.sin(pa)*ps,ps*.6,ps*.3,pa,0,Math.PI*2);ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+// ═══ LEAF CANOPY VIGNETTE ═══
+function drawCanopyVignette(t){
+  // Dark edges suggesting overhanging leaves
+  ctx.save();
+  const corners=[
+    {x:0,y:0,rx:W*.4,ry:H*.35},
+    {x:W,y:0,rx:W*.35,ry:H*.3},
+    {x:0,y:H,rx:W*.3,ry:H*.25},
+    {x:W,y:H,rx:W*.35,ry:H*.3},
+  ];
+  corners.forEach((c,i)=>{
+    const nx=noise2D(i*10+t*.00005,0)*20;
+    const ny=noise2D(0,i*10+t*.00004)*15;
+    const g=ctx.createRadialGradient(c.x+nx,c.y+ny,0,c.x+nx,c.y+ny,Math.max(c.rx,c.ry));
+    g.addColorStop(0,'rgba(10,18,8,.12)');g.addColorStop(.5,'rgba(10,18,8,.06)');g.addColorStop(1,'rgba(10,18,8,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(c.x+nx,c.y+ny,Math.max(c.rx,c.ry),0,Math.PI*2);ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ═══ INIT ═══
+const washes=Array.from({length:7},()=>new ForestWash);
+const bFar=Array.from({length:5},()=>new Butterfly(0));
+const bMid=Array.from({length:4},()=>new Butterfly(1));
+const bNear=Array.from({length:3},()=>new Butterfly(2));
+const motes=Array.from({length:50},()=>new SunMote);
+const pollen=Array.from({length:40},()=>new Pollen);
+const touchButterflies=[];
+
+// ═══ RENDER ═══
+function render(){
+  t++;mxS+=(mx-mxS)*.03;myS+=(my-myS)*.03;
+  
+  drawForestBg(t);
+  washes.forEach(w=>w.draw(t));
+  drawLightShafts(t);
+  drawCanopyVignette(t);
+  
+  bFar.forEach(b=>{b.update(t);b.draw(t)});
+  motes.forEach(m=>{m.update(t);m.draw(t)});
+  pollen.forEach(p=>{p.update(t);p.draw(t)});
+  bMid.forEach(b=>{b.update(t);b.draw(t)});
+  bNear.forEach(b=>{b.update(t);b.draw(t)});
+  touchButterflies.forEach(b=>{b.update(t);b.draw(t)});
+  for(let i=touchButterflies.length-1;i>=0;i--){const b=touchButterflies[i];if(b.x<-60||b.x>W+60||b.y<-60||b.y>H+60)touchButterflies.splice(i,1);}
+  
+  drawWildflowers(t);
+  
+  // Film grain
+  if(t%4===0)for(let i=0;i<30;i++){ctx.fillStyle=`rgba(180,200,140,${Math.random()*.003})`;ctx.fillRect(Math.random()*W,Math.random()*H,1,1);}
+  
+  requestAnimationFrame(render);
+}
+render();
+
+document.getElementById('env').addEventListener('click',()=>{document.getElementById('env').classList.add('opened');setTimeout(()=>{document.getElementById('exp').classList.add('active');document.getElementById('env').style.display='none'},700)});
+
+const pc=document.getElementById('pc'),pctx=pc.getContext('2d'),fl=document.getElementById('fl');
+const FILTERS=['Original','Sun Dappled','Forest Glow','Butterfly Wing','Enchanted'];let cf=0,oD;
+function genP(w,h){const o=document.createElement('canvas');o.width=w;o.height=h;const c=o.getContext('2d');const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#2A3828');bg.addColorStop(.3,'#253520');bg.addColorStop(.6,'#2A3025');bg.addColorStop(1,'#1E2818');c.fillStyle=bg;c.fillRect(0,0,w,h);for(let i=0;i<10;i++){const x=w*.15+Math.random()*w*.7,y=h*.15+Math.random()*h*.7,r=20+Math.random()*50,g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(${100+Math.random()*40},25%,40%,.3)`);g.addColorStop(1,'transparent');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill()}for(let i=0;i<2e3;i++){c.fillStyle=`rgba(180,200,140,${Math.random()*.04})`;c.fillRect(Math.random()*w,Math.random()*h,1,1)}c.font='300 15px "Cormorant Garamond",serif';c.textAlign='center';c.fillStyle='rgba(180,200,160,.3)';c.fillText('your photo here',w/2,h*.83);c.font='300 10px "Nunito Sans",sans-serif';c.fillText('(tap to see art filters)',w/2,h*.89);return o}
+function initP(){const f=document.getElementById('pf'),s=f.offsetWidth||280;pc.width=s;pc.height=s;pctx.drawImage(genP(s,s),0,0);oD=pctx.getImageData(0,0,s,s)}
+function apF(n){const w=pc.width,h=pc.height;pctx.putImageData(oD,0,0);if(n==='Original')return;const id=pctx.getImageData(0,0,w,h),d=id.data;
+if(n==='Sun Dappled'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*1.1+10);d[i+1]=Math.min(255,d[i+1]*1.12+12);d[i+2]=d[i+2]*.88+5}pctx.putImageData(id,0,0);for(let i=0;i<6;i++){const x=Math.random()*w,y=Math.random()*h,r=15+Math.random()*30,g=pctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(220,230,160,${.04+Math.random()*.04})`);g.addColorStop(1,'rgba(220,230,160,0)');pctx.fillStyle=g;pctx.beginPath();pctx.arc(x,y,r,0,Math.PI*2);pctx.fill()}}
+else if(n==='Forest Glow'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*.95+8);d[i+1]=Math.min(255,d[i+1]*1.1+15);d[i+2]=Math.min(255,d[i+2]*.9+10)}pctx.putImageData(id,0,0);pctx.globalAlpha=.22;for(let i=0;i<6;i++)pctx.drawImage(pc,(Math.random()-.5)*5,(Math.random()-.5)*5);pctx.globalAlpha=1;const v=pctx.createRadialGradient(w/2,h/2,w*.15,w/2,h/2,w*.55);v.addColorStop(0,'rgba(140,200,120,.05)');v.addColorStop(1,'rgba(26,36,24,.1)');pctx.fillStyle=v;pctx.fillRect(0,0,w,h)}
+else if(n==='Butterfly Wing'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*.85+10);d[i+1]=Math.min(255,d[i+1]*1+15);d[i+2]=Math.min(255,d[i+2]*1.2+20)}pctx.putImageData(id,0,0);for(let i=0;i<4;i++){const x=Math.random()*w,y=Math.random()*h,r=20+Math.random()*30,g=pctx.createRadialGradient(x,y,0,x,y,r);const hue=[200,170,280,220][i];g.addColorStop(0,`hsla(${hue},50%,55%,.05)`);g.addColorStop(1,`hsla(${hue},50%,55%,0)`);pctx.fillStyle=g;pctx.beginPath();pctx.arc(x,y,r,0,Math.PI*2);pctx.fill()}}
+else if(n==='Enchanted'){for(let i=0;i<d.length;i+=4){d[i]=Math.min(255,d[i]*1.05+12);d[i+1]=Math.min(255,d[i+1]*1.1+10);d[i+2]=Math.min(255,d[i+2]*1.05+15)}pctx.putImageData(id,0,0);pctx.globalAlpha=.25;for(let i=0;i<7;i++)pctx.drawImage(pc,(Math.random()-.5)*6,(Math.random()-.5)*6);pctx.globalAlpha=1;for(let i=0;i<20;i++){const x=Math.random()*w,y=Math.random()*h,r=.5+Math.random();pctx.fillStyle=`rgba(220,240,180,${.1+Math.random()*.15})`;pctx.beginPath();pctx.arc(x,y,r,0,Math.PI*2);pctx.fill();}}}
+document.getElementById('pf').addEventListener('click',e=>{cf=(cf+1)%FILTERS.length;pc.style.transition='opacity .3s';pc.style.opacity='.4';setTimeout(()=>{apF(FILTERS[cf]);fl.textContent=FILTERS[cf];pc.style.opacity='1'},250);spB(e.clientX,e.clientY)});
+function spB(x,y){for(let i=0;i<3;i++){const b=new Butterfly(2);b.x=x+(Math.random()-.5)*50;b.y=y+(Math.random()-.5)*40;b.tx=b.x+(Math.random()-.5)*200;b.ty=b.y-60-Math.random()*100;b.alpha=.3+Math.random()*.2;b.speed=.5+Math.random()*.5;touchButterflies.push(b)}}
+document.addEventListener('click',e=>{if(e.target.closest('.envelope-screen')||e.target.closest('.photo-frame'))return;spB(e.clientX,e.clientY)});
+document.fonts.ready.then(()=>setTimeout(initP,100));addEventListener('resize',()=>{resize();setTimeout(initP,100)});
+</script>
+</body>
+</html>

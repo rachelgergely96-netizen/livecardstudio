@@ -120,11 +120,6 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 .prompt-card.open .prompt-body{max-height:2000px}
 .prompt-inner{padding:0 22px 20px}
 .prompt-desc{font-size:.7rem;font-weight:300;color:var(--tx2);line-height:1.7;margin-bottom:12px}
-.prompt-block{position:relative;background:var(--mid);border-radius:10px;padding:16px 18px;font-family:'SF Mono','Fira Code',monospace;font-size:.58rem;line-height:1.8;color:rgba(255,255,255,.75);white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto}
-.prompt-block::-webkit-scrollbar{width:4px}.prompt-block::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-.copy-btn{position:absolute;top:8px;right:8px;padding:5px 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:.52rem;font-weight:400;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .3s;z-index:2}
-.copy-btn:hover{background:rgba(201,169,110,.15);color:var(--gold);border-color:rgba(201,169,110,.2)}
-.copy-btn.copied{background:rgba(143,166,128,.15);color:var(--sage);border-color:rgba(143,166,128,.2)}
 
 .prompt-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
 .prompt-tags span{padding:3px 9px;border-radius:8px;font-size:.48rem;font-weight:400;letter-spacing:.5px}
@@ -189,6 +184,57 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
 .photo-card-ui input[type="file"]{position:absolute;width:0;height:0;opacity:0}
 
 /* ═══ CTA SECTION ═══ */
+/* Theme showcase */
+.theme-showcase{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 24px 56px}
+.theme-showcase-shell{
+  border:1px solid var(--bdr);
+  border-radius:20px;
+  padding:30px 22px 22px;
+  background:linear-gradient(150deg,rgba(255,255,255,.65),rgba(247,243,237,.8));
+  backdrop-filter:blur(10px);
+  box-shadow:0 16px 42px rgba(0,0,0,.04);
+}
+.theme-showcase-head{text-align:center;max-width:620px;margin:0 auto 18px}
+.theme-showcase-head .eyebrow{
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:.5rem;
+  font-weight:500;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:var(--gold2);
+  background:rgba(201,169,110,.08);
+  border:1px solid rgba(201,169,110,.15);
+  margin-bottom:9px;
+}
+.theme-showcase-head h2{font-size:clamp(1.2rem,2.6vw,1.8rem);font-weight:300;line-height:1.18;margin-bottom:8px}
+.theme-showcase-head p{font-size:.74rem;color:var(--tx2);line-height:1.7}
+.theme-grid-v2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:18px}
+.theme-link-v2{
+  text-decoration:none;
+  color:inherit;
+  border:1px solid var(--bdr);
+  border-radius:12px;
+  background:rgba(255,255,255,.6);
+  padding:10px 11px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  transition:all .28s;
+}
+.theme-link-v2:hover{transform:translateY(-1px);border-color:rgba(201,169,110,.2);box-shadow:0 9px 22px rgba(0,0,0,.04)}
+.theme-link-v2 .dots{display:flex;gap:5px}
+.theme-link-v2 .dots span{width:11px;height:11px;border-radius:50%;border:1px solid rgba(255,255,255,.65)}
+.theme-link-v2 .nm{font-size:.64rem;font-weight:500;letter-spacing:.2px}
+.theme-link-v2 .meta{font-size:.52rem;letter-spacing:1.3px;text-transform:uppercase;color:var(--tx3)}
+.theme-showcase-cta{text-align:center;margin-top:18px}
+.theme-showcase-cta a{
+  display:inline-block;text-decoration:none;padding:9px 20px;border-radius:999px;
+  border:1px solid rgba(201,169,110,.18);color:var(--gold2);font-size:.58rem;
+  letter-spacing:1.6px;text-transform:uppercase;background:rgba(201,169,110,.06);transition:all .25s;
+}
+.theme-showcase-cta a:hover{background:rgba(201,169,110,.12)}
 .bottom-cta{position:relative;z-index:2;text-align:center;padding:60px 32px 80px}
 .bottom-cta h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:300;margin-bottom:6px}
 .bottom-cta h2 em{font-style:italic;color:var(--blush)}
@@ -212,8 +258,101 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
   .nl a:not(.nav-cta){display:none}
   .tabs-bar{gap:3px}
   .tab-btn{padding:8px 14px;font-size:.56rem}
+  .theme-grid-v2{grid-template-columns:repeat(2,1fr)}
 }
-@media(max-width:600px){.cards-row{grid-template-columns:1fr;max-width:300px;margin-left:auto;margin-right:auto}}
+@media(max-width:600px){
+  .cards-row{grid-template-columns:1fr;max-width:300px;margin-left:auto;margin-right:auto}
+  .theme-grid-v2{grid-template-columns:1fr}
+  .theme-showcase{padding:0 18px 50px}
+  .theme-showcase-shell{padding:24px 16px 18px}
+}
+
+/* Ambient Sound demo */
+.ambient-speaker-btn{
+  position:absolute;bottom:12px;left:12px;z-index:5;
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-size:1rem;cursor:pointer;transition:all .3s;color:rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.ambient-speaker-btn:hover,.ambient-speaker-btn.active{background:rgba(201,169,110,.15);border-color:rgba(201,169,110,.3);color:rgba(255,255,255,.9)}
+.ambient-controls{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:4px}
+.ambient-themes{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.ambient-theme-btn{
+  padding:6px 14px;border-radius:20px;border:1px solid var(--bdr);
+  background:rgba(255,255,255,.5);backdrop-filter:blur(4px);
+  font-family:'DM Sans',sans-serif;font-size:.56rem;font-weight:400;
+  letter-spacing:1px;color:var(--tx3);cursor:pointer;transition:all .3s;
+}
+.ambient-theme-btn:hover{border-color:rgba(201,169,110,.15);color:var(--tx2)}
+.ambient-theme-btn.active{background:var(--tx);color:#fff;border-color:var(--tx)}
+.ambient-vol-wrap{display:flex;align-items:center;gap:8px}
+.ambient-vol-label{font-size:.52rem;font-weight:400;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx3)}
+.ambient-vol-slider{width:100px;accent-color:var(--gold2)}
+
+/* NFC Bridge demo */
+.nfc-demo-split{display:flex;gap:28px;align-items:center;justify-content:center;flex-wrap:wrap}
+.nfc-physical-card{
+  width:200px;height:280px;border-radius:8px;
+  background:linear-gradient(145deg,#F8F4EC,#EDE8DE);
+  box-shadow:0 15px 40px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.03);
+  position:relative;overflow:hidden;
+}
+.nfc-card-inner{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.nfc-card-foil{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 30%,rgba(201,169,110,.06) 45%,rgba(201,169,110,.12) 50%,rgba(201,169,110,.06) 55%,transparent 70%);
+  background-size:200% 200%;
+  animation:nfcFoilShimmer 4s ease infinite;
+  pointer-events:none;
+}
+@keyframes nfcFoilShimmer{0%{background-position:200% 200%}100%{background-position:0% 0%}}
+.nfc-card-content{position:relative;z-index:1;text-align:center;padding:24px}
+.nfc-card-mono{font-family:'DM Sans',sans-serif;font-size:.38rem;font-weight:500;letter-spacing:3.5px;text-transform:uppercase;color:var(--tx3);margin-bottom:10px}
+.nfc-card-names{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;color:var(--tx);letter-spacing:1px;margin-bottom:4px}
+.nfc-card-date{font-family:'DM Sans',sans-serif;font-size:.44rem;font-weight:400;letter-spacing:2.5px;text-transform:uppercase;color:var(--tx3)}
+.nfc-card-nfc-icon{
+  position:absolute;bottom:14px;right:14px;
+  display:flex;align-items:center;gap:4px;
+  font-family:'DM Sans',sans-serif;font-size:.4rem;font-weight:500;
+  letter-spacing:2px;text-transform:uppercase;color:var(--txf);
+}
+.nfc-qr-side{display:flex;flex-direction:column;align-items:center;gap:10px}
+.nfc-qr-holder{display:flex;align-items:center;justify-content:center}
+.nfc-qr-url{font-family:'SF Mono','Fira Code',monospace;font-size:.5rem;color:var(--tx3);word-break:break-all;text-align:center;max-width:200px}
+.nfc-preview-btn{
+  padding:10px 24px;border-radius:24px;
+  font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:#fff;background:var(--mid);border:none;cursor:pointer;transition:all .3s;
+}
+.nfc-preview-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,169,110,.2)}
+
+/* NFC Load Sequence overlay */
+.nfc-load-overlay{
+  position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);
+  display:flex;align-items:center;justify-content:center;
+  animation:nfcOverlayIn .4s ease;
+}
+@keyframes nfcOverlayIn{from{opacity:0}to{opacity:1}}
+.nfc-load-container{position:relative;width:90vw;max-width:400px;aspect-ratio:5/7;border-radius:8px;overflow:hidden}
+.nfc-load-close{
+  position:fixed;top:16px;right:16px;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);
+  font-size:1.2rem;cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;
+}
+.nfc-load-close:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* Card sound UI on live cards */
+.card-sound-wrap{position:absolute;bottom:8px;left:8px;z-index:5;display:flex;align-items:center;gap:6px}
+.card-sound-btn{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);font-size:.7rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;padding:0}
+.card-sound-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.card-sound-btn.muted{opacity:.4}
+.card-sound-slider-wrap{display:none}
+.card-sound-wrap:hover .card-sound-slider-wrap,.card-sound-wrap.reveal .card-sound-slider-wrap{display:block}
+.card-sound-slider{width:60px;accent-color:var(--gold2)}
 </style>
 </head>
 <body>
@@ -398,21 +537,16 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
   <div class="tab-panel" id="tab-codex">
     <div class="codex-panel">
       <div class="codex-hero">
-        <div class="ch-badge">🧬 Custom Studio — Build Prompts</div>
-        <h2>Copy these prompts into <em>Claude Code</em></h2>
-        <p>Each prompt below is engineered to build a production-ready feature for LiveCard Studio. Open your project in VS Code, launch Claude Code, and paste. Click any card to expand the full prompt.</p>
-      </div>
-
-      <div class="codex-note">
-        <h4>⚡ Before you start</h4>
-        <p>Make sure your LiveCard Studio project is open in VS Code and Claude Code (terminal) is running. These prompts reference the existing codebase structure — the card engine, particle systems, canvas renderer, and theme palette system. Run them in order for best results.</p>
+        <div class="ch-badge">🧬 Custom Studio — Interactive Showcase</div>
+        <h2>Experience every feature <em>live</em></h2>
+        <p>These aren’t mockups — tap, speak, tilt, and interact. Every demo below is running real-time in your browser. Click any panel to try it.</p>
       </div>
 
       <div class="prompt-list">
 
-        <!-- PROMPT 1: Sound-Reactive — Live demo -->
-        <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+        <!-- 1: Sound-Reactive — Live demo -->
+        <div class="prompt-card open">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">1</div>
             <div class="ph-icon">🎙️</div>
             <div class="ph-info"><h4>Sound-Reactive Cards</h4><span>Web Audio API · Frequency analysis · Particle physics</span></div>
@@ -420,14 +554,14 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
           </div>
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="sound-reactive"></div>
-            <p class="codex-demo-desc codex-demo-desc-1">Bass drives particle size, mids shift hue, highs trigger sparkles. Enable the mic and make some noise — you’ll see the frequency bars at the bottom and bass rings on big hits.</p>
+            <p class="codex-demo-desc">Bass drives particle size, mids shift hue, highs trigger sparkles. Enable the mic and make some noise — you’ll see the frequency bars at the bottom and bass rings on big hits.</p>
             <div class="prompt-tags"><span class="pt-api">Web Audio API</span><span class="pt-canvas">Canvas 2D</span><span class="pt-sensor">MediaStream</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 2: Gesture Physics -->
+        <!-- 2: Gesture Physics — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">2</div>
             <div class="ph-icon">📱</div>
             <div class="ph-info"><h4>Gesture Physics Engine</h4><span>DeviceOrientation · Accelerometer · Blow detection</span></div>
@@ -435,58 +569,14 @@ h1,h2,h3,h4,h5{font-family:'Cormorant Garamond',serif}
           </div>
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="gesture-physics"></div>
-            <p class="codex-demo-desc">Device sensors mapped to real-time force vectors on particles. Tilt your phone and gravity shifts. Blow into the mic and petals scatter. Shake and particles burst outward.</p>
-            <div class="prompt-desc">Full prompt (copy to Claude):</div>
-            <div class="prompt-block" id="p2">Build a gesture physics engine for LiveCard Studio cards.
-
-CONTEXT: Cards render particles on canvas with position {x,y}, velocity {vx,vy}, and per-frame updates. Existing particle types include petals (bezier shapes), stars (circles with glow), embers (radial gradients), confetti (rotating rectangles), bubbles, snow, and dust motes.
-
-REQUIREMENTS:
-1. Create a GesturePhysicsEngine class with three input sources:
-
-   TILT (DeviceOrientationEvent):
-   - Map event.gamma (left/right tilt, -90 to 90) to gravity X force
-   - Map event.beta (front/back tilt, -180 to 180) to gravity Y force  
-   - Normalize to force vector magnitude 0-2
-   - Apply as acceleration to all particles each frame: p.vx += gravityX * 0.02; p.vy += gravityY * 0.02
-   - Request permission on iOS 13+ with DeviceOrientationEvent.requestPermission()
-   - Desktop fallback: map mouse position relative to card center as gravity direction
-
-   BLOW (Microphone amplitude):
-   - Reuse mic stream from sound-reactive module if available, or create new
-   - Monitor RMS amplitude of audio input
-   - When amplitude spikes above threshold (0.15) for 3+ consecutive frames:
-     * Apply upward scatter force to all particles: p.vy -= blowForce * 3; p.vx += (Math.random()-0.5) * blowForce * 2
-     * Trigger visual wind lines (3-5 curved strokes sweeping upward, fade out over 20 frames)
-   - Detect blow vs speech: blow = sustained amplitude with low frequency dominance
-
-   SHAKE (DeviceMotionEvent):
-   - Monitor accelerationIncludingGravity magnitude: sqrt(x² + y² + z²)
-   - When magnitude exceeds threshold (25) for 2+ frames:
-     * Apply random burst force to all particles: random direction, magnitude 3-6
-     * Spawn 15 extra burst particles at card center that fly outward and fade
-     * Add screen shake: translate card by random ±3px for 10 frames, ease back
-
-2. Gesture indicator UI:
-   - Small badge appears top-right when gesture detected: "Tilting...", "Blow!", "Shake!"
-   - Badge auto-fades after 2 seconds
-   - Subtle directional arrow on canvas showing current gravity vector (faint, 20% opacity)
-
-3. Velocity damping: multiply all velocities by 0.97 per frame to prevent runaway speeds
-
-4. Boundary wrapping: particles that exit one edge re-enter from the opposite edge
-
-5. Integration: Export class with start(canvasEl, particlesArray)/stop() interface. Should layer on top of existing particle render loop without replacing it.
-
-TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature detection for all sensor APIs.
-              <button class="copy-btn" onclick="copyPrompt(event,'p2')">Copy</button></div>
+            <p class="codex-demo-desc">Tilt your phone and gravity shifts. Blow into the mic and petals scatter. Shake and particles burst outward. On desktop, move your mouse to attract particles.</p>
             <div class="prompt-tags"><span class="pt-sensor">DeviceOrientation</span><span class="pt-sensor">Accelerometer</span><span class="pt-api">MediaStream</span><span class="pt-canvas">Canvas 2D</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 3: Time-Evolving Lifecycle -->
+        <!-- 3: Time-Evolving Lifecycle — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">3</div>
             <div class="ph-icon">🌅</div>
             <div class="ph-info"><h4>Time-Evolving Lifecycle</h4><span>Date math · Stage transitions · Seasonal rendering</span></div>
@@ -494,16 +584,14 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
           </div>
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="lifecycle"></div>
-            <p class="codex-demo-desc">Cards that age like a real garden. Day 1 shows seeds. Day 5 shows sprouts. Day 10 blooms fully. Day 35 fades to gold. Use the slider to scrub through days.</p>
-            <div class="prompt-desc">Full prompt (copy to Claude):</div>
-            <div class="prompt-block" id="p3">Build a time-evolving lifecycle system for LiveCard Studio. Input: card.createdAt. Define 6 stages (SEED, SPROUT, BUD, BLOOM, FULL GARDEN, GOLDEN FADE). Export getLifecycleState(createdAt).<button class="copy-btn" onclick="copyPrompt(event,'p3')">Copy</button></div>
+            <p class="codex-demo-desc">Cards that age like a real garden. Day 1 shows seeds. Day 5 shows sprouts. Day 10 blooms fully. Day 35 fades to gold. Use the buttons to scrub through stages.</p>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">Date API</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 4: Photo-Reactive Worlds -->
+        <!-- 4: Photo-Reactive Worlds — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">4</div>
             <div class="ph-icon">🎨</div>
             <div class="ph-info"><h4>Photo-Reactive Worlds</h4><span>Color extraction · Palette generation · Dynamic theming</span></div>
@@ -524,31 +612,29 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
                 </div>
               </div>
             </div>
-            <p class="codex-demo-desc">Upload any photo and the card extracts dominant colors and generates a matching living universe.</p>
-            <div class="prompt-block" id="p4">Build a photo-reactive world generator. K-means color extraction, warmth/brightness analysis, world generation from palette. Export generateWorldFromImage(imageFile).<button class="copy-btn" onclick="copyPrompt(event,'p4')">Copy</button></div>
+            <p class="codex-demo-desc">Upload any photo and the card extracts dominant colors via k-means clustering, then generates a matching living universe.</p>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-ai">Color Science</span><span class="pt-api">File API</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 5: AI Personal Universe -->
+        <!-- 5: AI Personal Universe — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">5</div>
             <div class="ph-icon">🔮</div>
-            <div class="ph-info"><h4>AI Personal Universe Generator</h4><span>Text parsing · Concept-to-visual mapping</span></div>
+            <div class="ph-info"><h4>AI Personal Universe Generator</h4><span>Text parsing · Concept-to-visual mapping · 40+ keywords</span></div>
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="universe"></div>
-            <p class="codex-demo-desc">Type a description and the card generates a unique living world with matching palette and particle shapes.</p>
-            <div class="prompt-block" id="p5">Build an AI personal universe generator. Concept keyword dictionary (40+ entries), text parsing, world generation. Export generateUniverseFromText(text).<button class="copy-btn" onclick="copyPrompt(event,'p5')">Copy</button></div>
-            <div class="prompt-tags"><span class="pt-ai">NLP Parsing</span><span class="pt-canvas">Canvas 2D</span></div>
+            <p class="codex-demo-desc">Type "she loves jazz, the ocean, and sunflowers" and watch a unique living world appear with matching palette, particles, and atmospheric physics.</p>
+            <div class="prompt-tags"><span class="pt-ai">NLP Parsing</span><span class="pt-canvas">Canvas 2D</span><span class="pt-ai">Generative Design</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 6: Constellation Group Cards — Live demo -->
+        <!-- 6: Constellation Group Cards — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">6</div>
             <div class="ph-icon">👥</div>
             <div class="ph-info"><h4>Constellation Group Cards</h4><span>Multi-contributor · Star map · Tap-to-reveal</span></div>
@@ -557,50 +643,75 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
           <div class="prompt-body"><div class="prompt-inner">
             <div class="codex-demo-container" data-demo="constellation"></div>
             <p class="codex-demo-desc">Every person becomes a star in your sky. Tap any star to see who it is — the star brightens, a ring of light expands, then the message rises. Watch for the shooting star.</p>
-            <p style="margin-top:10px"><a href="constellation.html" class="copy-btn" style="display:inline-block;text-decoration:none">Create your own constellation card →</a></p>
+            <p style="margin-top:10px"><a href="constellation.html" style="display:inline-block;text-decoration:none;padding:5px 14px;border-radius:8px;font-size:.56rem;font-weight:400;letter-spacing:1px;color:var(--gold2);background:rgba(201,169,110,.06);border:1px solid rgba(201,169,110,.1);">Create your own constellation card →</a></p>
             <div class="prompt-tags"><span class="pt-canvas">Canvas 2D</span><span class="pt-api">localStorage</span><span class="pt-api">Touch Events</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 7: Generative Ambient Sound -->
+        <!-- 7: Generative Ambient Sound — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">7</div>
             <div class="ph-icon">🎵</div>
             <div class="ph-info"><h4>Generative Ambient Sound</h4><span>Web Audio oscillators · Procedural music · Never loops</span></div>
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Each card gets a unique procedural soundtrack that never loops — ocean drones, garden crickets, starfield shimmer.</div>
-            <div class="prompt-block" id="p7">Build AmbientSoundEngine: theme-mapped sound palettes (ocean, garden, fire, starfield, celebration), procedural timing, start/stop/setVolume. Web Audio only.<button class="copy-btn" onclick="copyPrompt(event,'p7')">Copy</button></div>
+            <div class="codex-demo-container" data-demo="ambient-sound"></div>
+            <p class="codex-demo-desc">Each card gets a unique procedural soundtrack that never loops. Ocean drones, garden crickets, fire crackles, cosmic shimmer — all synthesized in real-time. Tap the speaker to listen.</p>
             <div class="prompt-tags"><span class="pt-api">Web Audio API</span><span class="pt-ai">Procedural Audio</span></div>
           </div></div>
         </div>
 
-        <!-- PROMPT 8: NFC Integration -->
+        <!-- 8: NFC Print Bridge — Live demo -->
         <div class="prompt-card">
-          <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="prompt-head" onclick="this.parentElement.classList.toggle(‘open’)">
             <div class="ph-num">8</div>
             <div class="ph-icon">📱</div>
-            <div class="ph-info"><h4>NFC Print Bridge</h4><span>Web NFC API · Deep linking · QR fallback</span></div>
+            <div class="ph-info"><h4>NFC Print Bridge</h4><span>Styled QR · Cinematic load sequence · Physical-to-digital</span></div>
             <div class="ph-arrow">▼</div>
           </div>
           <div class="prompt-body"><div class="prompt-inner">
-            <div class="prompt-desc">Connects physical NFC-embedded cards to their digital living versions. Landing page, QR fallback, analytics.</div>
-            <div class="prompt-block" id="p8">Build NFC-to-digital bridge: URL schema lcs_{id}, landing page /c/:cardId with load sequence, styled QR export, client-side analytics, card management dashboard.<button class="copy-btn" onclick="copyPrompt(event,'p8')">Copy</button></div>
-            <div class="prompt-tags"><span class="pt-nfc">NFC</span><span class="pt-api">URL Routing</span><span class="pt-canvas">QR Generation</span></div>
+            <div class="codex-demo-container" data-demo="nfc-bridge"></div>
+            <p class="codex-demo-desc">Physical NFC-embedded cards link to living digital versions. Tap "Preview" to experience the cinematic load sequence — the moment when a physical card comes alive.</p>
+            <div class="prompt-tags"><span class="pt-nfc">NFC</span><span class="pt-canvas">QR Generation</span><span class="pt-api">Canvas 2D</span></div>
           </div></div>
-        </div>
-
-        <div class="codex-note">
-          <h4>💡 Pro tip</h4>
-          <p>Run prompts 1-5 as individual features first, test each one, then ask Claude Code to integrate them into a unified card engine with a config-driven approach. Prompt 8 (NFC Bridge) is the production deployment layer — save it for when the features are solid.</p>
         </div>
 
       </div>
     </div>
   </div>
 </div>
+
+<section class="theme-showcase rv" id="themes">
+  <div class="theme-showcase-shell">
+    <div class="theme-showcase-head">
+      <span class="eyebrow">New Theme Library</span>
+      <h2>17 cinematic scene themes are now live</h2>
+      <p>Tap any theme to open a live preview. Each one is now available in the card builder and share links.</p>
+    </div>
+    <div class="theme-grid-v2">
+      <a class="theme-link-v2" href="/themes/v2-aurora-dreams.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#78C8B4"></span><span style="background:#60A8D0"></span><span style="background:#0A0E1A"></span></div><div class="nm">Aurora Dreams</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-constellation.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#C5B8D4"></span><span style="background:#8BA5C0"></span><span style="background:#0E0D18"></span></div><div class="nm">Constellation</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-deep-bioluminescence.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#5DD6B8"></span><span style="background:#56B4DE"></span><span style="background:#0A1220"></span></div><div class="nm">Deep Bioluminescence</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-firefly-meadow.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#B8C888"></span><span style="background:#A4B86C"></span><span style="background:#1A1E2E"></span></div><div class="nm">Firefly Meadow</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-garden-bloom.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#E8B4C0"></span><span style="background:#8BAF8D"></span><span style="background:#F6F3EC"></span></div><div class="nm">Garden Bloom</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-gentle-tide.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#7BA5A8"></span><span style="background:#E0C8C0"></span><span style="background:#E5EDE8"></span></div><div class="nm">Gentle Tide</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-golden-hour.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#D4A574"></span><span style="background:#B8865A"></span><span style="background:#FDF3E8"></span></div><div class="nm">Golden Hour Sky</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-iridescent-butterflies.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#60C8B0"></span><span style="background:#4098C0"></span><span style="background:#1A2418"></span></div><div class="nm">Iridescent Butterflies</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-lantern-festival.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#E8B464"></span><span style="background:#D4944C"></span><span style="background:#1A1420"></span></div><div class="nm">Lantern Festival</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-lotus-ceremony.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#E8C898"></span><span style="background:#D4A070"></span><span style="background:#080C18"></span></div><div class="nm">Lotus Ceremony</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-midnight-rain.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#6A8AB8"></span><span style="background:#4B5D8A"></span><span style="background:#0B1222"></span></div><div class="nm">Midnight Rain</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-paper-boats.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#D8C8E8"></span><span style="background:#B0A0C8"></span><span style="background:#0C101E"></span></div><div class="nm">Paper Boats</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-petal-drift.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#C4919B"></span><span style="background:#A66B78"></span><span style="background:#FDF6EC"></span></div><div class="nm">Petal Drift</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-rising-embers.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#F0A030"></span><span style="background:#D88020"></span><span style="background:#0E0A08"></span></div><div class="nm">Rising Embers</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-sakura-wind.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#E8D4D0"></span><span style="background:#D4B8B0"></span><span style="background:#C8A8A0"></span></div><div class="nm">Sakura Wind</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-wish-bottles.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#80D0E8"></span><span style="background:#60A8C8"></span><span style="background:#06081A"></span></div><div class="nm">Wish Bottles</div><div class="meta">Theme Preview</div></a>
+      <a class="theme-link-v2" href="/themes/v2-wishing-dandelions.html" target="_blank" rel="noopener"><div class="dots"><span style="background:#E8D4A0"></span><span style="background:#C8B080"></span><span style="background:#1A1428"></span></div><div class="nm">Wishing Dandelions</div><div class="meta">Theme Preview</div></a>
+    </div>
+    <div class="theme-showcase-cta"><a href="/dashboard.html">Open Builder</a></div>
+  </div>
+</section>
 
 <!-- BOTTOM CTA -->
 <section class="bottom-cta rv" id="cta">
@@ -616,18 +727,6 @@ TECH: Vanilla JS. Must handle iOS permission dialogs gracefully. Include feature
 <script>
 const dpr=Math.min(devicePixelRatio||1,2);let sY=0;
 addEventListener('scroll',()=>{sY=window.scrollY});
-
-// ═══ COPY PROMPT ═══
-function copyPrompt(e,id){
-  e.stopPropagation();
-  const el=document.getElementById(id);
-  const btn=el.querySelector('.copy-btn');
-  const text=el.textContent.replace(btn.textContent,'').trim();
-  navigator.clipboard.writeText(text).then(()=>{
-    btn.textContent='Copied!';btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
-  });
-}
 
 // ═══ PALETTES ═══
 const PAL={

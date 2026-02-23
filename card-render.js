@@ -103,9 +103,113 @@
       badgeColors: ['#D4829A','#98C9A3','#B08898','#A0B8A8','#E890A8','#80B090','#C090B0','#A8C0A0']
     }
   };
+  var v2ThemeTemplates = {
+    aurora: '/themes/v2-aurora-dreams.html',
+    constellation: '/themes/v2-constellation.html',
+    gardenbloom: '/themes/v2-garden-bloom.html',
+    gentletide: '/themes/v2-gentle-tide.html',
+    goldenhour: '/themes/v2-golden-hour.html',
+    iridescent: '/themes/v2-iridescent-butterflies.html',
+    lantern: '/themes/v2-lantern-festival.html',
+    lotus: '/themes/v2-lotus-ceremony.html',
+    bioluminescence: '/themes/v2-deep-bioluminescence.html',
+    midnightrain: '/themes/v2-midnight-rain.html',
+    paperboats: '/themes/v2-paper-boats.html',
+    petaldrift: '/themes/v2-petal-drift.html',
+    risingembers: '/themes/v2-rising-embers.html',
+    sakura: '/themes/v2-sakura-wind.html',
+    firefly: '/themes/v2-firefly-meadow.html',
+    wishbottles: '/themes/v2-wish-bottles.html',
+    dandelions: '/themes/v2-wishing-dandelions.html'
+  };
+  var v2TemplateCache = {};
+
+  function hasOwn(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+  }
+
+  function isV2Theme(theme) {
+    return !!(theme && hasOwn(v2ThemeTemplates, theme));
+  }
+
+  function getPhotos(card) {
+    var photos = card && card.photos;
+    if (typeof photos === 'string') {
+      try { photos = JSON.parse(photos); } catch (e) { photos = []; }
+    }
+    if (!Array.isArray(photos)) photos = [];
+    return photos;
+  }
+
+  function getPrimaryPhoto(card) {
+    var photos = getPhotos(card);
+    for (var i = 0; i < photos.length; i++) {
+      var src = typeof photos[i] === 'string' ? photos[i] : (photos[i] && photos[i].dataUrl) || '';
+      if (src) return src;
+    }
+    return '';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function replaceTagContent(html, className, content) {
+    var pattern = new RegExp('(<[^>]*class="' + className + '"[^>]*>)([\\s\\S]*?)(<\\/[^>]+>)');
+    return html.replace(pattern, function(_, open, _old, close) {
+      return open + content + close;
+    });
+  }
+
+  function patchV2Template(rawTemplate, card) {
+    var occasion = card.occasion || 'birthday';
+    var title = defaultTitles[occasion] || 'A Living Card For You';
+    var recipient = card.recipient_name || 'Someone Special';
+    var sender = card.sender_name || 'With love';
+    var message = card.message || defaultMessages[occasion] || '';
+    var photoSrc = getPrimaryPhoto(card);
+    var html = rawTemplate;
+
+    html = html.replace(/<title>[\s\S]*?<\/title>/i, '<title>A Living Card For ' + escapeHtml(recipient) + '</title>');
+    html = replaceTagContent(html, 'msg-occ', escapeHtml(title));
+    html = replaceTagContent(html, 'msg-txt', escapeHtml(message).replace(/\n/g, '<br>'));
+    html = replaceTagContent(html, 'msg-from', '- ' + escapeHtml(sender));
+    html = replaceTagContent(html, 'env-from', 'for ' + escapeHtml(recipient));
+    html = html.replace(/<a href="#">LiveCardStudio<\/a>/g, '<a href="/">LiveCardStudio</a>');
+
+    if (photoSrc) {
+      var photoScript = '<script>window.__LIVECARD_PHOTO__=' + JSON.stringify(photoSrc) + ';</script>';
+      html = html.replace('<script>', photoScript + '<script>');
+      html = html.replace(
+        /function (initP|initPhoto)\(\)\{[\s\S]*?\}/,
+        function(_m, fnName) {
+          return 'function ' + fnName + '(){const f=document.getElementById("pf"),s=f.offsetWidth||280;pc.width=s;pc.height=s;function setOriginal(){if(typeof oD!=="undefined"){oD=pctx.getImageData(0,0,s,s)}if(typeof origData!=="undefined"){origData=pctx.getImageData(0,0,s,s)}}function fallback(){const gen=typeof genP==="function"?genP:(typeof genPhoto==="function"?genPhoto:null);if(gen){pctx.drawImage(gen(s,s),0,0)}setOriginal()}const src=window.__LIVECARD_PHOTO__;if(!src){fallback();return;}const img=new Image();img.onload=function(){const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;if(!iw||!ih){fallback();return;}const sc=Math.max(s/iw,s/ih),dw=iw*sc,dh=ih*sc,dx=(s-dw)/2,dy=(s-dh)/2;pctx.clearRect(0,0,s,s);pctx.drawImage(img,dx,dy,dw,dh);setOriginal()};img.onerror=fallback;img.src=src}';
+        }
+      );
+    }
+
+    return html;
+  }
+
+  function loadV2Template(path) {
+    if (v2TemplateCache[path]) return v2TemplateCache[path];
+    if (!global.fetch) {
+      return Promise.reject(new Error('Fetch unavailable for V2 template loading'));
+    }
+    v2TemplateCache[path] = global.fetch(path).then(function(res) {
+      if (!res.ok) throw new Error('Failed to fetch V2 template: ' + path);
+      return res.text();
+    });
+    return v2TemplateCache[path];
+  }
 
   function buildCardHTML(card) {
     if (!card || !card.theme) return '';
+    if (isV2Theme(card.theme)) return '';
     var T = themes[card.theme] || themes.watercolor;
     var occasion = card.occasion || 'birthday';
     var subtitle = defaultSubtitles[occasion] || 'wishing a very special';
@@ -113,11 +217,7 @@
     var recipient = card.recipient_name || 'Someone Special';
     var sender = card.sender_name || 'With love';
     var message = (card.message || defaultMessages[occasion] || '').replace(/\n/g, '<br>');
-    var photos = card.photos;
-    if (typeof photos === 'string') {
-      try { photos = JSON.parse(photos); } catch (e) { photos = []; }
-    }
-    if (!Array.isArray(photos)) photos = [];
+    var photos = getPhotos(card);
     var photoHTML = '';
     for (var i = 0; i < photos.length; i++) {
       var src = typeof photos[i] === 'string' ? photos[i] : (photos[i] && photos[i].dataUrl) || '';
@@ -253,5 +353,19 @@
       '<\/script></body></html>';
   }
 
-  global.LiveCardRender = { buildCardHTML: buildCardHTML, themes: themes };
+  function buildCardHTMLAsync(card) {
+    if (!card || !card.theme) return Promise.resolve('');
+    if (!isV2Theme(card.theme)) return Promise.resolve(buildCardHTML(card));
+    var path = v2ThemeTemplates[card.theme];
+    return loadV2Template(path).then(function(rawTemplate) {
+      return patchV2Template(rawTemplate, card);
+    });
+  }
+
+  global.LiveCardRender = {
+    buildCardHTML: buildCardHTML,
+    buildCardHTMLAsync: buildCardHTMLAsync,
+    themes: themes,
+    v2ThemeTemplates: v2ThemeTemplates
+  };
 })(typeof window !== 'undefined' ? window : this);

@@ -7,6 +7,8 @@ import { createGesturePhysicsDemo } from './gesture-physics.js';
 import { createLifecycleDemo } from './lifecycle-demo.js';
 import { createPhotoReactiveDemo } from './photo-reactive.js';
 import { createUniverseDemo } from './universe-demo.js';
+import { createAmbientSoundDemo } from './ambient-sound-demo.js';
+import { createNFCBridgeDemo } from './nfc-bridge.js';
 
 const TAB_ID = 'tab-codex';
 const DEMOS = {
@@ -16,6 +18,8 @@ const DEMOS = {
   'lifecycle': createLifecycleDemo,
   'photo-reactive': createPhotoReactiveDemo,
   'universe': createUniverseDemo,
+  'ambient-sound': createAmbientSoundDemo,
+  'nfc-bridge': createNFCBridgeDemo,
 };
 
 let activeDemos = new Map();
