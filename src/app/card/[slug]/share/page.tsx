@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { FirstViewNotificationSettings } from '@/components/card/first-view-notification-settings';
 import { CopyLinkButton } from '@/components/dashboard/copy-link-button';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/auth/session';
@@ -80,10 +81,12 @@ export default async function SharePage({ params }: { params: { slug: string } }
               <p className="serif-copy mt-2 text-2xl text-brand-body">
                 We&apos;ll notify you when {card.recipientName} opens their card.
               </p>
-              <label className="mt-4 flex items-center gap-2 text-sm text-brand-muted">
-                <input type="checkbox" defaultChecked />
-                Send me an email on first view
-              </label>
+              <FirstViewNotificationSettings
+                cardId={card.id}
+                initialNotifyOnFirstView={card.notifyOnFirstView}
+                initialNotifyEmail={card.notifyEmail}
+                fallbackEmail={session.user.email || null}
+              />
               <div className="mt-6 flex gap-2">
                 <Link href={`/c/${card.slug}`} target="_blank">
                   <Button tone="secondary">Open Recipient View</Button>

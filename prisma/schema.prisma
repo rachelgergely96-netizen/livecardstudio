@@ -99,6 +99,8 @@ model Card {
   ogImageUrl      String?
   viewCount       Int         @default(0)
   firstViewedAt   DateTime?
+  notifyOnFirstView Boolean   @default(false)
+  notifyEmail      String?
   paintData       Json?
   featureToggles  Json?
   createdAt       DateTime    @default(now())
@@ -106,6 +108,9 @@ model Card {
   publishedAt     DateTime?
   paidAt          DateTime?
   stripePaymentId String?
+  publishRetryCount Int      @default(0)
+  publishError     String?
+  publishRetryAt   DateTime?
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([slug])
@@ -175,4 +180,15 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model StripeWebhookEvent {
+  id         String   @id @default(cuid())
+  eventId    String   @unique
+  eventType  String
+  status     String
+  details    Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  processedAt DateTime?
 }

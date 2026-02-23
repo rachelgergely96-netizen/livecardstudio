@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, notFound, ok, serverError, unauthorized } from '@/lib/api';
 import { prisma } from '@/lib/db/prisma';
+import { env } from '@/lib/env';
+import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
 
 const updateCardSchema = z.object({
   title: z.string().min(2).max(120).optional(),
@@ -20,6 +22,8 @@ const updateCardSchema = z.object({
       confettiFinale: z.boolean()
     })
     .optional(),
+  notifyOnFirstView: z.boolean().optional(),
+  notifyEmail: z.string().email().nullable().optional(),
   status: z.nativeEnum(CardStatus).optional(),
   giftCard: z
     .object({
@@ -81,6 +85,16 @@ export async function PUT(request: Request, context: { params: { id: string } })
 
     const payload = parsed.data;
 
+    if (payload.giftCard?.tremendousProductId && env.TREMENDOUS_API_KEY) {
+      const product = await findGiftBrandById(payload.giftCard.tremendousProductId);
+      if (!product) {
+        return badRequest('Selected gift product is unavailable.');
+      }
+      if (!isGiftDenominationAllowed(product, payload.giftCard.amount / 100)) {
+        return badRequest('Selected gift amount is not valid for this brand.');
+      }
+    }
+
     const updated = await prisma.card.update({
       where: { id: existing.id },
       data: {
@@ -92,6 +106,8 @@ export async function PUT(request: Request, context: { params: { id: string } })
         sectionMessages: payload.sectionMessages,
         musicStyle: payload.musicStyle,
         featureToggles: payload.featureToggles,
+        notifyOnFirstView: payload.notifyOnFirstView,
+        notifyEmail: payload.notifyEmail,
         status: payload.status,
         giftCard:
           payload.giftCard === undefined

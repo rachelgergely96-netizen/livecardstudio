@@ -9,6 +9,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().optional(),
+  ADMIN_ALERT_EMAIL: z.string().optional(),
   AWS_REGION: z.string().optional(),
   S3_BUCKET_NAME: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),

@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, ok, serverError, unauthorized, notFound } from '@/lib/api';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import { ensureStripe } from '@/lib/integrations/stripe';
+import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
 import { absoluteUrl } from '@/lib/utils';
 
 const checkoutSchema = z.object({
@@ -98,6 +100,23 @@ export async function POST(request: Request) {
     }
 
     if (giftAmount > 0 && card.giftCard) {
+      if (!env.TREMENDOUS_API_KEY) {
+        return badRequest('Gift card checkout requires Tremendous configuration.');
+      }
+
+      if (!card.giftCard.tremendousProductId) {
+        return badRequest('Gift card product selection is required before checkout.');
+      }
+
+      const brand = await findGiftBrandById(card.giftCard.tremendousProductId);
+      if (!brand) {
+        return badRequest('Selected gift product is unavailable.');
+      }
+
+      if (!isGiftDenominationAllowed(brand, card.giftCard.amount / 100)) {
+        return badRequest('Selected gift amount is not valid for the chosen brand.');
+      }
+
       lineItems.push({
         quantity: 1,
         price_data: {
@@ -118,25 +137,34 @@ export async function POST(request: Request) {
       });
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: lineItems,
-      customer: card.user.stripeCustomerId || undefined,
-      metadata: {
-        cardId: card.id,
-        userId: card.user.id,
-        slug: card.slug,
-        hasGift: card.giftCard ? 'true' : 'false'
-      },
-      success_url: absoluteUrl(`/card/${card.slug}/share?checkout=success&session_id={CHECKOUT_SESSION_ID}`),
-      cancel_url: absoluteUrl(`/create?cardId=${card.id}&checkout=cancel`),
-      payment_intent_data: {
+    const idempotencyKey = createHash('sha256')
+      .update(`checkout:${card.id}:${card.user.id}:${cardAmount}:${giftAmount}`)
+      .digest('hex');
+
+    const checkoutSession = await stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        line_items: lineItems,
+        customer: card.user.stripeCustomerId || undefined,
         metadata: {
           cardId: card.id,
-          userId: card.user.id
+          userId: card.user.id,
+          slug: card.slug,
+          hasGift: card.giftCard ? 'true' : 'false'
+        },
+        success_url: absoluteUrl(`/card/${card.slug}/share?checkout=success&session_id={CHECKOUT_SESSION_ID}`),
+        cancel_url: absoluteUrl(`/create?cardId=${card.id}&checkout=cancel`),
+        payment_intent_data: {
+          metadata: {
+            cardId: card.id,
+            userId: card.user.id
+          }
         }
+      },
+      {
+        idempotencyKey
       }
-    });
+    );
 
     return ok({
       mode: 'stripe',

@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, notFound, ok, serverError, unauthorized } from '@/lib/api';
 import { prisma } from '@/lib/db/prisma';
-import { purchaseGiftCard } from '@/lib/integrations/tremendous';
+import { env } from '@/lib/env';
+import { findGiftBrandById, isGiftDenominationAllowed, purchaseGiftCard } from '@/lib/integrations/tremendous';
 
 const purchaseSchema = z.object({
   cardId: z.string().min(1),
@@ -34,6 +35,19 @@ export async function POST(request: Request) {
 
     if (!card.giftCard) {
       return badRequest('Card does not include a gift card slot yet.');
+    }
+
+    if (!env.TREMENDOUS_API_KEY) {
+      return badRequest('Tremendous API is not configured.');
+    }
+
+    const brand = await findGiftBrandById(parsed.data.productId);
+    if (!brand) {
+      return badRequest('Selected gift product is unavailable.');
+    }
+
+    if (!isGiftDenominationAllowed(brand, parsed.data.denominationUsd)) {
+      return badRequest('Selected denomination is not valid for this gift product.');
     }
 
     const purchase = await purchaseGiftCard({

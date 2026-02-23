@@ -40,7 +40,9 @@ export async function regenerateCardHtml(cardId: string, options: RegenerateOpti
       htmlUrl,
       ogImageUrl: card.ogImageUrl || absoluteUrl(`/og/${card.slug}.png`),
       status: options.status || card.status,
-      publishedAt: options.markPublishedAt ? new Date() : card.publishedAt
+      publishedAt: options.markPublishedAt ? new Date() : card.publishedAt,
+      publishError: null,
+      publishRetryAt: null
     },
     include: {
       photos: true,

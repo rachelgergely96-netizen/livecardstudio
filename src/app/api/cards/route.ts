@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth/session';
 import { badRequest, created, serverError, unauthorized, ok } from '@/lib/api';
 import { createCardSlug } from '@/lib/cards/slug';
 import { prisma } from '@/lib/db/prisma';
+import { env } from '@/lib/env';
+import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
 
 const createCardSchema = z.object({
   title: z.string().min(2).max(120),
@@ -21,6 +23,8 @@ const createCardSchema = z.object({
       confettiFinale: z.boolean()
     })
     .optional(),
+  notifyOnFirstView: z.boolean().optional(),
+  notifyEmail: z.string().email().nullable().optional(),
   giftCard: z
     .object({
       brand: z.string().min(1).max(100),
@@ -96,6 +100,16 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const slug = createCardSlug(`${payload.occasion}-${payload.recipientName}`);
 
+    if (payload.giftCard?.tremendousProductId && env.TREMENDOUS_API_KEY) {
+      const product = await findGiftBrandById(payload.giftCard.tremendousProductId);
+      if (!product) {
+        return badRequest('Selected gift product is unavailable.');
+      }
+      if (!isGiftDenominationAllowed(product, payload.giftCard.amount / 100)) {
+        return badRequest('Selected gift amount is not valid for this brand.');
+      }
+    }
+
     const card = await prisma.card.create({
       data: {
         slug,
@@ -108,6 +122,8 @@ export async function POST(request: Request) {
         sectionMessages: payload.sectionMessages || [],
         musicStyle: payload.musicStyle,
         featureToggles: payload.featureToggles,
+        notifyOnFirstView: payload.notifyOnFirstView ?? false,
+        notifyEmail: payload.notifyEmail ?? null,
         status: CardStatus.DRAFT,
         giftCard: payload.giftCard
           ? {
