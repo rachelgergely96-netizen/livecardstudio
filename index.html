@@ -1121,7 +1121,12 @@ document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.f
 
       btn.addEventListener('click',function(ev){
         ev.preventDefault(); ev.stopPropagation();
-        if(!ambientEngine)return;
+        hasUserActivated=true;
+        if(!ambientEngine){
+          setMuted(false);
+          startEngineForCard(card);
+          return;
+        }
         const next=!getMuted();
         setMuted(next);
         ambientEngine.setVolume(next?slider.value/100:0);

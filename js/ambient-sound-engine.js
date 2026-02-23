@@ -61,8 +61,6 @@
       this.started = false;
       this.stopped = false;
       this._scheduled = [];
-      this._oscPool = [];
-      this._noisePool = [];
     }
 
     _ctx() {
@@ -84,7 +82,6 @@
     }
 
     _getOsc() {
-      if (this._oscPool.length) return this._oscPool.pop();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.connect(gain);
@@ -94,18 +91,16 @@
 
     _releaseOsc(obj) {
       try {
-        obj.gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        if (this.ctx) obj.gain.gain.setValueAtTime(0, this.ctx.currentTime);
+      } catch (_) {}
+      try {
         obj.osc.stop();
       } catch (_) {}
-      this._oscPool.push(obj);
+      try { obj.osc.disconnect(); } catch (_) {}
+      try { obj.gain.disconnect(); } catch (_) {}
     }
 
     _getNoise(buffer) {
-      if (this._noisePool.length) {
-        const n = this._noisePool.pop();
-        n.buffer = buffer;
-        return n;
-      }
       const buf = this.ctx.createBufferSource();
       buf.buffer = buffer;
       const gain = this.ctx.createGain();
@@ -116,10 +111,13 @@
 
     _releaseNoise(obj) {
       try {
-        obj.gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        if (this.ctx) obj.gain.gain.setValueAtTime(0, this.ctx.currentTime);
+      } catch (_) {}
+      try {
         obj.buffer.stop();
       } catch (_) {}
-      this._noisePool.push(obj);
+      try { obj.buffer.disconnect(); } catch (_) {}
+      try { obj.gain.disconnect(); } catch (_) {}
     }
 
     _schedule(fn) {
@@ -146,6 +144,7 @@
     }
 
     stop() {
+      if (this.stopped) return;
       this.stopped = true;
       this._scheduled.forEach(cancel => { try { cancel(); } catch (_) {} });
       this._scheduled = [];
@@ -155,11 +154,13 @@
         this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
         this.masterGain.gain.linearRampToValueAtTime(0, t + 0.3);
       }
+      const ctx = this.ctx;
       setTimeout(() => {
-        this._oscPool.forEach(o => { try { o.osc.stop(); } catch (_) {} });
-        this._noisePool.forEach(n => { try { n.buffer.stop(); } catch (_) {} });
-        this._oscPool = [];
-        this._noisePool = [];
+        try {
+          if (ctx && ctx.state !== 'closed') ctx.close();
+        } catch (_) {}
+        this.ctx = null;
+        this.masterGain = null;
       }, 400);
     }
 
