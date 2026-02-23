@@ -1,15 +1,17 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { normalizeCallbackUrl } from '@/lib/auth/callback-url';
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = normalizeCallbackUrl(searchParams.get('callbackUrl'), '/dashboard');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<string>('');
@@ -98,7 +100,16 @@ export function LoginForm() {
       </div>
 
       <p className="mt-5 text-sm text-brand-muted">
-        No account? <a href="/signup" className="text-brand-copper">Create one</a>
+        No account?{' '}
+        <Link
+          href={{
+            pathname: '/signup',
+            query: { callbackUrl }
+          }}
+          className="text-brand-copper"
+        >
+          Create one
+        </Link>
       </p>
       {status ? <p className="mt-3 text-sm text-brand-copper">{status}</p> : null}
     </div>

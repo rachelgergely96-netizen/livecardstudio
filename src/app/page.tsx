@@ -55,10 +55,21 @@ export default function LandingPage() {
           <a href="#pricing">Pricing</a>
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/login" className="hidden text-sm text-brand-muted md:inline">
+          <Link
+            href={{
+              pathname: '/login',
+              query: { callbackUrl: '/dashboard' }
+            }}
+            className="hidden text-sm text-brand-muted md:inline"
+          >
             Login
           </Link>
-          <Link href="/create">
+          <Link
+            href={{
+              pathname: '/signup',
+              query: { callbackUrl: '/create' }
+            }}
+          >
             <Button>Create Your Card</Button>
           </Link>
         </div>
@@ -76,10 +87,23 @@ export default function LandingPage() {
               on it.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/create">
+              <Link
+                href={{
+                  pathname: '/signup',
+                  query: { callbackUrl: '/create' }
+                }}
+              >
                 <Button className="gap-2">
-                  Create Your Card <ArrowRight className="h-4 w-4" />
+                  Get Started Free <ArrowRight className="h-4 w-4" />
                 </Button>
+              </Link>
+              <Link
+                href={{
+                  pathname: '/login',
+                  query: { callbackUrl: '/dashboard' }
+                }}
+              >
+                <Button tone="secondary">Log In</Button>
               </Link>
               <a href="#demo">
                 <Button tone="secondary">See a demo</Button>

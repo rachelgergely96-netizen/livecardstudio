@@ -1,11 +1,17 @@
 import { redirect } from 'next/navigation';
 import { SignupForm } from '@/components/auth/signup-form';
+import { normalizeCallbackUrl } from '@/lib/auth/callback-url';
 import { auth } from '@/lib/auth/session';
 
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams
+}: {
+  searchParams: { callbackUrl?: string };
+}) {
+  const callbackUrl = normalizeCallbackUrl(searchParams.callbackUrl, '/dashboard');
   const session = await auth();
   if (session?.user?.id) {
-    redirect('/dashboard');
+    redirect(callbackUrl);
   }
 
   return (

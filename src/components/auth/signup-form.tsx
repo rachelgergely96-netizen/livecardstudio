@@ -1,13 +1,17 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { normalizeCallbackUrl } from '@/lib/auth/callback-url';
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = normalizeCallbackUrl(searchParams.get('callbackUrl'), '/dashboard');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,18 +48,18 @@ export function SignupForm() {
       email,
       password,
       redirect: false,
-      callbackUrl: '/dashboard'
+      callbackUrl
     });
 
     setLoading(false);
 
     if (signInResult?.error) {
       setStatus('Account created. Please sign in.');
-      router.push('/login');
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
 
-    router.push('/dashboard');
+    router.push(signInResult?.url || callbackUrl);
     router.refresh();
   }
 
@@ -105,13 +109,22 @@ export function SignupForm() {
         type="button"
         tone="secondary"
         className="mt-4 w-full"
-        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+        onClick={() => signIn('google', { callbackUrl })}
       >
         Continue with Google
       </Button>
 
       <p className="mt-5 text-sm text-brand-muted">
-        Already have an account? <a href="/login" className="text-brand-copper">Sign in</a>
+        Already have an account?{' '}
+        <Link
+          href={{
+            pathname: '/login',
+            query: { callbackUrl }
+          }}
+          className="text-brand-copper"
+        >
+          Sign in
+        </Link>
       </p>
       {status ? <p className="mt-3 text-sm text-brand-copper">{status}</p> : null}
     </div>
