@@ -3,20 +3,12 @@
 import { CardStatus, MusicStyle, Occasion, Theme } from '@prisma/client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PhotoManager, type PhotoItem } from '@/components/studio/photo-manager';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { formatUsd } from '@/lib/utils';
 import { defaultCardFeatures, occasionLabels, themeLabels } from '@/types/card';
-
-type PhotoItem = {
-  id: string;
-  caption: string | null;
-  sortOrder: number;
-  base64Data: string | null;
-  processedUrl: string | null;
-  originalUrl: string;
-};
 
 type GiftCardInput = {
   brand: string;
@@ -185,73 +177,6 @@ export function CreateWizard({
     }
   }
 
-  async function uploadPhotos(fileList: FileList | null) {
-    if (!fileList?.length) return;
-
-    try {
-      setSaving(true);
-      setStatus('');
-
-      const cardId = await ensureCardExists();
-      const formData = new FormData();
-      Array.from(fileList).forEach((file) => formData.append('photos', file));
-
-      const response = await fetch(`/api/cards/${cardId}/photos`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || 'Could not upload photos.');
-      }
-
-      setCard((current) => ({
-        ...current,
-        photos: [...current.photos, ...payload.photos]
-      }));
-      setStatus(`${payload.photos.length} photo(s) uploaded.`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Upload failed.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function removePhoto(photoId: string) {
-    if (!card.id) return;
-
-    const response = await fetch(`/api/cards/${card.id}/photos/${photoId}`, {
-      method: 'DELETE'
-    });
-
-    if (!response.ok) {
-      const payload = await response.json();
-      setStatus(payload.error || 'Could not remove photo.');
-      return;
-    }
-
-    setCard((current) => ({
-      ...current,
-      photos: current.photos.filter((photo) => photo.id !== photoId)
-    }));
-  }
-
-  async function reorderPhotos(nextOrder: PhotoItem[]) {
-    if (!card.id) {
-      setCard((current) => ({ ...current, photos: nextOrder }));
-      return;
-    }
-
-    setCard((current) => ({ ...current, photos: nextOrder }));
-
-    await fetch(`/api/cards/${card.id}/photos/reorder`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photoIds: nextOrder.map((photo) => photo.id) })
-    });
-  }
-
   async function loadGiftBrands() {
     if (giftBrands.length) return;
 
@@ -408,71 +333,15 @@ export function CreateWizard({
 
         {step === 1 ? (
           <div className="mt-6 space-y-4">
-            <label className="ui-label">Upload photos</label>
-            <label className="flex min-h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[rgba(200,160,120,0.4)] bg-white/70 p-6 text-center">
-              <input
-                type="file"
-                className="hidden"
-                multiple
-                accept="image/*"
-                onChange={(event) => uploadPhotos(event.target.files)}
-              />
-              <div>
-                <p className="text-lg text-brand-charcoal">Drop your favorite memories here</p>
-                <p className="mt-1 text-sm text-brand-muted">JPG, PNG, HEIC. Up to 12 photos.</p>
-                {userPlan === 'FREE' ? (
-                  <p className="mt-2 text-xs text-brand-copper">Free tier includes up to 4 photos.</p>
-                ) : null}
-              </div>
-            </label>
-
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {card.photos
-                .slice()
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((photo, index, all) => {
-                  const src = photo.base64Data || photo.processedUrl || photo.originalUrl;
-                  return (
-                    <article key={photo.id} className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/80 p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt={`Uploaded photo ${index + 1}`} className="h-28 w-full rounded-lg object-cover" />
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        <button
-                          type="button"
-                          className="rounded-full border px-2 py-1 text-xs"
-                          onClick={() => {
-                            if (index === 0) return;
-                            const next = [...all];
-                            [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                            reorderPhotos(next.map((item, order) => ({ ...item, sortOrder: order })));
-                          }}
-                        >
-                          Up
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-full border px-2 py-1 text-xs"
-                          onClick={() => {
-                            if (index === all.length - 1) return;
-                            const next = [...all];
-                            [next[index + 1], next[index]] = [next[index], next[index + 1]];
-                            reorderPhotos(next.map((item, order) => ({ ...item, sortOrder: order })));
-                          }}
-                        >
-                          Down
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-full border border-red-300 px-2 py-1 text-xs text-red-600"
-                          onClick={() => removePhoto(photo.id)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-            </div>
+            <PhotoManager
+              photos={card.photos}
+              onPhotosChange={(photos) => setCard((current) => ({ ...current, photos }))}
+              cardId={card.id}
+              ensureCardExists={ensureCardExists}
+              userPlan={userPlan}
+              onStatus={setStatus}
+              onBusyChange={setSaving}
+            />
           </div>
         ) : null}
 

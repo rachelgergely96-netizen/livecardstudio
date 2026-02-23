@@ -41,7 +41,14 @@ export async function POST(request: Request, context: { params: { id: string } }
 
     const createdPhotos = [];
     for (const [index, file] of fileEntries.entries()) {
-      const processed = await processUploadedPhoto(file);
+      let processed;
+      try {
+        processed = await processUploadedPhoto(file);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Could not process an uploaded photo.';
+        return badRequest(message);
+      }
+
       const objectKey = `photos/${card.id}/${Date.now()}-${index}.jpg`;
       const uploadedUrl = await uploadImage(objectKey, processed.buffer, processed.mimeType);
 
