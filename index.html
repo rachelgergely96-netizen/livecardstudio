@@ -1064,12 +1064,16 @@ document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.f
   const STORAGE_MUTE='livecard_ambient_mute';
   const STORAGE_VOL='livecard_ambient_vol';
   let ambientEngine=null;
-  let hasUserActivated=false;
 
   function getMuted(){ try{ return sessionStorage.getItem(STORAGE_MUTE)==='1'; }catch(e){ return false; } }
   function setMuted(v){ try{ sessionStorage.setItem(STORAGE_MUTE,v?'1':'0'); }catch(e){} }
   function getStoredVol(){ try{ const v=parseInt(sessionStorage.getItem(STORAGE_VOL),10); return isNaN(v)?80:Math.max(0,Math.min(100,v)); }catch(e){ return 80; } }
   function setStoredVol(v){ try{ sessionStorage.setItem(STORAGE_VOL,String(Math.round(v))); }catch(e){} }
+  function ensureAudibleVol(){
+    const v=getStoredVol();
+    if(v<15){ setStoredVol(80); return 80; }
+    return v;
+  }
 
   function themeForCard(card){
     if(!window.AmbientSoundEngine)return 'starfield';
@@ -1110,26 +1114,31 @@ document.querySelectorAll('.rv').forEach(el=>{new IntersectionObserver(es=>{es.f
 
       card.addEventListener('click',function(ev){
         if(ev.target.closest('.card-sound-wrap'))return;
-        hasUserActivated=true;
         startEngineForCard(card);
       },{passive:true});
       card.addEventListener('touchstart',function(ev){
         if(ev.target.closest('.card-sound-wrap'))return;
-        hasUserActivated=true;
         startEngineForCard(card);
       },{passive:true});
 
       btn.addEventListener('click',function(ev){
         ev.preventDefault(); ev.stopPropagation();
-        hasUserActivated=true;
         if(!ambientEngine){
+          ensureAudibleVol();
           setMuted(false);
           startEngineForCard(card);
           return;
         }
         const next=!getMuted();
         setMuted(next);
-        ambientEngine.setVolume(next?slider.value/100:0);
+        if(!next&&parseInt(slider.value,10)<15){
+          slider.value='80';
+          setStoredVol(80);
+        }
+        ambientEngine.setVolume(next?0:slider.value/100);
+        if(ambientEngine.ctx&&ambientEngine.ctx.state==='suspended'){
+          ambientEngine.ctx.resume().catch(function(){});
+        }
         updateAllSoundUI();
       });
       slider.addEventListener('input',function(){

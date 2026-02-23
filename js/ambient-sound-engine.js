@@ -420,7 +420,7 @@
     _startStarfield(ctx, t0) {
       const deep = this._getOsc();
       deep.osc.type = 'sine';
-      deep.osc.frequency.setValueAtTime(40, t0);
+      deep.osc.frequency.setValueAtTime(58, t0);
       deep.osc.start(t0);
       deep.gain.disconnect();
       const deepLfo = ctx.createOscillator();
@@ -432,8 +432,15 @@
       deep.gain.connect(deepLfoGain);
       deepLfo.connect(deepLfoGain.gain);
       deepLfoGain.connect(this.masterGain);
-      deep.gain.gain.setValueAtTime(0.06, t0);
+      deep.gain.gain.setValueAtTime(0.1, t0);
       deepLfo.start(t0);
+
+      // Add immediate mid texture so starfield cards are audible right away.
+      const mid = this._getOsc();
+      mid.osc.type = 'triangle';
+      mid.osc.frequency.setValueAtTime(170, t0);
+      mid.gain.gain.setValueAtTime(0.022, t0);
+      mid.osc.start(t0);
 
       let shimmerFreq = 3000;
       const shimmerTick = () => {
