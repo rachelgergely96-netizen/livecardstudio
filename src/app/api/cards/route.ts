@@ -134,6 +134,10 @@ export async function POST(request: Request) {
     const slug = createCardSlug(`${payload.occasion}-${payload.recipientName}`);
     const resolvedThemes = resolveThemeSelection(payload);
 
+    if (session.user.plan === 'FREE' && payload.tier === CardTier.PREMIUM) {
+      return badRequest('Premium themes require Premium or Pro plans.');
+    }
+
     if (session.user.plan === 'FREE' && payload.giftCard) {
       return badRequest('Gift cards require Premium or Pro plans.');
     }

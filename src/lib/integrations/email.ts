@@ -87,6 +87,24 @@ export function buildMagicLinkEmail(url: string) {
   };
 }
 
+export function buildPasswordResetEmail(input: { resetUrl: string }) {
+  return {
+    subject: 'Reset your LiveCardStudio password',
+    html: `
+      <div style="font-family:Inter,Arial,sans-serif;padding:24px;background:#fdf8f0;color:#3a2f2a;">
+        <div style="max-width:560px;margin:0 auto;background:#fffaf3;border:1px solid rgba(200,160,120,0.2);border-radius:16px;padding:28px;">
+          <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8b6f5e;margin:0 0 10px;">LiveCardStudio</p>
+          <h1 style="font-family:Georgia,serif;font-weight:500;margin:0 0 12px;">Reset your password</h1>
+          <p style="font-size:16px;line-height:1.55;color:#5a4a3f;">Tap below to set a new password. This link expires in 30 minutes.</p>
+          <a href="${input.resetUrl}" style="display:inline-block;margin-top:18px;padding:12px 20px;background:#c87941;color:#fff;text-decoration:none;border-radius:999px;font-weight:600;">Reset password</a>
+          <p style="margin-top:18px;font-size:13px;line-height:1.5;color:#8b6f5e;">If you did not request this, you can ignore this email.</p>
+        </div>
+      </div>
+    `,
+    text: `Reset your password: ${input.resetUrl}\n\nThis link expires in 30 minutes.`
+  };
+}
+
 export function buildFirstViewOpenedEmail(input: {
   recipientName: string;
   viewedAtIso: string;

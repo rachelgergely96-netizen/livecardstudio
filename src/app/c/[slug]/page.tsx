@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { demoCardHtml } from '@/lib/cards/demo-html';
 import { toCardGenerationInput } from '@/lib/cards/build-card-input';
@@ -9,6 +10,42 @@ import { readStorageContent } from '@/lib/integrations/storage-read';
 import { absoluteUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
+
+function CreateYourOwnCta() {
+  return (
+    <section className="border-t border-[rgba(200,160,120,0.24)] bg-[#fffaf3] px-6 py-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="ui-label">Inspired by this card?</p>
+          <h2 className="section-title mt-2 text-3xl">Create your own living card</h2>
+          <p className="mt-2 text-sm text-brand-muted">
+            Start with photos, add a message, pick a theme, and share one beautiful link.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={{
+              pathname: '/signup',
+              query: { callbackUrl: '/create' }
+            }}
+            className="rounded-full bg-brand-copper px-4 py-2 text-sm text-white"
+          >
+            Start Free
+          </Link>
+          <Link
+            href={{
+              pathname: '/login',
+              query: { callbackUrl: '/create' }
+            }}
+            className="rounded-full border border-[rgba(200,160,120,0.28)] bg-white px-4 py-2 text-sm text-brand-muted"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 async function getCard(slug: string) {
   return prisma.card.findUnique({
@@ -98,6 +135,7 @@ export default async function PublicCardPage({ params }: { params: { slug: strin
           sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
           allow="autoplay"
         />
+        <CreateYourOwnCta />
       </main>
     );
   }
@@ -176,6 +214,7 @@ export default async function PublicCardPage({ params }: { params: { slug: strin
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
         allow="autoplay"
       />
+      <CreateYourOwnCta />
     </main>
   );
 }

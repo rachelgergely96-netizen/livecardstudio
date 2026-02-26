@@ -1,7 +1,8 @@
 'use client';
 
 import { CardStatus, MusicStyle, Occasion, CardTier, QuickTheme, PremiumTheme } from '@prisma/client';
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AudioManager, type AudioTrack } from '@/components/studio/audio-manager';
 import { PhotoManager, type PhotoItem } from '@/components/studio/photo-manager';
@@ -81,6 +82,23 @@ const musicOptions: MusicStyle[] = [
   'NONE'
 ];
 
+type UpgradeFeature = 'premium_theme' | 'photos' | 'gift_card';
+
+const UPGRADE_PROMPTS: Record<UpgradeFeature, { title: string; message: string }> = {
+  premium_theme: {
+    title: 'Premium themes are a paid feature',
+    message: 'Upgrade to Premium or Pro to unlock premium theme styles and advanced storytelling layouts.'
+  },
+  photos: {
+    title: 'Need more than 4 photos?',
+    message: 'Free plans include up to 4 photos. Upgrade to Premium or Pro to add up to 12 photos per card.'
+  },
+  gift_card: {
+    title: 'Gift cards require an upgrade',
+    message: 'Unlock e-gift card reveals with a Premium or Pro plan.'
+  }
+};
+
 function normalizeCard(input?: Partial<WizardCard>): WizardCard {
   const occasion = input?.occasion || 'BIRTHDAY';
   const tier = input?.tier || 'QUICK';
@@ -143,6 +161,7 @@ export function CreateWizard({
   const [saving, setSaving] = useState(false);
   const [giftBrands, setGiftBrands] = useState<GiftBrand[]>([]);
   const [previewUrl, setPreviewUrl] = useState(card.slug ? `/c/${card.slug}` : '');
+  const [upgradePrompt, setUpgradePrompt] = useState<UpgradeFeature | null>(null);
 
   const recommendations = getOccasionRecommendations(card.occasion);
   const selectedThemeLabel = resolveThemeLabel({
@@ -165,6 +184,38 @@ export function CreateWizard({
 
   const demosForTier = BUILT_THEME_DEMOS.filter((demo) => demo.tier === card.tier);
 
+  function openUpgradePrompt(feature: UpgradeFeature) {
+    setUpgradePrompt(feature);
+  }
+
+  function handleUpgradeError(message: string) {
+    if (message.includes('Premium themes require')) {
+      openUpgradePrompt('premium_theme');
+      return true;
+    }
+    if (message.includes('Gift cards require')) {
+      openUpgradePrompt('gift_card');
+      return true;
+    }
+    if (message.includes('Photo limit exceeded') || message.includes('up to 4 photos')) {
+      openUpgradePrompt('photos');
+      return true;
+    }
+    return false;
+  }
+
+  useEffect(() => {
+    if (userPlan === 'FREE' && card.tier === 'PREMIUM') {
+      setCard((current) => ({
+        ...current,
+        tier: 'QUICK',
+        musicStyle: 'NONE',
+        quickTheme: current.quickTheme || getDefaultQuickTheme(current.occasion)
+      }));
+      openUpgradePrompt('premium_theme');
+    }
+  }, [card.tier, userPlan, card.occasion]);
+
   function withOccasion(nextOccasion: Occasion) {
     const nextRecommendations = getOccasionRecommendations(nextOccasion);
     setCard((current) => ({
@@ -180,6 +231,11 @@ export function CreateWizard({
   }
 
   function withTier(nextTier: CardTier) {
+    if (nextTier === 'PREMIUM' && userPlan === 'FREE') {
+      openUpgradePrompt('premium_theme');
+      return;
+    }
+
     setCard((current) => ({
       ...current,
       tier: nextTier,
@@ -192,6 +248,11 @@ export function CreateWizard({
   function applyThemeDemo(themeId: string) {
     const selected = BUILT_THEME_DEMOS.find((item) => item.id === themeId);
     if (!selected) {
+      return;
+    }
+
+    if (selected.tier === 'PREMIUM' && userPlan === 'FREE') {
+      openUpgradePrompt('premium_theme');
       return;
     }
 
@@ -237,7 +298,9 @@ export function CreateWizard({
 
     const payload = await response.json();
     if (!response.ok) {
-      throw new Error(payload.error || 'Could not create draft card.');
+      const message = payload.error || 'Could not create draft card.';
+      handleUpgradeError(message);
+      throw new Error(message);
     }
 
     setCard((current) => ({
@@ -265,7 +328,9 @@ export function CreateWizard({
 
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || 'Could not save card draft.');
+        const message = payload.error || 'Could not save card draft.';
+        handleUpgradeError(message);
+        throw new Error(message);
       }
 
       setCard((current) => ({
@@ -501,6 +566,8 @@ export function CreateWizard({
               cardId={card.id}
               ensureCardExists={ensureCardExists}
               userPlan={userPlan}
+              tier={card.tier}
+              onUpgradeRequired={() => openUpgradePrompt('photos')}
               onStatus={setStatus}
               onBusyChange={setSaving}
             />
@@ -657,8 +724,11 @@ export function CreateWizard({
                 <input
                   type="checkbox"
                   checked={Boolean(card.giftCard)}
-                  disabled={userPlan === 'FREE'}
                   onChange={(event) => {
+                    if (event.target.checked && userPlan === 'FREE') {
+                      openUpgradePrompt('gift_card');
+                      return;
+                    }
                     if (event.target.checked) {
                       setCard((current) => ({
                         ...current,
@@ -867,6 +937,24 @@ export function CreateWizard({
           </div>
         ) : null}
       </aside>
+
+      {upgradePrompt ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] p-5 shadow-xl">
+            <p className="ui-label">Upgrade required</p>
+            <h3 className="section-title mt-2 text-3xl">{UPGRADE_PROMPTS[upgradePrompt].title}</h3>
+            <p className="mt-3 text-sm text-brand-body">{UPGRADE_PROMPTS[upgradePrompt].message}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/pricing">
+                <Button type="button">View plans</Button>
+              </Link>
+              <Button type="button" tone="secondary" onClick={() => setUpgradePrompt(null)}>
+                Continue on Free
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

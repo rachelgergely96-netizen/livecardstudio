@@ -1,5 +1,6 @@
 'use client';
 
+import type { CardTier } from '@prisma/client';
 import {
   DndContext,
   type DragEndEvent,
@@ -37,6 +38,8 @@ type PhotoManagerProps = {
   cardId?: string;
   ensureCardExists: () => Promise<string>;
   userPlan: 'FREE' | 'PREMIUM' | 'PRO';
+  tier: CardTier;
+  onUpgradeRequired?: () => void;
   onStatus: (message: string) => void;
   onBusyChange: (busy: boolean) => void;
 };
@@ -206,6 +209,8 @@ export function PhotoManager({
   cardId,
   ensureCardExists,
   userPlan,
+  tier,
+  onUpgradeRequired,
   onStatus,
   onBusyChange
 }: PhotoManagerProps) {
@@ -232,6 +237,18 @@ export function PhotoManager({
       const heicChecks = await Promise.all(files.map((file) => detectLikelyHeic(file)));
       if (heicChecks.some(Boolean)) {
         onStatus('HEIC file detected. Converting for compatibility...');
+      }
+
+      const tierCap = tier === 'QUICK' ? 1 : userPlan === 'FREE' ? 4 : 12;
+      if (sortedPhotos.length + files.length > tierCap) {
+        if (userPlan === 'FREE' && tier !== 'QUICK') {
+          onUpgradeRequired?.();
+          onStatus('Free plans include up to 4 photos. Upgrade to add more.');
+          return;
+        }
+
+        onStatus(`Photo limit exceeded. This card supports up to ${tierCap} photos.`);
+        return;
       }
 
       const resolvedCardId = cardId || (await ensureCardExists());

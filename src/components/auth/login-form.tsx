@@ -100,6 +100,18 @@ export function LoginForm() {
           <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </div>
 
+        <div className="flex justify-end">
+          <Link
+            href={{
+              pathname: '/forgot-password',
+              query: email ? { email } : undefined
+            }}
+            className="text-xs text-brand-copper"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         <Button type="submit" className="mt-2 w-full" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
         </Button>

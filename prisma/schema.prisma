@@ -140,6 +140,7 @@ model User {
   cards            Card[]
   sessions         Session[]
   accounts         Account[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Card {
@@ -244,6 +245,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([usedAt])
 }
 
 model StripeWebhookEvent {

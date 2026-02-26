@@ -104,6 +104,10 @@ export async function PUT(request: Request, context: { params: { id: string } })
           : payload.premiumTheme
         : null;
 
+    if (session.user.plan === 'FREE' && nextTier === CardTier.PREMIUM) {
+      return badRequest('Premium themes require Premium or Pro plans.');
+    }
+
     if (session.user.plan === 'FREE' && payload.giftCard) {
       return badRequest('Gift cards require Premium or Pro plans.');
     }
