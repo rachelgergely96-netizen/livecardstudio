@@ -13,6 +13,12 @@ type GiftInput = {
   redemptionUrl?: string | null;
 };
 
+type CustomAudioInput = {
+  url: string;
+  name?: string | null;
+  mimeType?: string | null;
+};
+
 export type PremiumWatercolorRenderInput = {
   slug: string;
   recipientName: string;
@@ -20,6 +26,7 @@ export type PremiumWatercolorRenderInput = {
   occasion: Occasion;
   message: string;
   photos: PhotoInput[];
+  customAudio?: CustomAudioInput;
   gift?: GiftInput | null;
 };
 
@@ -145,6 +152,47 @@ const PREMIUM_STYLE = `
 }
 `;
 
+const PREMIUM_AUDIO_STYLE = `
+.lcs-premium-audio {
+  position: fixed;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(120,60,80,0.28);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.78);
+  color: rgba(120,60,80,0.9);
+  backdrop-filter: blur(8px);
+  padding: 8px 12px;
+  font: 600 11px/1 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lcs-premium-audio-btn {
+  border: 1px solid rgba(120,60,80,0.3);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+  color: rgba(120,60,80,0.9);
+  font: 600 10px/1 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.lcs-premium-audio-name {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+`;
+
 let templateCache: string | null = null;
 
 function escapeHtml(value: string | null | undefined) {
@@ -203,12 +251,28 @@ function buildGiftMarkup(gift: GiftInput | null | undefined, recipientName: stri
 </div>`;
 }
 
+function buildAudioMarkup(customAudio: CustomAudioInput | null | undefined) {
+  if (!customAudio?.url) {
+    return '';
+  }
+
+  return `
+<div class="lcs-premium-audio" id="lcs-premium-audio">
+  <span class="lcs-premium-audio-name">${escapeHtml(customAudio.name || 'Custom Audio')}</span>
+  <button id="lcs-premium-audio-play" class="lcs-premium-audio-btn" type="button">Play</button>
+  <button id="lcs-premium-audio-mute" class="lcs-premium-audio-btn" type="button">Mute</button>
+  <audio id="lcs-premium-audio-el" src="${escapeHtml(customAudio.url)}" preload="auto" loop></audio>
+</div>`;
+}
+
 function buildPatchScript(data: {
   recipientName: string;
   occasionLabel: string;
   senderName: string;
   message: string;
   photos: string[];
+  customAudioUrl?: string;
+  customAudioName?: string;
 }) {
   const payload = escapeJsonForScript(data);
 
@@ -284,6 +348,40 @@ function buildPatchScript(data: {
       giftOpen.remove();
     });
   }
+
+  var audioEl = document.getElementById('lcs-premium-audio-el');
+  var audioPlay = document.getElementById('lcs-premium-audio-play');
+  var audioMute = document.getElementById('lcs-premium-audio-mute');
+  if (audioEl && audioPlay && audioMute) {
+    function syncAudioUi() {
+      audioPlay.textContent = audioEl.paused ? 'Play' : 'Pause';
+      audioMute.textContent = audioEl.muted ? 'Unmute' : 'Mute';
+    }
+
+    audioPlay.addEventListener('click', function () {
+      if (audioEl.paused) {
+        audioEl.play().then(syncAudioUi).catch(function () {
+          audioPlay.textContent = 'Tap to play';
+        });
+      } else {
+        audioEl.pause();
+        syncAudioUi();
+      }
+    });
+
+    audioMute.addEventListener('click', function () {
+      audioEl.muted = !audioEl.muted;
+      syncAudioUi();
+    });
+
+    audioEl.addEventListener('play', syncAudioUi);
+    audioEl.addEventListener('pause', syncAudioUi);
+    syncAudioUi();
+
+    audioEl.play().then(syncAudioUi).catch(function () {
+      audioPlay.textContent = 'Play';
+    });
+  }
 })();
 </script>`;
 }
@@ -296,8 +394,15 @@ export function renderPremiumWatercolorHtml(input: PremiumWatercolorRenderInput)
   let html = getTemplateHtml();
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(`${occasionLabel} ${input.recipientName}`)}</title>`);
   html = html.replace('</style>', `${PREMIUM_STYLE}\n</style>`);
+  if (input.customAudio?.url) {
+    html = html.replace('</style>', `${PREMIUM_AUDIO_STYLE}\n</style>`);
+  }
 
   const giftMarkup = buildGiftMarkup(input.gift, input.recipientName);
+  const audioMarkup = buildAudioMarkup(input.customAudio);
+  if (audioMarkup) {
+    html = html.replace('</body>', `${audioMarkup}\n</body>`);
+  }
   if (giftMarkup) {
     html = html.replace('</body>', `${giftMarkup}\n</body>`);
   }
@@ -307,7 +412,9 @@ export function renderPremiumWatercolorHtml(input: PremiumWatercolorRenderInput)
     occasionLabel,
     senderName,
     message: input.message,
-    photos: photoSources
+    photos: photoSources,
+    customAudioUrl: input.customAudio?.url,
+    customAudioName: input.customAudio?.name || undefined
   });
 
   html = html.replace('</body>', `${patchScript}\n</body>`);

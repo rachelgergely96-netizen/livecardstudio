@@ -3,11 +3,13 @@
 import { CardStatus, MusicStyle, Occasion, CardTier, QuickTheme, PremiumTheme } from '@prisma/client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AudioManager, type AudioTrack } from '@/components/studio/audio-manager';
 import { PhotoManager, type PhotoItem } from '@/components/studio/photo-manager';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { formatUsd } from '@/lib/utils';
+import { BUILT_THEME_DEMOS, getThemeDemoName, getThemeDemoPreviewUrl } from '@/lib/themes/catalog';
 import {
   cardTierLabels,
   defaultCardFeatures,
@@ -39,6 +41,7 @@ type WizardCard = {
   message: string;
   sectionMessages: string[];
   musicStyle: MusicStyle;
+  customAudio: AudioTrack | null;
   featureToggles: {
     photoInteractions: boolean;
     brushReveal: boolean;
@@ -57,11 +60,10 @@ type GiftBrand = {
 };
 
 const steps = [
-  'Choose Your Moment',
-  'Choose Your Card Type',
-  'Add Your Photos',
-  'Write Your Message',
-  'Choose Your Style',
+  'Card Details',
+  'Select Photos',
+  'Optional Audio',
+  'Choose Theme',
   'Add a Gift Inside',
   'Preview & Checkout'
 ];
@@ -79,9 +81,6 @@ const musicOptions: MusicStyle[] = [
   'NONE'
 ];
 
-const quickThemeOptions = Object.keys(quickThemeLabels) as QuickTheme[];
-const premiumThemeOptions = Object.keys(premiumThemeLabels) as PremiumTheme[];
-
 function normalizeCard(input?: Partial<WizardCard>): WizardCard {
   const occasion = input?.occasion || 'BIRTHDAY';
   const tier = input?.tier || 'QUICK';
@@ -98,6 +97,7 @@ function normalizeCard(input?: Partial<WizardCard>): WizardCard {
     message: input?.message || '',
     sectionMessages: input?.sectionMessages || [],
     musicStyle: input?.musicStyle || (tier === 'QUICK' ? 'NONE' : 'MUSIC_BOX_BIRTHDAY'),
+    customAudio: input?.customAudio || null,
     featureToggles: {
       ...defaultCardFeatures,
       ...(input?.featureToggles || {})
@@ -110,6 +110,23 @@ function normalizeCard(input?: Partial<WizardCard>): WizardCard {
 
 function toMusicLabel(style: MusicStyle) {
   return style.replaceAll('_', ' ');
+}
+
+function themeSelected(theme: (typeof BUILT_THEME_DEMOS)[number], card: WizardCard) {
+  if (theme.tier !== card.tier) {
+    return false;
+  }
+  if (theme.tier === 'QUICK') {
+    return Boolean(theme.quickTheme && card.quickTheme === theme.quickTheme);
+  }
+  return Boolean(theme.premiumTheme && card.premiumTheme === theme.premiumTheme);
+}
+
+function audioSummary(card: WizardCard) {
+  if (card.customAudio?.name) {
+    return `Uploaded track: ${card.customAudio.name}`;
+  }
+  return `Soundtrack style: ${toMusicLabel(card.musicStyle)}`;
 }
 
 export function CreateWizard({
@@ -146,6 +163,8 @@ export function CreateWizard({
   const giftCostCents = card.giftCard?.amount || 0;
   const totalCents = cardCostCents + giftCostCents;
 
+  const demosForTier = BUILT_THEME_DEMOS.filter((demo) => demo.tier === card.tier);
+
   function withOccasion(nextOccasion: Occasion) {
     const nextRecommendations = getOccasionRecommendations(nextOccasion);
     setCard((current) => ({
@@ -167,6 +186,27 @@ export function CreateWizard({
       quickTheme: current.quickTheme || getDefaultQuickTheme(current.occasion),
       premiumTheme: current.premiumTheme || getDefaultPremiumTheme(current.occasion),
       musicStyle: nextTier === 'QUICK' ? 'NONE' : current.musicStyle === 'NONE' ? 'MUSIC_BOX_BIRTHDAY' : current.musicStyle
+    }));
+  }
+
+  function applyThemeDemo(themeId: string) {
+    const selected = BUILT_THEME_DEMOS.find((item) => item.id === themeId);
+    if (!selected) {
+      return;
+    }
+
+    setCard((current) => ({
+      ...current,
+      tier: selected.tier,
+      occasion: current.occasion || selected.occasion,
+      quickTheme: selected.quickTheme || current.quickTheme,
+      premiumTheme: selected.premiumTheme || current.premiumTheme,
+      musicStyle:
+        selected.tier === 'PREMIUM'
+          ? current.musicStyle === 'NONE'
+            ? 'MUSIC_BOX_BIRTHDAY'
+            : current.musicStyle
+          : 'NONE'
     }));
   }
 
@@ -311,15 +351,12 @@ export function CreateWizard({
 
   const canContinue = useMemo(() => {
     if (step === 0) {
-      return Boolean(card.recipientName.trim() && card.title.trim());
+      return Boolean(card.recipientName.trim() && card.title.trim() && card.message.trim());
     }
-    if (step === 2) {
+    if (step === 1) {
       return card.tier === 'QUICK' ? card.photos.length === 1 : card.photos.length > 0;
     }
     if (step === 3) {
-      return Boolean(card.message.trim());
-    }
-    if (step === 4) {
       return card.tier === 'QUICK' ? Boolean(card.quickTheme) : Boolean(card.premiumTheme);
     }
     return true;
@@ -329,7 +366,9 @@ export function CreateWizard({
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
       <section className="card-panel p-6">
         <header>
-          <p className="ui-label">Step {step + 1} of {steps.length}</p>
+          <p className="ui-label">
+            Step {step + 1} of {steps.length}
+          </p>
           <h1 className="section-title mt-2 text-4xl">{steps[step]}</h1>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(200,160,120,0.18)]">
             <i
@@ -394,39 +433,61 @@ export function CreateWizard({
                 placeholder="Maya's Birthday"
               />
             </div>
+
+            <div>
+              <label className="ui-label">Main message</label>
+              <Textarea
+                value={card.message}
+                onChange={(event) => setCard((current) => ({ ...current, message: event.target.value }))}
+                className="min-h-40 font-body text-lg"
+                placeholder={`Write from the heart. What do you want ${card.recipientName || 'them'} to feel?`}
+              />
+              <p className="mt-1 text-xs text-brand-muted">{card.message.length} characters</p>
+            </div>
+
+            <div>
+              <label className="ui-label">Extra section messages (optional)</label>
+              {[0, 1, 2].map((index) => (
+                <Input
+                  key={index}
+                  className="mt-2"
+                  value={card.sectionMessages[index] || ''}
+                  onChange={(event) => {
+                    const next = [...card.sectionMessages];
+                    next[index] = event.target.value;
+                    setCard((current) => ({ ...current, sectionMessages: next }));
+                  }}
+                  placeholder={`Section ${index + 1} message`}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
         {step === 1 ? (
-          <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {(Object.keys(cardTierLabels) as CardTier[]).map((tier) => (
-              <button
-                key={tier}
-                type="button"
-                onClick={() => withTier(tier)}
-                className={`rounded-2xl border p-4 text-left ${
-                  card.tier === tier
-                    ? 'border-brand-copper bg-brand-copper/10'
-                    : 'border-[rgba(200,160,120,0.28)] bg-white/70'
-                }`}
-              >
-                <p className="ui-label">{cardTierLabels[tier]}</p>
-                {tier === 'QUICK' ? (
-                  <p className="mt-2 text-sm text-brand-body">
-                    One photo. Envelope reveal. Theme filters. Fast creation in under two minutes.
-                  </p>
-                ) : (
-                  <p className="mt-2 text-sm text-brand-body">
-                    Multi-photo story. Music, paint canvas, and richer interactive experiences.
-                  </p>
-                )}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {step === 2 ? (
           <div className="mt-6 space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {(Object.keys(cardTierLabels) as CardTier[]).map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  onClick={() => withTier(tier)}
+                  className={`rounded-2xl border p-4 text-left ${
+                    card.tier === tier
+                      ? 'border-brand-copper bg-brand-copper/10'
+                      : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                  }`}
+                >
+                  <p className="ui-label">{cardTierLabels[tier]}</p>
+                  {tier === 'QUICK' ? (
+                    <p className="mt-2 text-sm text-brand-body">One-photo format for rapid delivery.</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-brand-body">Multi-photo format for richer storytelling.</p>
+                  )}
+                </button>
+              ))}
+            </div>
+
             <p className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 px-3 py-2 text-sm text-brand-body">
               {card.tier === 'QUICK'
                 ? 'Quick cards require exactly 1 photo.'
@@ -446,92 +507,22 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 3 ? (
+        {step === 2 ? (
           <div className="mt-6 space-y-4">
-            <div>
-              <label className="ui-label">Main message</label>
-              <Textarea
-                value={card.message}
-                onChange={(event) => setCard((current) => ({ ...current, message: event.target.value }))}
-                className="min-h-40 font-body text-lg"
-                placeholder={`Write from the heart. What do you want ${card.recipientName || 'them'} to feel?`}
-              />
-              <p className="mt-1 text-xs text-brand-muted">{card.message.length} characters</p>
-            </div>
+            <AudioManager
+              cardId={card.id}
+              audioTrack={card.customAudio}
+              ensureCardExists={ensureCardExists}
+              onAudioChange={(audio) => setCard((current) => ({ ...current, customAudio: audio }))}
+              onStatus={setStatus}
+              onBusyChange={setSaving}
+            />
 
-            {card.tier === 'PREMIUM' ? (
-              <div>
-                <label className="ui-label">Section messages (optional)</label>
-                {[0, 1, 2].map((index) => (
-                  <Input
-                    key={index}
-                    className="mt-2"
-                    value={card.sectionMessages[index] || ''}
-                    onChange={(event) => {
-                      const next = [...card.sectionMessages];
-                      next[index] = event.target.value;
-                      setCard((current) => ({ ...current, sectionMessages: next }));
-                    }}
-                    placeholder={`Section ${index + 1} message`}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {step === 4 ? (
-          <div className="mt-6 space-y-5">
-            <div>
-              <label className="ui-label">Recommended for {occasionLabels[card.occasion]}</label>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                {(card.tier === 'QUICK' ? recommendations.quick : recommendations.premium).map((theme) => (
-                  <span key={theme} className="rounded-full border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] px-2.5 py-1">
-                    {card.tier === 'QUICK'
-                      ? quickThemeLabels[theme as QuickTheme]
-                      : premiumThemeLabels[theme as PremiumTheme]}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="ui-label">Theme</label>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                {card.tier === 'QUICK'
-                  ? quickThemeOptions.map((theme) => (
-                      <button
-                        key={theme}
-                        type="button"
-                        onClick={() => setCard((current) => ({ ...current, quickTheme: theme }))}
-                        className={`rounded-xl border px-3 py-2 text-left text-sm ${
-                          card.quickTheme === theme
-                            ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
-                            : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
-                        }`}
-                      >
-                        {quickThemeLabels[theme]}
-                      </button>
-                    ))
-                  : premiumThemeOptions.map((theme) => (
-                      <button
-                        key={theme}
-                        type="button"
-                        onClick={() => setCard((current) => ({ ...current, premiumTheme: theme }))}
-                        className={`rounded-xl border px-3 py-2 text-left text-sm ${
-                          card.premiumTheme === theme
-                            ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
-                            : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
-                        }`}
-                      >
-                        {premiumThemeLabels[theme]}
-                      </button>
-                    ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="ui-label">Music</label>
+            <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
+              <label className="ui-label">Fallback soundtrack style</label>
+              <p className="mt-1 text-xs text-brand-muted">
+                Used when no uploaded audio is attached. Uploaded audio always takes priority.
+              </p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
                 {(card.tier === 'QUICK' ? (['NONE'] as MusicStyle[]) : musicOptions).map((musicStyle) => (
                   <button
@@ -546,6 +537,85 @@ export function CreateWizard({
                   >
                     {toMusicLabel(musicStyle)}
                   </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {step === 3 ? (
+          <div className="mt-6 space-y-5">
+            <div className="grid gap-3 md:grid-cols-2">
+              {(Object.keys(cardTierLabels) as CardTier[]).map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  onClick={() => withTier(tier)}
+                  className={`rounded-2xl border p-4 text-left ${
+                    card.tier === tier
+                      ? 'border-brand-copper bg-brand-copper/10'
+                      : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                  }`}
+                >
+                  <p className="ui-label">{cardTierLabels[tier]}</p>
+                  {tier === 'QUICK' ? (
+                    <p className="mt-2 text-sm text-brand-body">
+                      One photo and cinematic motion. Fast creation in under two minutes.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-brand-body">
+                      Multi-photo stories, richer effects, and premium moments.
+                    </p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div>
+              <label className="ui-label">Recommended for {occasionLabels[card.occasion]}</label>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {(card.tier === 'QUICK' ? recommendations.quick : recommendations.premium).map((theme) => (
+                  <span key={theme} className="rounded-full border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] px-2.5 py-1">
+                    {card.tier === 'QUICK'
+                      ? quickThemeLabels[theme as QuickTheme]
+                      : premiumThemeLabels[theme as PremiumTheme]}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="ui-label">Pre-generated themes</label>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {demosForTier.map((theme) => (
+                  <article
+                    key={theme.id}
+                    className={`rounded-2xl border p-3 ${
+                      themeSelected(theme, card)
+                        ? 'border-brand-copper bg-brand-copper/10'
+                        : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                    }`}
+                  >
+                    <button type="button" className="w-full text-left" onClick={() => applyThemeDemo(theme.id)}>
+                      <div
+                        className="h-16 rounded-xl"
+                        style={{ background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})` }}
+                      />
+                      <p className="section-title mt-2 text-2xl">{getThemeDemoName(theme)}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.08em] text-brand-muted">{theme.collection}</p>
+                      <p className="mt-1 text-sm text-brand-body">{theme.description}</p>
+                    </button>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button type="button" className="px-3 py-2 text-xs" onClick={() => applyThemeDemo(theme.id)}>
+                        Use Theme
+                      </Button>
+                      <a href={getThemeDemoPreviewUrl(theme)} target="_blank" rel="noopener noreferrer">
+                        <Button tone="secondary" type="button" className="px-3 py-2 text-xs">
+                          Demo
+                        </Button>
+                      </a>
+                    </div>
+                  </article>
                 ))}
               </div>
             </div>
@@ -579,7 +649,7 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 5 ? (
+        {step === 4 ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-3">
               <label className="flex items-center justify-between">
@@ -670,18 +740,24 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        {step === 6 ? (
+        {step === 5 ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
               <p className="ui-label">Order summary</p>
               <ul className="mt-2 space-y-1.5 text-sm text-brand-body">
-                <li>Occasion: {occasionLabels[card.occasion]} for {card.recipientName || 'Recipient'}</li>
+                <li>
+                  Occasion: {occasionLabels[card.occasion]} for {card.recipientName || 'Recipient'}
+                </li>
                 <li>Type: {cardTierLabels[card.tier]}</li>
                 <li>Theme: {selectedThemeLabel}</li>
                 <li>Photos: {card.photos.length}</li>
-                <li>Music: {toMusicLabel(card.musicStyle)}</li>
+                <li>{audioSummary(card)}</li>
                 <li>Features: {Object.entries(card.featureToggles).filter(([, enabled]) => enabled).length} enabled</li>
-                {card.giftCard ? <li>Gift card: {card.giftCard.brand} {formatUsd(card.giftCard.amount)}</li> : null}
+                {card.giftCard ? (
+                  <li>
+                    Gift card: {card.giftCard.brand} {formatUsd(card.giftCard.amount)}
+                  </li>
+                ) : null}
               </ul>
             </div>
 
@@ -691,7 +767,9 @@ export function CreateWizard({
               </Button>
               {previewUrl ? (
                 <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                  <Button tone="secondary" type="button">Open Full Preview</Button>
+                  <Button tone="secondary" type="button">
+                    Open Full Preview
+                  </Button>
                 </a>
               ) : null}
               <Button type="button" onClick={completeCheckout} disabled={saving}>
@@ -703,7 +781,12 @@ export function CreateWizard({
 
         <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[rgba(200,160,120,0.2)] pt-4">
           <div className="flex gap-2">
-            <Button tone="secondary" type="button" onClick={() => setStep((value) => Math.max(0, value - 1))}>
+            <Button
+              tone="secondary"
+              type="button"
+              onClick={() => setStep((value) => Math.max(0, value - 1))}
+              disabled={step === 0}
+            >
               Back
             </Button>
             <Button tone="secondary" type="button" onClick={saveDraft} disabled={saving}>
@@ -714,7 +797,7 @@ export function CreateWizard({
           <Button
             type="button"
             onClick={() => setStep((value) => Math.min(steps.length - 1, value + 1))}
-            disabled={!canContinue}
+            disabled={!canContinue || step === steps.length - 1}
           >
             Next
           </Button>
@@ -729,17 +812,41 @@ export function CreateWizard({
         <p className="serif-copy mt-1 text-xl text-brand-body">For {card.recipientName || 'Recipient'}</p>
 
         <dl className="mt-4 space-y-2 text-sm text-brand-muted">
-          <div className="flex justify-between gap-3"><dt>Occasion</dt><dd>{occasionLabels[card.occasion]}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Type</dt><dd>{cardTierLabels[card.tier]}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Theme</dt><dd>{selectedThemeLabel}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Photos</dt><dd>{card.photos.length}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Status</dt><dd>{card.status || 'DRAFT'}</dd></div>
-          <div className="flex justify-between gap-3"><dt>Music</dt><dd>{toMusicLabel(card.musicStyle)}</dd></div>
+          <div className="flex justify-between gap-3">
+            <dt>Occasion</dt>
+            <dd>{occasionLabels[card.occasion]}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>Type</dt>
+            <dd>{cardTierLabels[card.tier]}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>Theme</dt>
+            <dd>{selectedThemeLabel}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>Photos</dt>
+            <dd>{card.photos.length}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>Status</dt>
+            <dd>{card.status || 'DRAFT'}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>Audio</dt>
+            <dd>{card.customAudio?.name || toMusicLabel(card.musicStyle)}</dd>
+          </div>
         </dl>
 
         <div className="mt-5 border-t border-[rgba(200,160,120,0.2)] pt-4 text-sm text-brand-body">
-          <div className="flex justify-between"><span>{card.tier === 'QUICK' ? 'Quick card' : 'Premium card'}</span><span>{formatUsd(cardCostCents)}</span></div>
-          <div className="mt-1 flex justify-between"><span>Gift card</span><span>{formatUsd(giftCostCents)}</span></div>
+          <div className="flex justify-between">
+            <span>{card.tier === 'QUICK' ? 'Quick card' : 'Premium card'}</span>
+            <span>{formatUsd(cardCostCents)}</span>
+          </div>
+          <div className="mt-1 flex justify-between">
+            <span>Gift card</span>
+            <span>{formatUsd(giftCostCents)}</span>
+          </div>
           <div className="mt-2 flex justify-between text-base font-semibold text-brand-charcoal">
             <span>Total</span>
             <span>{formatUsd(totalCents)}</span>

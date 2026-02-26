@@ -8,6 +8,12 @@ type InputPhoto = {
   caption?: string | null;
 };
 
+type CustomAudioInput = {
+  url: string;
+  name?: string | null;
+  mimeType?: string | null;
+};
+
 type GiftData = {
   brand: string;
   amountCents: number;
@@ -26,6 +32,7 @@ export type CardGenerationInput = {
   message: string;
   sectionMessages?: string[];
   musicStyle: MusicStyle;
+  customAudio?: CustomAudioInput;
   photos: InputPhoto[];
   features?: Partial<CardFeatures>;
   gift?: GiftData | null;
@@ -449,13 +456,61 @@ function giftMarkup(gift: GiftData | null | undefined, recipientName: string) {
   `;
 }
 
-function soundScript(musicStyle: MusicStyle) {
+function soundScript(musicStyle: MusicStyle, customAudio?: CustomAudioInput) {
   const style = JSON.stringify(musicStyle);
+  const customAudioPayload = JSON.stringify(customAudio || null)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 
   return `
     <script>
       (function(){
         const style = ${style};
+        const customAudio = ${customAudioPayload};
+        const playButton = document.getElementById('soundPlay');
+        const closeButton = document.getElementById('soundClose');
+
+        if (customAudio && customAudio.url) {
+          const customAudioEl = document.getElementById('soundAudio');
+          if (!customAudioEl || !playButton || !closeButton) {
+            return;
+          }
+
+          customAudioEl.loop = true;
+          customAudioEl.preload = 'auto';
+
+          function setPlaying(playing) {
+            playButton.textContent = playing ? 'Pause' : 'Play';
+            closeButton.textContent = customAudioEl.muted ? 'Unmute' : 'Mute';
+          }
+
+          playButton.addEventListener('click', () => {
+            if (customAudioEl.paused) {
+              customAudioEl.play().then(() => setPlaying(true)).catch(() => {
+                playButton.textContent = 'Tap to play';
+              });
+            } else {
+              customAudioEl.pause();
+              setPlaying(false);
+            }
+          });
+
+          closeButton.addEventListener('click', () => {
+            customAudioEl.muted = !customAudioEl.muted;
+            setPlaying(!customAudioEl.paused);
+          });
+
+          customAudioEl.addEventListener('play', () => setPlaying(true));
+          customAudioEl.addEventListener('pause', () => setPlaying(false));
+          setPlaying(false);
+
+          customAudioEl.play().then(() => setPlaying(true)).catch(() => {
+            playButton.textContent = 'Play';
+          });
+          return;
+        }
+
         let ctx;
         let playing = false;
         let interval;
@@ -502,8 +557,6 @@ function soundScript(musicStyle: MusicStyle) {
           playing = false;
         }
 
-        const playButton = document.getElementById('soundPlay');
-        const closeButton = document.getElementById('soundClose');
         if (playButton) playButton.addEventListener('click', () => { start(); playButton.textContent = 'Playing'; });
         if (closeButton) closeButton.addEventListener('click', () => { const b = document.getElementById('soundBanner'); if (b) b.remove(); stop(); });
       })();
@@ -673,6 +726,7 @@ export function generateCardHtml(input: CardGenerationInput) {
         quickTheme: input.quickTheme,
         message: input.message,
         photos: input.photos,
+        customAudio: input.customAudio,
         gift: input.gift
       });
     } catch (error) {
@@ -694,6 +748,7 @@ export function generateCardHtml(input: CardGenerationInput) {
         occasion: input.occasion,
         message: input.message,
         photos: input.photos,
+        customAudio: input.customAudio,
         gift: input.gift
       });
     } catch (error) {
@@ -1087,12 +1142,19 @@ export function generateCardHtml(input: CardGenerationInput) {
 
   <div class="shell">
     <div class="sound-banner" id="soundBanner">
-      <span>This card sings for you, ${esc(input.recipientName)}. Tap play to hear it.</span>
+      <span>${
+        input.customAudio?.url
+          ? `A song was picked for you, ${esc(input.recipientName)}.`
+          : `This card sings for you, ${esc(input.recipientName)}. Tap play to hear it.`
+      }</span>
       <div style="display:flex;gap:8px;align-items:center;">
         <button id="soundPlay" type="button">Play</button>
-        <button id="soundClose" type="button" style="background:transparent;color:var(--text);border:1px solid var(--border);">X</button>
+        <button id="soundClose" type="button" style="background:transparent;color:var(--text);border:1px solid var(--border);">${
+          input.customAudio?.url ? 'Mute' : 'X'
+        }</button>
       </div>
     </div>
+    ${input.customAudio?.url ? `<audio id="soundAudio" src="${esc(input.customAudio.url)}"></audio>` : ''}
 
     <header class="hero">
       <p class="kicker">Living card for the moments that matter</p>
@@ -1124,7 +1186,7 @@ export function generateCardHtml(input: CardGenerationInput) {
     </footer>
   </div>
 
-  ${soundScript(input.musicStyle)}
+  ${soundScript(input.musicStyle, input.customAudio)}
   ${interactionScript(featureToggles)}
 </body>
 </html>`;

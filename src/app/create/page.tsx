@@ -14,6 +14,32 @@ type CreateSearchParams = {
   occasion?: string;
 };
 
+function parseCustomAudio(paintData: unknown) {
+  if (!paintData || typeof paintData !== 'object' || Array.isArray(paintData)) {
+    return null;
+  }
+
+  const customAudio = (paintData as Record<string, unknown>).customAudio;
+  if (!customAudio || typeof customAudio !== 'object' || Array.isArray(customAudio)) {
+    return null;
+  }
+
+  const url = (customAudio as Record<string, unknown>).url;
+  const name = (customAudio as Record<string, unknown>).name;
+  const mimeType = (customAudio as Record<string, unknown>).mimeType;
+  const bytes = (customAudio as Record<string, unknown>).bytes;
+  if (typeof url !== 'string' || !url.trim()) {
+    return null;
+  }
+
+  return {
+    url,
+    name: typeof name === 'string' ? name : 'Custom Audio',
+    mimeType: typeof mimeType === 'string' ? mimeType : undefined,
+    bytes: typeof bytes === 'number' ? bytes : undefined
+  };
+}
+
 export default async function CreatePage({ searchParams }: { searchParams?: CreateSearchParams }) {
   const preset = parseCreateThemePreset(searchParams);
   const session = await auth();
@@ -77,7 +103,8 @@ export default async function CreatePage({ searchParams }: { searchParams?: Crea
               amount: card.giftCard.amount,
               currency: card.giftCard.currency
             }
-          : null
+          : null,
+        customAudio: parseCustomAudio(card.paintData)
       };
     }
   }

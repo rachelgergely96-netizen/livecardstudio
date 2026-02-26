@@ -6,6 +6,31 @@ export type CardWithAssets = Card & {
   giftCard: GiftCard | null;
 };
 
+function readCustomAudio(paintData: unknown) {
+  if (!paintData || typeof paintData !== 'object' || Array.isArray(paintData)) {
+    return undefined;
+  }
+
+  const audio = (paintData as Record<string, unknown>).customAudio;
+  if (!audio || typeof audio !== 'object' || Array.isArray(audio)) {
+    return undefined;
+  }
+
+  const url = (audio as Record<string, unknown>).url;
+  if (typeof url !== 'string' || !url.trim()) {
+    return undefined;
+  }
+
+  const name = (audio as Record<string, unknown>).name;
+  const mimeType = (audio as Record<string, unknown>).mimeType;
+
+  return {
+    url,
+    name: typeof name === 'string' ? name : undefined,
+    mimeType: typeof mimeType === 'string' ? mimeType : undefined
+  };
+}
+
 export function toCardGenerationInput(card: CardWithAssets): CardGenerationInput {
   const message = card.message || '';
 
@@ -22,6 +47,7 @@ export function toCardGenerationInput(card: CardWithAssets): CardGenerationInput
       ? card.sectionMessages.map((line) => String(line))
       : undefined,
     musicStyle: card.musicStyle,
+    customAudio: readCustomAudio(card.paintData),
     photos: card.photos
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((photo) => ({

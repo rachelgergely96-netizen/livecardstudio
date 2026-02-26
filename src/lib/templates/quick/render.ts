@@ -14,6 +14,12 @@ type GiftInput = {
   redemptionUrl?: string | null;
 };
 
+type CustomAudioInput = {
+  url: string;
+  name?: string | null;
+  mimeType?: string | null;
+};
+
 export type QuickThemeRenderInput = {
   slug: string;
   recipientName: string;
@@ -22,6 +28,7 @@ export type QuickThemeRenderInput = {
   quickTheme?: QuickTheme;
   message: string;
   photos: PhotoInput[];
+  customAudio?: CustomAudioInput;
   gift?: GiftInput | null;
 };
 
@@ -133,6 +140,47 @@ const QUICK_GIFT_STYLE = `
 }
 `;
 
+const QUICK_AUDIO_STYLE = `
+.lcs-audio-wrap {
+  position: fixed;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  z-index: 26;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(10px);
+  padding: 8px 12px;
+  color: #fff;
+  font: 600 11px/1 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lcs-audio-btn {
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font: 600 10px/1 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.lcs-audio-name {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+`;
+
 const templateCache = new Map<string, string>();
 
 function escapeHtml(value: string | null | undefined) {
@@ -198,12 +246,28 @@ function buildGiftMarkup(gift: GiftInput | null | undefined, recipientName: stri
 </div>`;
 }
 
+function buildAudioMarkup(customAudio: CustomAudioInput | null | undefined) {
+  if (!customAudio?.url) {
+    return '';
+  }
+
+  return `
+<div class="lcs-audio-wrap" id="lcs-audio-wrap">
+  <span class="lcs-audio-name">${escapeHtml(customAudio.name || 'Custom Audio')}</span>
+  <button class="lcs-audio-btn" id="lcs-audio-play" type="button">Play</button>
+  <button class="lcs-audio-btn" id="lcs-audio-mute" type="button">Mute</button>
+  <audio id="lcs-audio-el" src="${escapeHtml(customAudio.url)}" preload="auto" loop></audio>
+</div>`;
+}
+
 function runtimePatchScript(data: {
   recipientName: string;
   occasionLabel: string;
   message: string;
   signature: string;
   photoSrc: string;
+  customAudioUrl?: string;
+  customAudioName?: string;
 }) {
   const payload = escapeJsonForScript(data);
 
@@ -351,6 +415,40 @@ function runtimePatchScript(data: {
       giftOpen.remove();
     });
   }
+
+  var audioEl = document.getElementById('lcs-audio-el');
+  var audioPlay = document.getElementById('lcs-audio-play');
+  var audioMute = document.getElementById('lcs-audio-mute');
+  if (audioEl && audioPlay && audioMute) {
+    function syncAudioUi() {
+      audioPlay.textContent = audioEl.paused ? 'Play' : 'Pause';
+      audioMute.textContent = audioEl.muted ? 'Unmute' : 'Mute';
+    }
+
+    audioPlay.addEventListener('click', function () {
+      if (audioEl.paused) {
+        audioEl.play().then(syncAudioUi).catch(function () {
+          audioPlay.textContent = 'Tap to play';
+        });
+      } else {
+        audioEl.pause();
+        syncAudioUi();
+      }
+    });
+
+    audioMute.addEventListener('click', function () {
+      audioEl.muted = !audioEl.muted;
+      syncAudioUi();
+    });
+
+    audioEl.addEventListener('play', syncAudioUi);
+    audioEl.addEventListener('pause', syncAudioUi);
+    syncAudioUi();
+
+    audioEl.play().then(syncAudioUi).catch(function () {
+      audioPlay.textContent = 'Play';
+    });
+  }
 })();
 </script>`;
 }
@@ -370,8 +468,15 @@ export function renderQuickThemeHtml(input: QuickThemeRenderInput) {
   if (input.gift) {
     html = html.replace('</style>', `${QUICK_GIFT_STYLE}\n</style>`);
   }
+  if (input.customAudio?.url) {
+    html = html.replace('</style>', `${QUICK_AUDIO_STYLE}\n</style>`);
+  }
 
   const giftMarkup = buildGiftMarkup(input.gift, input.recipientName);
+  const audioMarkup = buildAudioMarkup(input.customAudio);
+  if (audioMarkup) {
+    html = html.replace('</body>', `${audioMarkup}\n</body>`);
+  }
   if (giftMarkup) {
     html = html.replace('</body>', `${giftMarkup}\n</body>`);
   }
@@ -381,7 +486,9 @@ export function renderQuickThemeHtml(input: QuickThemeRenderInput) {
     occasionLabel,
     message: input.message,
     signature,
-    photoSrc: firstPhoto
+    photoSrc: firstPhoto,
+    customAudioUrl: input.customAudio?.url,
+    customAudioName: input.customAudio?.name || undefined
   });
 
   html = html.replace('</body>', `${patchScript}\n</body>`);

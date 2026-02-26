@@ -62,6 +62,10 @@ export async function uploadHtml(slug: string, html: string) {
 }
 
 export async function uploadImage(key: string, data: Buffer, contentType = 'image/png') {
+  return uploadBinary(key, data, contentType);
+}
+
+export async function uploadBinary(key: string, data: Buffer, contentType = 'application/octet-stream') {
   if (!s3Client || !env.S3_BUCKET_NAME) {
     return uploadLocal(key, data);
   }
