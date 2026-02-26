@@ -4,6 +4,7 @@ import { SignOutButton } from '@/components/auth/signout-button';
 import { CreateWizard } from '@/components/studio/create-wizard';
 import { auth } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
+import { parseECardIntegrationSeed } from '@/lib/integrations/ecard-seed';
 import { buildCreateThemeUrl, parseCreateThemePreset } from '@/lib/themes/presets';
 
 type CreateSearchParams = {
@@ -12,6 +13,16 @@ type CreateSearchParams = {
   quickTheme?: string;
   premiumTheme?: string;
   occasion?: string;
+  recipientName?: string;
+  recipient_name?: string;
+  message?: string;
+  backgroundMusic?: string;
+  background_music?: string;
+  giftCardSelection?: string;
+  gift_card_selection?: string;
+  themeSelection?: string;
+  theme_selection?: string;
+  theme?: string;
 };
 
 function parseCustomAudio(paintData: unknown) {
@@ -40,20 +51,53 @@ function parseCustomAudio(paintData: unknown) {
   };
 }
 
+function buildCallbackUrl(searchParams?: CreateSearchParams) {
+  const params = new URLSearchParams();
+  const entries = Object.entries(searchParams || {});
+
+  for (const [key, value] of entries) {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry) {
+          params.append(key, entry);
+        }
+      });
+      continue;
+    }
+
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/create?${query}` : '/create';
+}
+
 export default async function CreatePage({ searchParams }: { searchParams?: CreateSearchParams }) {
   const preset = parseCreateThemePreset(searchParams);
+  const integrationSeed = parseECardIntegrationSeed(searchParams);
   const session = await auth();
   if (!session?.user?.id) {
-    const callbackUrl = buildCreateThemeUrl(preset, { cardId: searchParams?.cardId });
+    const callbackUrl = buildCallbackUrl(searchParams) || buildCreateThemeUrl(preset, { cardId: searchParams?.cardId });
     redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   let initialCard: Record<string, unknown> | undefined;
 
-  if (!searchParams?.cardId && Object.keys(preset).length > 0) {
-    initialCard = {
-      ...preset
+  if (!searchParams?.cardId) {
+    const seedCard = {
+      ...integrationSeed,
+      ...preset,
+      occasion: preset.occasion || integrationSeed.occasion,
+      tier: preset.tier || integrationSeed.tier,
+      quickTheme: preset.quickTheme || integrationSeed.quickTheme,
+      premiumTheme: preset.premiumTheme || integrationSeed.premiumTheme
     };
+
+    if (Object.values(seedCard).some((value) => value !== undefined)) {
+      initialCard = seedCard;
+    }
   }
 
   if (searchParams?.cardId) {
