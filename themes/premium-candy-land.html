@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>🍭 LiveCardStudio — Candy Land</title><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:'Cormorant Garamond',serif;background:#1a0820;color:#f0d8f0;overflow-x:hidden;-webkit-font-smoothing:antialiased}.envelope-screen{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1040 0%,#1a0820 50%,#100414 100%);transition:opacity 1.2s ease,transform 1.2s ease}.envelope-screen.opened{opacity:0;pointer-events:none;transform:scale(1.05)}.envelope-wrap{position:relative;width:340px;height:230px;cursor:pointer;transform:translateY(20px);opacity:0;animation:ef 1.2s .3s cubic-bezier(.16,1,.3,1) forwards}@keyframes ef{to{transform:translateY(0);opacity:1}}.envelope-body{width:100%;height:100%;border-radius:16px;position:relative;background:linear-gradient(135deg,#2a1040,#1e0830);box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 30px rgba(255,100,200,.05);overflow:hidden}.envelope-flap{position:absolute;top:0;left:0;width:100%;height:55%;background:linear-gradient(180deg,#301448,#241038);clip-path:polygon(0 0,50% 65%,100% 0);transform-origin:top center;transition:transform .8s cubic-bezier(.4,0,.2,1);z-index:2}.envelope-wrap.opening .envelope-flap{transform:rotateX(180deg)}.envelope-seal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;z-index:3;background:radial-gradient(circle,#ff69b4,#ff1493);box-shadow:0 0 30px rgba(255,105,180,.5);display:flex;align-items:center;justify-content:center;font-size:26px;animation:sg 2s ease-in-out infinite}@keyframes sg{0%,100%{box-shadow:0 0 30px rgba(255,105,180,.5);transform:translate(-50%,-50%) scale(1)}50%{box-shadow:0 0 50px rgba(255,105,180,.7);transform:translate(-50%,-50%) scale(1.05)}}.envelope-tagline{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:.75rem;color:rgba(255,105,180,.3);letter-spacing:.15em}canvas.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}canvas.sr{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:.5}.card-content{position:relative;z-index:5;opacity:0;transition:opacity 1.5s ease .5s;min-height:100vh}.card-content.visible{opacity:1}.hero-section{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}.hero-occasion{font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,105,180,.5);margin-bottom:16px;opacity:0;animation:fu 1s 1.5s ease forwards}.hero-name{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,9vw,5.5rem);font-weight:700;line-height:1;background:linear-gradient(135deg,#ff69b4,#ff1493,#da70d6,#87ceeb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:24px;opacity:0;animation:fu 1.2s 1.8s ease forwards}.hero-divider{width:100px;height:3px;margin:20px auto;background:linear-gradient(to right,#ff69b4,#da70d6,#87ceeb);border-radius:2px;opacity:0;animation:fu 1s 2.3s ease forwards}.hero-subtitle{font-style:italic;font-size:1.3rem;color:rgba(255,105,180,.4);opacity:0;animation:fu 1s 2.5s ease forwards}@keyframes fu{to{opacity:1;transform:translateY(0)}}.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);opacity:0;animation:fu 1s 3s ease forwards;display:flex;flex-direction:column;align-items:center;gap:8px}.scroll-hint span{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,105,180,.2)}.scroll-arrow{width:20px;height:20px;border-right:2px solid rgba(255,105,180,.25);border-bottom:2px solid rgba(255,105,180,.25);transform:rotate(45deg);animation:sb 2s ease-in-out infinite}@keyframes sb{0%,100%{transform:rotate(45deg) translate(0,0);opacity:.25}50%{transform:rotate(45deg) translate(5px,5px);opacity:.6}}.photo-section{padding:80px 20px;max-width:900px;margin:0 auto;opacity:0;transform:translateY(60px);transition:all 1.2s cubic-bezier(.16,1,.3,1)}.photo-section.in-view{opacity:1;transform:translateY(0)}.photo-frame{position:relative;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4);transition:transform .15s ease-out}.photo-frame img{width:100%;display:block;filter:brightness(.95) saturate(1.1)}.photo-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,transparent 60%,rgba(26,8,32,.7) 100%);pointer-events:none}.photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:20px}.text-section{text-align:center;padding:60px 20px;max-width:700px;margin:0 auto;opacity:0;transform:translateY(40px);transition:all 1s cubic-bezier(.16,1,.3,1)}.text-section.in-view{opacity:1;transform:translateY(0)}.text-section p{font-size:1.4rem;line-height:1.9;color:rgba(240,210,240,.55);font-style:italic}.text-section .accent{color:#ff69b4;font-weight:600}.sound-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;padding:12px 28px;border-radius:40px;background:rgba(26,8,32,.9);backdrop-filter:blur(20px);border:1px solid rgba(255,105,180,.12);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,105,180,.5);cursor:pointer;display:flex;align-items:center;gap:10px;opacity:0;animation:fu .8s 3.5s ease forwards}.sound-bars{display:flex;gap:2px;align-items:end;height:14px}.sound-bar{width:3px;border-radius:2px;background:linear-gradient(to top,#ff1493,#87ceeb);animation:sbr .8s ease-in-out infinite alternate}.sound-bar:nth-child(1){height:4px}.sound-bar:nth-child(2){height:8px;animation-delay:.15s}.sound-bar:nth-child(3){height:12px;animation-delay:.3s}.sound-bar:nth-child(4){height:6px;animation-delay:.45s}.sound-bars.paused .sound-bar{animation-play-state:paused;height:3px!important}@keyframes sbr{to{height:14px}}.paint-section{padding:80px 20px;text-align:center}.paint-prompt{font-size:1rem;color:rgba(255,105,180,.25);margin-bottom:20px}.paint-canvas-wrap{position:relative;max-width:800px;margin:0 auto;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}.paint-canvas-wrap canvas{display:block;width:100%;cursor:crosshair;touch-action:none}.paint-tools{display:flex;justify-content:center;gap:10px;margin-top:16px}.paint-color{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .3s}.paint-color.active{border-color:#fff;transform:scale(1.2)}.paint-clear{padding:6px 16px;border-radius:20px;border:1px solid rgba(255,105,180,.15);background:transparent;color:rgba(255,105,180,.4);font-family:'Cormorant Garamond',serif;font-size:.8rem;cursor:pointer}.message-section{padding:100px 20px;text-align:center;max-width:700px;margin:0 auto;opacity:0;transform:translateY(40px);transition:all 1.2s cubic-bezier(.16,1,.3,1)}.message-section.in-view{opacity:1;transform:translateY(0)}.msg-divider{width:80px;height:3px;margin:0 auto 30px;background:linear-gradient(to right,#ff69b4,#da70d6,#87ceeb);border-radius:2px}.msg-text{font-size:1.5rem;line-height:2;color:rgba(240,210,240,.6);font-style:italic;margin-bottom:40px}.msg-from{font-size:1rem;color:rgba(255,105,180,.3);letter-spacing:.15em}canvas.cc{position:fixed;top:0;left:0;width:100%;height:100%;z-index:40;pointer-events:none}.gift-section{padding:80px 20px;text-align:center;opacity:0;transform:translateY(40px);transition:all 1s cubic-bezier(.16,1,.3,1)}.gift-section.in-view{opacity:1;transform:translateY(0)}.gift-card{display:inline-block;padding:40px 60px;border-radius:20px;background:linear-gradient(135deg,rgba(42,16,64,.8),rgba(26,8,32,.9));border:1px solid rgba(255,105,180,.1);cursor:pointer;transition:all .6s}.gift-card:hover{transform:translateY(-4px)}.gift-icon{font-size:2.5rem;margin-bottom:16px}.gift-label{font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,105,180,.3);margin-bottom:12px}.gift-amount{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,#ff69b4,#87ceeb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.gift-hidden{filter:blur(20px);transition:filter .8s}.gift-revealed{filter:blur(0)}.lcs-footer{text-align:center;padding:60px 20px 40px;border-top:1px solid rgba(255,105,180,.04)}.lcs-made-with{font-style:italic;font-size:.75rem;color:rgba(255,105,180,.15);letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px}.lcs-logo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#ff69b4;text-decoration:none}.lcs-tagline{font-style:italic;font-size:.72rem;color:rgba(255,105,180,.1);margin-top:8px}@media(max-width:600px){.photo-duo{grid-template-columns:1fr}.hero-name{font-size:clamp(2rem,11vw,4rem)}.msg-text{font-size:1.2rem}}</style></head>
+<body>
+<div class="envelope-screen" id="envelope"><div class="envelope-wrap" id="envWrap" onclick="openEnvelope()"><div class="envelope-body"><div class="envelope-flap"></div><div class="envelope-seal">🍭</div><div class="envelope-tagline">something sweet inside</div></div></div></div>
+<canvas class="bg" id="bg"></canvas><canvas class="sr" id="sr"></canvas><canvas class="cc" id="confetti"></canvas>
+<div class="sound-banner" onclick="toggleSound()"><div class="sound-bars" id="soundBars"><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div></div><span id="soundLabel">sweet vibes</span></div>
+<div class="card-content" id="cardContent">
+  <section class="hero-section"><div class="hero-occasion">Happy Birthday</div><h1 class="hero-name">Candy Land</h1><div class="hero-divider"></div><div class="hero-subtitle">life is sweeter with you</div><div class="scroll-hint"><span>scroll for treats</span><div class="scroll-arrow"></div></div></section>
+  <section class="photo-section" data-reveal><div class="photo-frame" data-tilt><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='600'%3E%3Crect fill='%231e0830' width='900' height='600'/%3E%3Ctext x='450' y='300' text-anchor='middle' fill='rgba(255,105,180,.12)' font-family='serif' font-size='24'%3EYour Photo Here%3C/text%3E%3C/svg%3E" alt=""><div class="photo-overlay"></div></div></section>
+  <section class="text-section" data-reveal><p>You make everything <span class="accent">sweeter</span> just by being in it.</p></section>
+  <section class="photo-section" data-reveal><div class="photo-duo"><div class="photo-frame" data-tilt><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='533'%3E%3Crect fill='%23241038' width='400' height='533'/%3E%3Ctext x='200' y='267' text-anchor='middle' fill='rgba(255,105,180,.12)' font-family='serif' font-size='18'%3EPhoto 2%3C/text%3E%3C/svg%3E" alt=""><div class="photo-overlay"></div></div><div class="photo-frame" data-tilt><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='533'%3E%3Crect fill='%23241038' width='400' height='533'/%3E%3Ctext x='200' y='267' text-anchor='middle' fill='rgba(255,105,180,.12)' font-family='serif' font-size='18'%3EPhoto 3%3C/text%3E%3C/svg%3E" alt=""><div class="photo-overlay"></div></div></div></section>
+  <section class="text-section" data-reveal><p>Sugar, sprinkles, and <span class="accent">all things wonderful</span> — that's you.</p></section>
+  <section class="paint-section" data-reveal><div class="paint-prompt">🍭 decorate your cake 🍭</div><div class="paint-canvas-wrap"><canvas id="paintCanvas" width="800" height="500"></canvas></div><div class="paint-tools"><div class="paint-color active" style="background:#ff69b4" data-color="#ff69b4"></div><div class="paint-color" style="background:#87ceeb" data-color="#87ceeb"></div><div class="paint-color" style="background:#ff6347" data-color="#ff6347"></div><div class="paint-color" style="background:#98fb98" data-color="#98fb98"></div><div class="paint-color" style="background:#ffd700" data-color="#ffd700"></div><button class="paint-clear" onclick="clearPaint()">clear</button></div></section>
+  <section class="message-section" data-reveal><div class="msg-divider"></div><div class="msg-text">Life gave me something sweeter than candy — it gave me you. Here's to another year of sugar rushes and pure joy.</div><div class="msg-from">— Your biggest fan 🍭</div></section>
+  <section class="gift-section" data-reveal><div class="gift-card" onclick="revealGift(this)"><div class="gift-icon">🍬</div><div class="gift-label">unwrap your treat</div><div class="gift-amount gift-hidden">$50</div></div></section>
+  <footer class="lcs-footer"><div class="lcs-made-with">made with love on</div><a href="https://livecardstudio.com" class="lcs-logo">🍭 LiveCardStudio</a><div class="lcs-tagline">cards that live & breathe</div></footer>
+</div>
+<script>
+const bgC=document.getElementById('bg'),bgCtx=bgC.getContext('2d');let W,H;
+const candies=[],sprinkles=[],bubbleGum=[],lollipops=[],gumdrops=[],swirls=[],sugarDust=[];
+// --- CANDY DRAWING FUNCTIONS ---
+function drawLollipop(ctx,x,y,size,rot,alpha,hue){ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+// Stick
+ctx.fillStyle='rgba(230,220,200,'+(alpha*.6)+')';ctx.fillRect(-1,size*.3,2,size);
+// Swirl head
+for(let r=0;r<4;r++){ctx.beginPath();ctx.arc(0,0,size*.4-r*2,r*.8,r*.8+Math.PI);ctx.strokeStyle='hsla('+((hue+r*60)%360)+',70%,60%,'+alpha+')';ctx.lineWidth=2;ctx.stroke()}
+// Outer circle
+ctx.beginPath();ctx.arc(0,0,size*.4,0,Math.PI*2);ctx.strokeStyle='hsla('+hue+',60%,50%,'+(alpha*.5)+')';ctx.lineWidth=1;ctx.stroke();
+ctx.restore()}
+function drawGumdrop(ctx,x,y,size,hue,alpha){ctx.fillStyle='hsla('+hue+',65%,55%,'+alpha+')';
+ctx.beginPath();ctx.moveTo(x-size*.5,y+size*.2);
+ctx.quadraticCurveTo(x-size*.5,y-size*.5,x,y-size*.5);
+ctx.quadraticCurveTo(x+size*.5,y-size*.5,x+size*.5,y+size*.2);
+ctx.lineTo(x-size*.5,y+size*.2);ctx.fill();
+// Sugar coating
+ctx.fillStyle='rgba(255,255,255,'+(alpha*.15)+')';
+ctx.beginPath();ctx.ellipse(x,y-size*.2,size*.2,size*.1,0,0,Math.PI*2);ctx.fill()}
+function drawCandyCane(ctx,x,y,size,rot,alpha){ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+// Straight part with stripes
+for(let s=0;s<8;s++){ctx.fillStyle=s%2?'rgba(255,60,80,'+(alpha*.8)+')':'rgba(255,255,255,'+(alpha*.6)+')';
+ctx.fillRect(-size*.08,s*size*.1,size*.16,size*.1)}
+// Hook
+ctx.beginPath();ctx.arc(size*.15,-size*.05,size*.15,Math.PI,0,true);
+ctx.strokeStyle='rgba(255,60,80,'+(alpha*.7)+')';ctx.lineWidth=size*.14;ctx.stroke();
+ctx.beginPath();ctx.arc(size*.15,-size*.05,size*.15,Math.PI,0,true);
+ctx.strokeStyle='rgba(255,255,255,'+(alpha*.4)+')';ctx.lineWidth=size*.06;ctx.stroke();
+ctx.restore()}
+function drawStar(ctx,x,y,size,hue,alpha){ctx.fillStyle='hsla('+hue+',70%,65%,'+alpha+')';ctx.beginPath();
+for(let i=0;i<5;i++){const a=i*Math.PI*2/5-Math.PI/2;const a2=(i+.5)*Math.PI*2/5-Math.PI/2;
+ctx.lineTo(x+Math.cos(a)*size,y+Math.sin(a)*size);
+ctx.lineTo(x+Math.cos(a2)*size*.4,y+Math.sin(a2)*size*.4)}ctx.closePath();ctx.fill()}
+function drawHeart(ctx,x,y,size,hue,alpha){ctx.fillStyle='hsla('+hue+',70%,60%,'+alpha+')';ctx.beginPath();
+ctx.moveTo(x,y+size*.35);ctx.bezierCurveTo(x-size,y-size*.3,x-size*.3,y-size,x,y-size*.4);
+ctx.bezierCurveTo(x+size*.3,y-size,x+size,y-size*.3,x,y+size*.35);ctx.fill()}
+function drawSwirl(ctx,x,y,size,rot,hue,alpha){ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+for(let i=0;i<3;i++){ctx.beginPath();
+for(let a=0;a<Math.PI*4;a+=.1){const r=a*size*.06;
+ctx.lineTo(Math.cos(a+i*Math.PI*.66)*r,Math.sin(a+i*Math.PI*.66)*r)}
+ctx.strokeStyle='hsla('+((hue+i*120)%360)+',70%,60%,'+alpha+')';ctx.lineWidth=1.5;ctx.stroke()}
+ctx.restore()}
+function initBg(){W=bgC.width=window.innerWidth;H=bgC.height=window.innerHeight;
+candies.length=0;sprinkles.length=0;bubbleGum.length=0;lollipops.length=0;gumdrops.length=0;swirls.length=0;sugarDust.length=0;
+const hues=[330,280,200,120,40,0,60,160];
+// Floating candy shapes
+for(let i=0;i<20;i++)candies.push({x:Math.random()*W,y:-Math.random()*H,vy:.15+Math.random()*.35,vx:(Math.random()-.5)*.2,rot:Math.random()*Math.PI*2,rotS:(Math.random()-.5)*.015,size:8+Math.random()*18,hue:hues[Math.floor(Math.random()*hues.length)],alpha:.04+Math.random()*.06,type:['star','heart','circle'][Math.floor(Math.random()*3)],sway:Math.random()*Math.PI*2});
+// Lollipops
+for(let i=0;i<8;i++)lollipops.push({x:Math.random()*W,y:-Math.random()*H*1.5,vy:.1+Math.random()*.2,rot:(Math.random()-.5)*.6,size:12+Math.random()*20,hue:hues[Math.floor(Math.random()*hues.length)],alpha:.04+Math.random()*.05,sway:Math.random()*Math.PI*2});
+// Gumdrops
+for(let i=0;i<10;i++)gumdrops.push({x:Math.random()*W,y:-Math.random()*H,vy:.08+Math.random()*.18,size:10+Math.random()*16,hue:hues[Math.floor(Math.random()*hues.length)],alpha:.04+Math.random()*.05,sway:Math.random()*Math.PI*2});
+// Candy canes
+for(let i=0;i<6;i++)candies.push({x:Math.random()*W,y:-Math.random()*H,vy:.12+Math.random()*.2,vx:(Math.random()-.5)*.1,rot:(Math.random()-.5)*1,rotS:(Math.random()-.5)*.008,size:15+Math.random()*20,alpha:.04+Math.random()*.05,type:'cane',sway:Math.random()*Math.PI*2});
+// Sprinkles — lots more!
+for(let i=0;i<150;i++)sprinkles.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*3,len:3+Math.random()*10,rot:Math.random()*Math.PI,hue:hues[Math.floor(Math.random()*hues.length)],alpha:.03+Math.random()*.06,phase:Math.random()*Math.PI*2});
+// Swirling candy spirals
+for(let i=0;i<5;i++)swirls.push({x:Math.random()*W,y:Math.random()*H,size:15+Math.random()*25,rot:0,rotS:.003+Math.random()*.005,hue:hues[Math.floor(Math.random()*hues.length)],alpha:.02+Math.random()*.03,phase:Math.random()*Math.PI*2});
+// Bubble gum blobs
+for(let i=0;i<8;i++)bubbleGum.push({x:Math.random()*W,y:Math.random()*H,r:60+Math.random()*140,hue:[330,280,200,160][Math.floor(Math.random()*4)],alpha:.008+Math.random()*.008,vx:.02+Math.random()*.04});
+// Sugar dust
+for(let i=0;i<100;i++)sugarDust.push({x:Math.random()*W,y:Math.random()*H,r:.3+Math.random()*1.2,vy:-.01-Math.random()*.03,phase:Math.random()*Math.PI*2,alpha:.03+Math.random()*.05})}
+function renderBg(t){const g=bgCtx.createRadialGradient(W/2,H*.4,0,W/2,H/2,W*.6);g.addColorStop(0,'#2a1248');g.addColorStop(.5,'#1a0820');g.addColorStop(1,'#100414');bgCtx.fillStyle=g;bgCtx.fillRect(0,0,W,H);const scrollY=window.scrollY||0;bgCtx.globalCompositeOperation='screen';
+// Bubble gum ambient blobs
+bubbleGum.forEach(b=>{b.x+=b.vx;if(b.x>W+b.r)b.x=-b.r;const bg2=bgCtx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);bg2.addColorStop(0,'hsla('+b.hue+',50%,40%,'+b.alpha+')');bg2.addColorStop(.6,'hsla('+b.hue+',40%,35%,'+(b.alpha*.3)+')');bg2.addColorStop(1,'hsla('+b.hue+',30%,25%,0)');bgCtx.fillStyle=bg2;bgCtx.fillRect(0,0,W,H)});
+// Candy spirals rotating in place
+swirls.forEach(s=>{s.rot+=s.rotS;const pulse=Math.sin(t*.001+s.phase)*.2+.8;drawSwirl(bgCtx,s.x,s.y-scrollY*.04,s.size*pulse,s.rot,s.hue,s.alpha*pulse)});
+// Lollipops
+lollipops.forEach(l=>{l.y+=l.vy;if(l.y>H+50){l.y=-50;l.x=Math.random()*W}const wx=Math.sin(t*.001+l.sway)*.4;drawLollipop(bgCtx,l.x,l.y-scrollY*.05,l.size,l.rot+wx,l.alpha,l.hue)});
+// Gumdrops
+gumdrops.forEach(gd=>{gd.y+=gd.vy;if(gd.y>H+30){gd.y=-30;gd.x=Math.random()*W}const wx=Math.sin(t*.0008+gd.sway)*.3;drawGumdrop(bgCtx,gd.x+wx*10,gd.y-scrollY*.04,gd.size,gd.hue,gd.alpha)});
+// Mixed candies (stars, hearts, circles, canes)
+candies.forEach(c=>{c.y+=c.vy;c.x+=(c.vx||0)+Math.sin(t*.001+(c.sway||0))*.5;c.rot+=(c.rotS||0);if(c.y>H+30){c.y=-30;c.x=Math.random()*W}const dy=c.y-scrollY*.05;
+if(c.type==='star')drawStar(bgCtx,c.x,dy,c.size/2,c.hue,c.alpha);
+else if(c.type==='heart')drawHeart(bgCtx,c.x,dy,c.size/2,c.hue||330,c.alpha);
+else if(c.type==='cane')drawCandyCane(bgCtx,c.x,dy,c.size,c.rot,c.alpha);
+else{bgCtx.beginPath();bgCtx.arc(c.x,dy,c.size/2,0,Math.PI*2);bgCtx.fillStyle='hsla('+(c.hue||330)+',70%,60%,'+c.alpha+')';bgCtx.fill()}});
+// Sprinkles
+sprinkles.forEach(s=>{const pulse=Math.sin(t*.002+s.phase)*.2+.8;bgCtx.save();bgCtx.translate(s.x,s.y-scrollY*.03);bgCtx.rotate(s.rot);bgCtx.fillStyle='hsla('+s.hue+',75%,65%,'+(s.alpha*pulse)+')';bgCtx.fillRect(-s.len/2,-s.r/2,s.len,s.r);bgCtx.restore()});
+// Sugar dust floating up
+sugarDust.forEach(d=>{d.y+=d.vy;d.x+=Math.sin(t*.0005+d.phase)*.15;if(d.y<-5){d.y=H+5}const pulse=Math.sin(t*.002+d.phase)*.3+.7;bgCtx.beginPath();bgCtx.arc(d.x,d.y-scrollY*.02,d.r*pulse,0,Math.PI*2);bgCtx.fillStyle='rgba(255,220,240,'+(d.alpha*pulse)+')';bgCtx.fill()});
+_renderAtmos(bgCtx,t);_renderBurst(bgCtx);_renderT3(bgCtx,t);_renderLA(bgCtx,t);bgCtx.globalCompositeOperation='source-over'}
+let audioCtx,analyser,analyserData,soundPlaying=false;
+function initAudio(){audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=256;analyserData=new Uint8Array(analyser.frequencyBinCount);const m=audioCtx.createGain();m.gain.value=.2;m.connect(analyser);analyser.connect(audioCtx.destination);
+[261.63,329.63,392,523.25].forEach((f,i)=>{const o=audioCtx.createOscillator();o.type=i%2?'triangle':'sine';o.frequency.value=f;const g=audioCtx.createGain();g.gain.value=.018;const lfo=audioCtx.createOscillator();lfo.type='sine';lfo.frequency.value=.1+i*.03;const lg=audioCtx.createGain();lg.gain.value=.008;lfo.connect(lg);lg.connect(g.gain);lfo.start();o.connect(g);g.connect(m);o.start()});
+const melody=[523.25,587.33,659.25,783.99,659.25,587.33,523.25,0,783.99,659.25,587.33,523.25];let melIdx=0;
+function musicBox(){if(!soundPlaying)return;setTimeout(()=>{if(!soundPlaying)return;const f=melody[melIdx%melody.length];melIdx++;if(f>0){const o=audioCtx.createOscillator();o.type='sine';o.frequency.value=f;const o2=audioCtx.createOscillator();o2.type='sine';o2.frequency.value=f*2.005;const g=audioCtx.createGain();g.gain.setValueAtTime(.04,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+1.5);const g2=audioCtx.createGain();g2.gain.setValueAtTime(.015,audioCtx.currentTime);g2.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+1);o.connect(g);g.connect(m);o2.connect(g2);g2.connect(m);o.start();o2.start();o.stop(audioCtx.currentTime+1.5);o2.stop(audioCtx.currentTime+1)}musicBox()},400)}musicBox();
+// Pop sounds
+function pop(){if(!soundPlaying)return;setTimeout(()=>{if(!soundPlaying)return;const o=audioCtx.createOscillator();o.type='sine';o.frequency.setValueAtTime(800+Math.random()*400,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(200,audioCtx.currentTime+.08);const g=audioCtx.createGain();g.gain.setValueAtTime(.03,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.15);o.connect(g);g.connect(m);o.start();o.stop(audioCtx.currentTime+.15);pop()},(2+Math.random()*5)*1000)}pop()}
+function toggleSound(){if(!soundPlaying){if(!audioCtx)initAudio();else audioCtx.resume();soundPlaying=true;document.getElementById('soundBars').classList.remove('paused');document.getElementById('soundLabel').textContent='sweet vibes'}else{audioCtx.suspend();soundPlaying=false;document.getElementById('soundBars').classList.add('paused');document.getElementById('soundLabel').textContent='sweet vibes'}}
+const srC=document.getElementById('sr'),srCtx=srC.getContext('2d');function initSR(){srC.width=window.innerWidth;srC.height=window.innerHeight}
+function renderSR(t){srCtx.clearRect(0,0,srC.width,srC.height);if(!soundPlaying||!analyser)return;analyser.getByteFrequencyData(analyserData);const bass=analyserData.slice(0,4).reduce((a,b)=>a+b,0)/(4*255),high=analyserData.slice(20,60).reduce((a,b)=>a+b,0)/(40*255);srCtx.globalCompositeOperation='screen';const bg=srCtx.createRadialGradient(srC.width/2,srC.height/2,0,srC.width/2,srC.height/2,bass*350);bg.addColorStop(0,'rgba(255,105,180,'+(bass*.08)+')');bg.addColorStop(1,'rgba(135,206,235,0)');srCtx.fillStyle=bg;srCtx.fillRect(0,0,srC.width,srC.height);
+// Sound reactive candy sparkles
+for(let i=0;i<Math.floor(high*30);i++){const hues=[330,280,200,120,40,0,60];srCtx.beginPath();srCtx.arc(Math.random()*srC.width,Math.random()*srC.height,Math.random()*3+1,0,Math.PI*2);srCtx.fillStyle='hsla('+hues[Math.floor(Math.random()*hues.length)]+',75%,65%,'+(high*.25)+')';srCtx.fill()}srCtx.globalCompositeOperation='source-over'}
+const pC=document.getElementById('paintCanvas'),pCtx=pC.getContext('2d');let paintColor='#ff69b4',isPainting=false,lastP=null;
+function initPaint(){const g=pCtx.createLinearGradient(0,0,0,500);g.addColorStop(0,'#1e0830');g.addColorStop(1,'#140620');pCtx.fillStyle=g;pCtx.fillRect(0,0,800,500);
+// Pre-scatter some candy
+for(let i=0;i<8;i++){const hues=[330,280,200,120];drawStar(pCtx,100+Math.random()*600,60+Math.random()*380,4+Math.random()*6,hues[Math.floor(Math.random()*4)],.03)}}
+function paintAt(x,y){const r=pC.getBoundingClientRect(),px=(x-r.left)*(800/r.width),py=(y-r.top)*(500/r.height);if(lastP){pCtx.beginPath();pCtx.moveTo(lastP.x,lastP.y);pCtx.lineTo(px,py);pCtx.strokeStyle=paintColor;pCtx.lineWidth=6;pCtx.lineCap='round';pCtx.globalAlpha=.4;pCtx.stroke();pCtx.globalAlpha=1}for(let i=0;i<5;i++){pCtx.beginPath();pCtx.arc(px+Math.random()*24-12,py+Math.random()*24-12,Math.random()*3+.5,0,Math.PI*2);pCtx.fillStyle=paintColor;pCtx.globalAlpha=.3;pCtx.fill();pCtx.globalAlpha=1}lastP={x:px,y:py}}
+pC.addEventListener('mousedown',e=>{isPainting=true;lastP=null;paintAt(e.clientX,e.clientY)});pC.addEventListener('mousemove',e=>{if(isPainting)paintAt(e.clientX,e.clientY)});pC.addEventListener('mouseup',()=>{isPainting=false;lastP=null});pC.addEventListener('mouseleave',()=>{isPainting=false;lastP=null});pC.addEventListener('touchstart',e=>{e.preventDefault();isPainting=true;lastP=null;paintAt(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});pC.addEventListener('touchmove',e=>{e.preventDefault();if(isPainting)paintAt(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});pC.addEventListener('touchend',()=>{isPainting=false;lastP=null});
+document.querySelectorAll('.paint-color').forEach(el=>{el.addEventListener('click',()=>{document.querySelectorAll('.paint-color').forEach(c=>c.classList.remove('active'));el.classList.add('active');paintColor=el.dataset.color})});function clearPaint(){initPaint()}
+const cC=document.getElementById('confetti'),cCtx=cC.getContext('2d'),conf=[];function initConf(){cC.width=window.innerWidth;cC.height=window.innerHeight}
+function fireConfetti(){for(let i=0;i<120;i++)conf.push({x:cC.width/2+(Math.random()-.5)*250,y:cC.height*.5,vx:(Math.random()-.5)*14,vy:-8-Math.random()*10,r:3+Math.random()*6,hue:[330,280,200,120,40,0,60][Math.floor(Math.random()*7)],rot:Math.random()*Math.PI*2,rotS:(Math.random()-.5)*.2,life:1,decay:.004+Math.random()*.005,type:['round','sprinkle','star'][Math.floor(Math.random()*3)]})}
+function renderConf(){cCtx.clearRect(0,0,cC.width,cC.height);for(let i=conf.length-1;i>=0;i--){const c=conf[i];c.x+=c.vx;c.vy+=.1;c.y+=c.vy;c.rot+=c.rotS;c.life-=c.decay;if(c.life<=0){conf.splice(i,1);continue}
+if(c.type==='star'){drawStar(cCtx,c.x,c.y,c.r,c.hue,c.life*.7)}
+else if(c.type==='sprinkle'){cCtx.save();cCtx.translate(c.x,c.y);cCtx.rotate(c.rot);cCtx.fillStyle='hsla('+c.hue+',75%,65%,'+c.life+')';cCtx.fillRect(-c.r,-c.r*.2,c.r*2,c.r*.4);cCtx.restore()}
+else{cCtx.beginPath();cCtx.arc(c.x,c.y,c.r/2,0,Math.PI*2);cCtx.fillStyle='hsla('+c.hue+',70%,60%,'+c.life+')';cCtx.fill()}}}
+function revealGift(el){el.querySelector('.gift-amount').classList.remove('gift-hidden');el.querySelector('.gift-amount').classList.add('gift-revealed');fireConfetti()}
+document.querySelectorAll('[data-tilt]').forEach(el=>{el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform='perspective(800px) rotateY('+x*8+'deg) rotateX('+(-y*8)+'deg)'});el.addEventListener('mouseleave',()=>{el.style.transform='perspective(800px) rotateX(0) rotateY(0)'})});
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in-view')})},{threshold:.15});document.querySelectorAll('[data-reveal]').forEach(el=>obs.observe(el));
+function openEnvelope(){document.getElementById('envWrap').classList.add('opening');setTimeout(()=>{document.getElementById('envelope').classList.add('opened');document.getElementById('cardContent').classList.add('visible')},800)}
+
+
+// === SIMPLEX NOISE ENGINE ===
+const _SN=(()=>{const p=[151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+const perm=new Uint8Array(512),permMod12=new Uint8Array(512);
+for(let i=0;i<512;i++){perm[i]=p[i&255];permMod12[i]=perm[i]%12}
+const G2=(3-Math.sqrt(3))/6,G3=1/6;
+const grad3=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+function dot2(g,x,y){return g[0]*x+g[1]*y}
+function dot3(g,x,y,z){return g[0]*x+g[1]*y+g[2]*z}
+return{
+noise2D(x,y){const s=(x+y)*.5*(Math.sqrt(3)-1),i=Math.floor(x+s),j=Math.floor(y+s),tt=(i+j)*G2,X0=i-tt,Y0=j-tt,x0=x-X0,y0=y-Y0;
+let i1,j1;if(x0>y0){i1=1;j1=0}else{i1=0;j1=1}
+const x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2,ii=i&255,jj=j&255;
+let n0=0,n1=0,n2=0,t0=.5-x0*x0-y0*y0;if(t0>=0){t0*=t0;n0=t0*t0*dot2(grad3[permMod12[ii+perm[jj]]],x0,y0)}
+let t1=.5-x1*x1-y1*y1;if(t1>=0){t1*=t1;n1=t1*t1*dot2(grad3[permMod12[ii+i1+perm[jj+j1]]],x1,y1)}
+let t2=.5-x2*x2-y2*y2;if(t2>=0){t2*=t2;n2=t2*t2*dot2(grad3[permMod12[ii+1+perm[jj+1]]],x2,y2)}
+return 70*(n0+n1+n2)},
+noise3D(x,y,z){const s=(x+y+z)/3,i=Math.floor(x+s),j=Math.floor(y+s),k=Math.floor(z+s),tt=(i+j+k)*G3,X0=i-tt,Y0=j-tt,Z0=k-tt,x0=x-X0,y0=y-Y0,z0=z-Z0;
+let i1,j1,k1,i2,j2,k2;if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1}}else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0}}
+const x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3,x2=x0-i2+2*G3,y2=y0-j2+2*G3,z2=z0-k2+2*G3,x3=x0-1+3*G3,y3=y0-1+3*G3,z3=z0-1+3*G3;
+const ii=i&255,jj=j&255,kk=k&255;let n0=0,n1=0,n2=0,n3=0;
+let t0=.6-x0*x0-y0*y0-z0*z0;if(t0>=0){t0*=t0;n0=t0*t0*dot3(grad3[permMod12[ii+perm[jj+perm[kk]]]],x0,y0,z0)}
+let t1=.6-x1*x1-y1*y1-z1*z1;if(t1>=0){t1*=t1;n1=t1*t1*dot3(grad3[permMod12[ii+i1+perm[jj+j1+perm[kk+k1]]]],x1,y1,z1)}
+let t2=.6-x2*x2-y2*y2-z2*z2;if(t2>=0){t2*=t2;n2=t2*t2*dot3(grad3[permMod12[ii+i2+perm[jj+j2+perm[kk+k2]]]],x2,y2,z2)}
+let t3=.6-x3*x3-y3*y3-z3*z3;if(t3>=0){t3*=t3;n3=t3*t3*dot3(grad3[permMod12[ii+1+perm[jj+1+perm[kk+1]]]],x3,y3,z3)}
+return 32*(n0+n1+n2+n3)}
+}})();
+
+
+
+// === ANIMATED SHIMMER + VIGNETTE + DOUBLE-TAP EGG ===
+let _shimPhase=0;
+const _eggP=[];let _lastTap=0;
+function _onDoubleTap(ex,ey){const now=Date.now();if(now-_lastTap<350){for(let i=0;i<40;i++){const ang=(i/40)*Math.PI*2;const spd=1+Math.random()*4;const delay=Math.random()*12;_eggP.push({x:ex,y:ey,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,sz:2+Math.random()*4,l:1,d:.003+Math.random()*.005,h:330+Math.random()*60-60/2,delay:delay,born:0})}}
+_lastTap=now}
+document.addEventListener('click',e=>_onDoubleTap(e.clientX,e.clientY));
+document.addEventListener('touchend',e=>{if(e.changedTouches&&e.changedTouches.length)_onDoubleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY)},{passive:true});
+function _renderT3(ctx,t){
+// Breathing vignette
+_shimPhase+=.008;const vigA=.03+Math.sin(_shimPhase)*.015;
+const vig=ctx.createRadialGradient(W/2,H/2,W*.2,W/2,H/2,W*.7);vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(.7,'rgba(55,20,40,'+(vigA*.5)+')');vig.addColorStop(1,'rgba(55,20,40,'+vigA+')');ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+// Shimmer spotlight (drifting radial glow)
+const sx=W/2+_SN.noise2D(_shimPhase*.3,0)*W*.25;const sy=H/2+_SN.noise2D(0,_shimPhase*.3)*H*.2;
+const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,W*.15);sg.addColorStop(0,'rgba(230,130,180,.018)');sg.addColorStop(.5,'rgba(230,130,180,.008)');sg.addColorStop(1,'rgba(230,130,180,0)');ctx.fillStyle=sg;ctx.fillRect(0,0,W,H);
+// Double-tap egg particles
+for(let i=_eggP.length-1;i>=0;i--){const ep=_eggP[i];ep.born++;if(ep.born<ep.delay)continue;
+ep.x+=ep.vx;ep.y+=ep.vy;ep.vx*=.985;ep.vy*=.985;ep.vy+=.015;ep.l-=ep.d;if(ep.l<=0){_eggP.splice(i,1);continue}
+const ea=ep.l*.6;ctx.beginPath();ctx.arc(ep.x,ep.y,ep.sz*ep.l,0,Math.PI*2);ctx.fillStyle='hsla('+ep.h+',70%,60%,'+ea+')';ctx.fill();
+const eg=ctx.createRadialGradient(ep.x,ep.y,0,ep.x,ep.y,ep.sz*3);eg.addColorStop(0,'hsla('+ep.h+',60%,65%,'+(ea*.15)+')');eg.addColorStop(1,'hsla('+ep.h+',50%,55%,0)');ctx.fillStyle=eg;ctx.beginPath();ctx.arc(ep.x,ep.y,ep.sz*3,0,Math.PI*2);ctx.fill()}
+}
+
+// === TAP BURST SYSTEM ===
+const _BP=[];
+function _onTapBurst(ex,ey){for(let i=0;i<20;i++){const ang=Math.random()*Math.PI*2;const spd=.5+Math.random()*3;_BP.push({x:ex,y:ey,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,sz:1+Math.random()*3,l:1,d:.008+Math.random()*.012,h:330+Math.random()*60-60*.5})}}
+document.addEventListener('click',e=>_onTapBurst(e.clientX,e.clientY));
+document.addEventListener('touchstart',e=>{if(e.touches.length)_onTapBurst(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+function _renderBurst(ctx){for(let i=_BP.length-1;i>=0;i--){const bp=_BP[i];bp.x+=bp.vx;bp.y+=bp.vy;bp.vx*=.97;bp.vy*=.97;bp.vy+=.02;bp.l-=bp.d;if(bp.l<=0){_BP.splice(i,1);continue}
+ctx.beginPath();ctx.arc(bp.x,bp.y,bp.sz*bp.l,0,Math.PI*2);ctx.fillStyle='hsla('+bp.h+',65%,60%,'+(bp.l*.5)+')';ctx.fill();
+const bg=ctx.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,bp.sz*5);bg.addColorStop(0,'hsla('+bp.h+',60%,60%,'+(bp.l*.08)+')');bg.addColorStop(1,'hsla('+bp.h+',50%,50%,0)');ctx.fillStyle=bg;ctx.beginPath();ctx.arc(bp.x,bp.y,bp.sz*5,0,Math.PI*2);ctx.fill();
+}}
+
+// === NOISE FLOW FIELD ATMOSPHERE ===
+const _FF={res:25,cols:0,rows:0,field:[],zOff:0};
+const _AP=[];const _AP_MAX=110;
+function _initFF(){_FF.cols=Math.ceil(W/_FF.res);_FF.rows=Math.ceil(H/_FF.res);_FF.field=new Float32Array(_FF.cols*_FF.rows)}
+function _updateFF(t){_FF.zOff+=.0008;for(let r=0;r<_FF.rows;r++)for(let c=0;c<_FF.cols;c++){_FF.field[r*_FF.cols+c]=_SN.noise3D(c*.06,r*.06,_FF.zOff)*Math.PI*4}}
+function _getAngle(x,y){const c=Math.floor(x/_FF.res),r=Math.floor(y/_FF.res);if(c<0||c>=_FF.cols||r<0||r>=_FF.rows)return 0;return _FF.field[r*_FF.cols+c]}
+function _spawnAP(){while(_AP.length<_AP_MAX)_AP.push({x:Math.random()*W,y:Math.random()*H,px:0,py:0,vx:0,vy:0,life:1,maxL:200+Math.random()*400,age:0,hShift:Math.random()*60,sz:.5+Math.random()*2})}
+function _renderAtmos(ctx,t){_updateFF(t);
+const pulse=.85+Math.sin(t*.0004)*.15;
+for(let i=_AP.length-1;i>=0;i--){const p=_AP[i];p.px=p.x;p.py=p.y;
+const a=_getAngle(p.x,p.y);p.vx+=Math.cos(a)*0.25;p.vy+=Math.sin(a)*0.25;
+// Mouse interaction
+if(_mA){const dx=_mX-p.x,dy=_mY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<150&&d>0){const f=(1-d/150)*0.15;p.vx+=(dx/d)*f;p.vy+=(dy/d)*f}}
+p.vx*=.96;p.vy*=.96;const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);if(spd>3){p.vx=(p.vx/spd)*3;p.vy=(p.vy/spd)*3}
+p.x+=p.vx;p.y+=p.vy;p.age++;p.life=1-p.age/p.maxL;
+if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;if(p.y<-10)p.y=H+10;if(p.y>H+10)p.y=-10;
+if(p.life<=0){p.x=Math.random()*W;p.y=Math.random()*H;p.px=p.x;p.py=p.y;p.vx=0;p.vy=0;p.life=1;p.age=0;p.maxL=200+Math.random()*400;continue}
+// Draw with trail
+const al=p.life*0.2*pulse;const h=(330+p.hShift+_gHue)%360;
+ctx.strokeStyle='hsla('+h+',60%,60%,'+al+')';ctx.lineWidth=p.sz*p.life;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();
+// Glow dot
+if(p.sz>1){ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life*.8,0,Math.PI*2);ctx.fillStyle='hsla('+h+',60%,75%,'+(al*.4)+')';ctx.fill()}
+}}
+_initFF();_spawnAP();
+
+// === LIVING ART ENHANCEMENTS ===
+let _mX=0,_mY=0,_mA=false;const _ct=[];let _gHue=0,_rT=0;const _rP=[];
+document.addEventListener('mousemove',e=>{_mX=e.clientX;_mY=e.clientY;_mA=true;if(_ct.length<25)_ct.push({x:e.clientX,y:e.clientY,r:1+Math.random()*3,l:1,d:.015+Math.random()*.01})});
+document.addEventListener('touchmove',e=>{_mX=e.touches[0].clientX;_mY=e.touches[0].clientY;_mA=true;if(_ct.length<15)_ct.push({x:e.touches[0].clientX,y:e.touches[0].clientY,r:1+Math.random()*3,l:1,d:.015+Math.random()*.01})},{passive:true});
+document.addEventListener('mouseleave',()=>{_mA=false});
+function _renderLA(ctx,t){_gHue=Math.sin(t*.00003)*40;
+for(let i=_ct.length-1;i>=0;i--){const p=_ct[i];p.l-=p.d;p.r*=.98;p.y+=.2;if(p.l<=0){_ct.splice(i,1);continue}
+ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.l,0,Math.PI*2);ctx.fillStyle='rgba(255,150,200,'+(p.l*.3)+')';ctx.fill();
+const tg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);tg.addColorStop(0,'rgba(255,150,200,'+(p.l*.08)+')');tg.addColorStop(1,'rgba(255,150,200,0)');ctx.fillStyle=tg;ctx.beginPath();ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);ctx.fill()}
+if(_mA){const mg=ctx.createRadialGradient(_mX,_mY,0,_mX,_mY,80);mg.addColorStop(0,'rgba(255,150,200,.03)');mg.addColorStop(1,'rgba(255,150,200,0)');ctx.fillStyle=mg;ctx.beginPath();ctx.arc(_mX,_mY,80,0,Math.PI*2);ctx.fill()}
+_rT++;if(_rT>600+Math.random()*900){_rT=0;for(let i=0;i<12;i++)_rP.push({x:W*(.2+Math.random()*.6),y:H*(.2+Math.random()*.4),vx:(Math.random()-.5)*.8,vy:(Math.random()-.5)*.8,r:1+Math.random()*3,l:1,d:.005+Math.random()*.008,h:330+Math.random()*40})}
+for(let i=_rP.length-1;i>=0;i--){const rp=_rP[i];rp.x+=rp.vx;rp.y+=rp.vy;rp.vx*=.99;rp.vy*=.99;rp.l-=rp.d;if(rp.l<=0){_rP.splice(i,1);continue}
+ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r*rp.l,0,Math.PI*2);ctx.fillStyle='hsla('+rp.h+',70%,60%,'+(rp.l*.4)+')';ctx.fill();
+const rg=ctx.createRadialGradient(rp.x,rp.y,0,rp.x,rp.y,rp.r*4);rg.addColorStop(0,'hsla('+rp.h+',60%,55%,'+(rp.l*.1)+')');rg.addColorStop(1,'hsla('+rp.h+',50%,45%,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r*4,0,Math.PI*2);ctx.fill()}}
+
+function mainLoop(t){renderBg(t);renderSR(t);renderConf();requestAnimationFrame(mainLoop)}function init(){initBg();initSR();initPaint();initConf();requestAnimationFrame(mainLoop)}window.addEventListener('resize',()=>{initBg();initSR();initConf()});init();
+</script></body></html>

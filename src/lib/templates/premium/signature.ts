@@ -33,17 +33,6 @@ export type PremiumSignatureRenderInput = {
   gift?: GiftInput | null;
 };
 
-const PREMIUM_SIGNATURE_TEMPLATE_FILES: Record<SignaturePremiumTheme, string> = {
-  CELESTIAL: 'premium-celestial.html',
-  MIDNIGHT_GARDEN: 'premium-midnight-garden.html',
-  BOTANICAL: 'premium-botanical.html',
-  GOLDEN_HOUR: 'premium-golden-hour.html',
-  MODERN_MINIMAL: 'premium-modern-minimal.html',
-  PASTEL_DREAM: 'premium-pastel-dream.html',
-  ETERNAL_VOW: 'premium-eternal-vow.html',
-  GRAND_CELEBRATION: 'premium-grand-celebration.html'
-};
-
 const OCCASION_COPY: Record<Occasion, string> = {
   BIRTHDAY: 'Happy Birthday',
   WEDDING: 'For Your Wedding Day',
@@ -106,7 +95,7 @@ function formatUsd(amountCents: number) {
 }
 
 function getTemplateHtml(theme: SignaturePremiumTheme) {
-  const fileName = PREMIUM_SIGNATURE_TEMPLATE_FILES[theme];
+  const fileName = `premium-${theme.toLowerCase().replace(/_/g, '-')}.html`;
   const cached = templateCache.get(fileName);
   if (cached) {
     return cached;
@@ -165,7 +154,7 @@ function buildPatchScript(data: {
 
   var msgFrom = document.querySelector('.msg-from');
   if (msgFrom && data.senderName) {
-    msgFrom.textContent = data.senderName.trim().startsWith('—') ? data.senderName.trim() : '— ' + data.senderName.trim();
+    msgFrom.textContent = data.senderName.trim().startsWith('-') ? data.senderName.trim() : '- ' + data.senderName.trim();
   }
 
   document.title = data.occasionLabel + ' for ' + data.recipientName;
@@ -292,4 +281,3 @@ export function renderPremiumSignatureThemeHtml(input: PremiumSignatureRenderInp
   html = html.replace('</body>', `${patchScript}\n</body>`);
   return html;
 }
-

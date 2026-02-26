@@ -38,8 +38,45 @@ export const quickThemeValues = [
 
 export const premiumThemeValues = [
   'WATERCOLOR',
+  'AUTUMN_EMBER',
+  'BAKE_OFF',
+  'BBQ_SMOKE',
+  'BIOLUMINESCENT_OCEAN',
+  'CANDY_LAND',
   'CELESTIAL',
+  'COFFEE_RITUAL',
+  'DONUT_SHOP',
+  'EDITORIAL',
+  'ENCHANTED_FOREST',
+  'ETERNAL_GARDEN',
+  'FAIRYTALE',
+  'FLOATING_HEARTS',
+  'GOOD_BOY',
+  'ICE_CREAM_TRUCK',
+  'LUCKY_ELEPHANT',
   'MIDNIGHT_GARDEN',
+  'MIDNIGHT_WHISKERS',
+  'MONARCH_MIGRATION',
+  'MOTHERS_DAY',
+  'NEBULA_GALAXY',
+  'NEON_TOKYO',
+  'NORTHERN_LIGHTS',
+  'OCEAN_DEPTHS',
+  'OMAKASE',
+  'ORIGAMI',
+  'PARIS',
+  'PASTA',
+  'PIZZA_NIGHT',
+  'PRINCESS',
+  'SAKURA_REVERIE',
+  'SERPENTINE',
+  'STARLIT_VOWS',
+  'TACO_TUESDAY',
+  'VELVET_NOIR',
+  'VOLCANIC_EMBER',
+  'WOLF_PACK',
+  'WRITTEN_IN_SAND',
+  'ZEN_GARDEN',
   'BOTANICAL',
   'GOLDEN_HOUR',
   'MODERN_MINIMAL',
@@ -102,17 +139,27 @@ export const quickThemeLabels: Record<QuickThemeValue, string> = {
   RINGS_OF_LIGHT: 'Rings of Light'
 };
 
-export const premiumThemeLabels: Record<PremiumThemeValue, string> = {
-  WATERCOLOR: 'Watercolor',
-  CELESTIAL: 'Celestial',
-  MIDNIGHT_GARDEN: 'Midnight Garden',
-  BOTANICAL: 'Botanical',
-  GOLDEN_HOUR: 'Golden Hour',
-  MODERN_MINIMAL: 'Modern Minimal',
-  PASTEL_DREAM: 'Pastel Dream',
-  ETERNAL_VOW: 'Eternal Vow',
-  GRAND_CELEBRATION: 'Grand Celebration'
+const PREMIUM_THEME_LABEL_OVERRIDES: Partial<Record<PremiumThemeValue, string>> = {
+  BBQ_SMOKE: 'BBQ Smoke',
+  MOTHERS_DAY: "Mother's Day"
 };
+
+function formatPremiumThemeLabel(value: PremiumThemeValue) {
+  if (PREMIUM_THEME_LABEL_OVERRIDES[value]) {
+    return PREMIUM_THEME_LABEL_OVERRIDES[value] as string;
+  }
+
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+export const premiumThemeLabels = premiumThemeValues.reduce<Record<PremiumThemeValue, string>>((acc, value) => {
+  acc[value] = formatPremiumThemeLabel(value);
+  return acc;
+}, {} as Record<PremiumThemeValue, string>);
 
 export const quickThemeCollections: Record<QuickThemeValue, 'atmospheric' | 'wedding'> = {
   AURORA_DREAMS: 'atmospheric',

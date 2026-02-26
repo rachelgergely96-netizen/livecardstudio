@@ -238,7 +238,7 @@ const QUICK_THEMES: Record<QuickTheme, QuickThemeTokens> = {
   }
 };
 
-const PREMIUM_THEMES: Record<PremiumTheme, PremiumThemeTokens> = {
+const PREMIUM_THEMES: Partial<Record<PremiumTheme, PremiumThemeTokens>> = {
   WATERCOLOR: {
     bgA: '#fdf8f0',
     bgB: '#f8efe3',
@@ -784,7 +784,7 @@ export function generateCardHtml(input: CardGenerationInput) {
   }
 
   const quickThemeKey = resolveQuickTheme(input);
-  const theme = PREMIUM_THEMES[premiumThemeKey] || PREMIUM_THEMES.WATERCOLOR;
+  const theme = PREMIUM_THEMES[premiumThemeKey] || PREMIUM_THEMES.WATERCOLOR!;
   const quickTheme = QUICK_THEMES[quickThemeKey] || QUICK_THEMES.AURORA_DREAMS;
   const featureToggles = normalizeFeatures(input.features);
   const greeting = OCCASION_COPY[input.occasion] || 'A Living Card';
