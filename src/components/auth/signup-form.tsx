@@ -66,20 +66,7 @@ export function SignupForm() {
   async function handleGoogleSignup() {
     setLoading(true);
     setStatus('');
-
-    const result = await signIn('google', {
-      callbackUrl,
-      redirect: false
-    });
-
-    setLoading(false);
-
-    if (result?.error || !result?.url) {
-      setStatus('Google sign-up is not available right now. Configure Google OAuth or sign up with email/password.');
-      return;
-    }
-
-    window.location.href = result.url;
+    await signIn('google', { callbackUrl });
   }
 
   return (

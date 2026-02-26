@@ -4,9 +4,7 @@ import { Plan } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import type { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import EmailProvider from 'next-auth/providers/email';
 import GoogleProvider from 'next-auth/providers/google';
-import { buildMagicLinkEmail, sendEmail } from '@/lib/integrations/email';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 
@@ -66,21 +64,6 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
     })
   );
 }
-
-providers.push(
-  EmailProvider({
-    from: env.RESEND_FROM_EMAIL || 'LiveCardStudio <hello@livecardstudio.com>',
-    async sendVerificationRequest({ identifier, url }) {
-      const email = buildMagicLinkEmail(url);
-      await sendEmail({
-        to: identifier,
-        subject: email.subject,
-        html: email.html,
-        text: email.text
-      });
-    }
-  })
-);
 
 export const authOptions: AuthOptions = {
   secret: authSecret,

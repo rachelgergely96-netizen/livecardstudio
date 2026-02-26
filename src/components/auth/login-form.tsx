@@ -43,45 +43,7 @@ export function LoginForm() {
   async function handleGoogleLogin() {
     setLoading(true);
     setStatus('');
-
-    const result = await signIn('google', {
-      callbackUrl,
-      redirect: false
-    });
-
-    setLoading(false);
-
-    if (result?.error || !result?.url) {
-      setStatus('Google sign-in is not available right now. Use email/password or configure Google OAuth.');
-      return;
-    }
-
-    window.location.href = result.url;
-  }
-
-  async function handleMagicLink() {
-    if (!email) {
-      setStatus('Enter your email first for magic link sign-in.');
-      return;
-    }
-
-    setLoading(true);
-    setStatus('');
-
-    const result = await signIn('email', {
-      email,
-      callbackUrl,
-      redirect: false
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      setStatus('Could not send the magic link email. Configure email provider or use password login.');
-      return;
-    }
-
-    setStatus('Check your inbox for your magic link.');
+    await signIn('google', { callbackUrl });
   }
 
   return (
@@ -118,11 +80,8 @@ export function LoginForm() {
       </form>
 
       <div className="mt-5 space-y-2">
-        <Button type="button" tone="secondary" className="w-full" onClick={handleGoogleLogin}>
+        <Button type="button" tone="secondary" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
           Continue with Google
-        </Button>
-        <Button type="button" tone="secondary" className="w-full" onClick={handleMagicLink}>
-          Send Magic Link
         </Button>
       </div>
 
