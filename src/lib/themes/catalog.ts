@@ -103,6 +103,78 @@ export const BUILT_THEME_DEMOS: ThemeDemoItem[] = [
     collection: 'Premium Story',
     description: 'Scrolling multi-photo story with paint overlay, music, and finale moments.',
     swatch: ['#FAF7F2', '#D99CB5']
+  },
+  {
+    id: 'celestial',
+    tier: 'PREMIUM',
+    premiumTheme: 'CELESTIAL',
+    occasion: 'JUST_BECAUSE',
+    collection: 'Signature Premium',
+    description: 'Cosmic gradients, starfield atmosphere, and luminous constellation storytelling.',
+    swatch: ['#08071E', '#C9A0FF']
+  },
+  {
+    id: 'midnight-garden',
+    tier: 'PREMIUM',
+    premiumTheme: 'MIDNIGHT_GARDEN',
+    occasion: 'ANNIVERSARY',
+    collection: 'Signature Premium',
+    description: 'Bioluminescent blooms and moonlit depth for intimate, emotional moments.',
+    swatch: ['#041208', '#00E8A0']
+  },
+  {
+    id: 'botanical',
+    tier: 'PREMIUM',
+    premiumTheme: 'BOTANICAL',
+    occasion: 'MOTHERS_DAY',
+    collection: 'Signature Premium',
+    description: 'Fresh garden palette with elegant floral movement and warm organic textures.',
+    swatch: ['#E8F3E8', '#6EA86A']
+  },
+  {
+    id: 'golden-hour',
+    tier: 'PREMIUM',
+    premiumTheme: 'GOLDEN_HOUR',
+    occasion: 'CONGRATULATIONS',
+    collection: 'Signature Premium',
+    description: 'Sunset amber glow with celebration warmth and cinematic light blooms.',
+    swatch: ['#2A1808', '#FFD86B']
+  },
+  {
+    id: 'modern-minimal',
+    tier: 'PREMIUM',
+    premiumTheme: 'MODERN_MINIMAL',
+    occasion: 'PROMOTION',
+    collection: 'Signature Premium',
+    description: 'Clean editorial contrast and restrained motion for polished modern messages.',
+    swatch: ['#0F0F14', '#E0E0E8']
+  },
+  {
+    id: 'pastel-dream',
+    tier: 'PREMIUM',
+    premiumTheme: 'PASTEL_DREAM',
+    occasion: 'BABY_SHOWER',
+    collection: 'Signature Premium',
+    description: 'Soft pastel gradients, dreamy glow, and gentle romantic ambience.',
+    swatch: ['#FBEAF3', '#D4B8DC']
+  },
+  {
+    id: 'eternal-vow',
+    tier: 'PREMIUM',
+    premiumTheme: 'ETERNAL_VOW',
+    occasion: 'WEDDING',
+    collection: 'Signature Premium',
+    description: 'Wedding-forward visual language with rose-gold accents and vow-inspired tone.',
+    swatch: ['#1A101A', '#E8B0C0']
+  },
+  {
+    id: 'grand-celebration',
+    tier: 'PREMIUM',
+    premiumTheme: 'GRAND_CELEBRATION',
+    occasion: 'NEW_YEARS',
+    collection: 'Signature Premium',
+    description: 'High-energy premium celebration with rich contrast, confetti, and festive movement.',
+    swatch: ['#190E09', '#FFB347']
   }
 ];
 
@@ -132,4 +204,3 @@ export function getThemeDemoStartUrl(item: ThemeDemoItem) {
 export function getThemeDemoPreviewUrl(item: ThemeDemoItem) {
   return buildThemePreviewUrl(getThemeDemoPreset(item));
 }
-

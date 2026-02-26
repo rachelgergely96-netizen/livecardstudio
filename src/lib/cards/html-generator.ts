@@ -2,6 +2,7 @@ import { CardTier, Occasion, QuickTheme, PremiumTheme, MusicStyle } from '@prism
 import { CardFeatures, defaultCardFeatures, getDefaultPremiumTheme, getDefaultQuickTheme } from '@/types/card';
 import { renderQuickThemeHtml } from '@/lib/templates/quick/render';
 import { renderPremiumWatercolorHtml } from '@/lib/templates/premium/watercolor';
+import { renderPremiumSignatureThemeHtml } from '@/lib/templates/premium/signature';
 
 type InputPhoto = {
   src: string;
@@ -753,6 +754,28 @@ export function generateCardHtml(input: CardGenerationInput) {
       });
     } catch (error) {
       console.error('Premium watercolor template render failed, falling back to legacy renderer.', {
+        slug: input.slug,
+        premiumTheme: input.premiumTheme,
+        error
+      });
+    }
+  }
+
+  if (input.tier === CardTier.PREMIUM) {
+    try {
+      return renderPremiumSignatureThemeHtml({
+        slug: input.slug,
+        recipientName: input.recipientName,
+        senderName: input.senderName,
+        occasion: input.occasion,
+        premiumTheme: premiumThemeKey as Exclude<PremiumTheme, 'WATERCOLOR'>,
+        message: input.message,
+        photos: input.photos,
+        customAudio: input.customAudio,
+        gift: input.gift
+      });
+    } catch (error) {
+      console.error('Premium signature theme render failed, falling back to legacy renderer.', {
         slug: input.slug,
         premiumTheme: input.premiumTheme,
         error
