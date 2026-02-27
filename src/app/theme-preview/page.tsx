@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CardTier } from '@prisma/client';
 import { generateCardHtml } from '@/lib/cards/html-generator';
+import { auth } from '@/lib/auth/session';
 import { buildCreateThemeUrl, parseCreateThemePreset } from '@/lib/themes/presets';
 import {
   getDefaultPremiumTheme,
@@ -41,7 +42,7 @@ function buildPhotoPlaceholder(label: string, a: string, b: string) {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 }
 
-export default function ThemePreviewPage({
+export default async function ThemePreviewPage({
   searchParams
 }: {
   searchParams?: {
@@ -51,6 +52,7 @@ export default function ThemePreviewPage({
     occasion?: string;
   };
 }) {
+  const session = await auth();
   const preset = parseCreateThemePreset(searchParams);
   const tier = preset.tier || CardTier.QUICK;
   const occasion = preset.occasion || 'BIRTHDAY';
@@ -102,6 +104,7 @@ export default function ThemePreviewPage({
     quickTheme,
     premiumTheme
   });
+  const backToThemesUrl = session?.user?.id ? '/dashboard#theme-gallery' : '/#themes';
 
   return (
     <main className="min-h-screen bg-[var(--color-midnight)]">
@@ -119,7 +122,7 @@ export default function ThemePreviewPage({
             Start From This Theme
           </Link>
           <Link
-            href="/#themes"
+            href={backToThemesUrl}
             className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-4 py-2 text-sm text-brand-muted"
           >
             Back to Themes
@@ -136,4 +139,3 @@ export default function ThemePreviewPage({
     </main>
   );
 }
-
