@@ -46,9 +46,9 @@ const navItems: NavItem[] = [
 ];
 
 const planTone: Record<Plan, string> = {
-  FREE: 'border-slate-200 bg-slate-100 text-slate-700',
-  PREMIUM: 'border-amber-200 bg-amber-50 text-amber-700',
-  PRO: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  FREE: 'border-slate-600 bg-slate-800 text-slate-300',
+  PREMIUM: 'border-amber-600 bg-amber-900/50 text-amber-300',
+  PRO: 'border-emerald-600 bg-emerald-900/50 text-emerald-300'
 };
 
 export function DashboardSidebar({
@@ -86,7 +86,7 @@ export function DashboardSidebar({
 
   const sidebarContent = (
     <div className="flex h-full flex-col p-4">
-      <div className="mb-6 rounded-2xl border border-[rgba(200,160,120,0.22)] bg-[#fffaf4] p-4">
+      <div className="mb-6 rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] p-4">
         <p className="ui-label">LiveCardStudio</p>
         <p className="section-title mt-1 text-2xl">{displayName}</p>
         <span className={cn('mt-2 inline-flex rounded-full border px-2 py-1 text-xs font-semibold', planTone[userPlan])}>
@@ -105,7 +105,7 @@ export function DashboardSidebar({
                 'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition',
                 isActive(item)
                   ? 'bg-brand-copper text-white'
-                  : 'text-brand-muted hover:bg-[#fff1e3] hover:text-brand-charcoal'
+                  : 'text-brand-muted hover:bg-[var(--color-surface-hover)] hover:text-brand-charcoal'
               )}
             >
               <Icon className="h-4 w-4" />
@@ -123,13 +123,13 @@ export function DashboardSidebar({
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-[rgba(200,160,120,0.2)] bg-[#fffaf4]/95 px-4 py-3 backdrop-blur-md lg:hidden">
+      <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface-solid)] px-4 py-3 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between">
           <p className="section-title text-2xl">Dashboard</p>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,160,120,0.28)] bg-white"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)]"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           >
             {menuOpen ? <X className="h-5 w-5 text-brand-muted" /> : <Menu className="h-5 w-5 text-brand-muted" />}
@@ -138,14 +138,14 @@ export function DashboardSidebar({
       </header>
 
       {menuOpen ? (
-        <div className="fixed inset-0 z-20 bg-[#3a2f2a]/35 lg:hidden">
-          <aside className="h-full w-72 border-r border-[rgba(200,160,120,0.2)] bg-white/95 backdrop-blur-md">
+        <div className="fixed inset-0 z-20 bg-black/50 lg:hidden">
+          <aside className="h-full w-72 border-r border-[var(--color-border)] bg-[var(--color-surface-solid)] backdrop-blur-md">
             {sidebarContent}
           </aside>
         </div>
       ) : null}
 
-      <aside className="hidden w-60 border-r border-[rgba(200,160,120,0.2)] bg-white/80 backdrop-blur-md lg:block">
+      <aside className="hidden w-60 border-r border-[var(--color-border)] bg-[var(--color-surface-elevated)] backdrop-blur-md lg:block">
         {sidebarContent}
       </aside>
     </>

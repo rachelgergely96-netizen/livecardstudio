@@ -28,7 +28,7 @@ export function OnboardingBanner() {
           const Icon = step.icon;
           return (
             <div key={step.label} className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf4] px-3 py-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-3 py-2">
                 <Icon className="h-4 w-4 text-brand-copper" />
                 <span className="text-sm text-brand-charcoal">{step.label}</span>
               </div>

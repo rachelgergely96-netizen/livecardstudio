@@ -92,7 +92,7 @@ export function AudioManager({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
+    <div className="space-y-3 rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-4">
       <div className="space-y-2">
         <label className="ui-label">Upload audio file (optional)</label>
         <Input
@@ -109,7 +109,7 @@ export function AudioManager({
       </div>
 
       {audioTrack ? (
-        <div className="space-y-2 rounded-xl border border-[rgba(200,160,120,0.24)] bg-[#fffaf3] p-3">
+        <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-solid)] p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-brand-charcoal">{audioTrack.name}</p>

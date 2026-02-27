@@ -33,7 +33,7 @@ export function ThemeGallery() {
               />
               <div className="mt-3 flex items-center justify-between gap-2">
                 <h3 className="section-title text-2xl">{name}</h3>
-                <span className="rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf3] px-2 py-1 text-xs text-brand-muted">
+                <span className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-2 py-1 text-xs text-brand-muted">
                   {cardTierLabels[theme.tier]}
                 </span>
               </div>

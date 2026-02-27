@@ -83,10 +83,10 @@ export function RecentActivity({ cards }: { cards: ActivityCard[] }) {
             <li key={item.key}>
               <Link
                 href={item.href}
-                className="flex items-center justify-between gap-2 rounded-xl border border-[rgba(200,160,120,0.2)] bg-[#fffaf4] px-3 py-2 transition hover:bg-[#fff3e7]"
+                className="flex items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-solid)] px-3 py-2 transition hover:bg-[var(--color-surface-hover)]"
               >
                 <span className="flex items-center gap-2 text-sm text-brand-charcoal">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-surface-elevated)]">
                     <Icon className="h-4 w-4 text-brand-copper" />
                   </span>
                   {item.label}

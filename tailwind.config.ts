@@ -10,24 +10,32 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          copper: '#c87941',
-          gold: '#d4a574',
+          copper: 'var(--color-gold)',
+          gold: 'var(--color-gold-light)',
           lavender: '#c4b0d4',
-          charcoal: '#3a2f2a',
-          body: '#5a4a3f',
-          muted: '#8b6f5e',
-          cream: '#fdf8f0',
-          linen: '#faf5f0'
+          charcoal: 'var(--color-text-primary)',
+          body: 'var(--color-text-body)',
+          muted: 'var(--color-text-muted)',
+          cream: 'var(--color-midnight)',
+          linen: 'var(--color-deep-plum)'
+        },
+        dark: {
+          midnight: '#0D0A14',
+          plum: '#2A1B3D',
+          surface: '#1A1425',
+          gold: '#D4A853',
+          'gold-light': '#F0D48A',
+          cream: '#FFF8F0'
         }
       },
       fontFamily: {
         display: ['var(--font-playfair)', 'serif'],
-        script: ['var(--font-dancing)', 'cursive'],
+        script: ['var(--font-caveat)', 'var(--font-dancing)', 'cursive'],
         body: ['var(--font-cormorant)', 'serif'],
-        ui: ['var(--font-inter)', 'sans-serif']
+        ui: ['var(--font-dm-sans)', 'var(--font-inter)', 'sans-serif']
       },
       boxShadow: {
-        soft: '0 20px 50px rgba(120, 88, 64, 0.12)'
+        soft: '0 20px 50px rgba(0, 0, 0, 0.40)'
       }
     }
   },

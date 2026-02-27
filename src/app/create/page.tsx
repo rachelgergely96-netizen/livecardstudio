@@ -162,7 +162,7 @@ export default async function CreatePage({ searchParams }: { searchParams?: Crea
         </div>
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
-            <button className="rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf4] px-4 py-2 text-sm text-brand-muted">
+            <button className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-4 py-2 text-sm text-brand-muted">
               Dashboard
             </button>
           </Link>

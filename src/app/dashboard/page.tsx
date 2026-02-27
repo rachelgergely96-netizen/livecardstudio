@@ -140,7 +140,7 @@ export default async function DashboardPage() {
         )}
 
         {studioDataUnavailable ? (
-          <section className="rounded-2xl border border-[rgba(200,160,120,0.28)] bg-[#fffaf3] p-4 text-sm text-brand-muted">
+          <section className="rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] p-4 text-sm text-brand-muted">
             Dashboard data is temporarily unavailable due to server configuration. Check database/auth environment
             variables and recent migrations.
           </section>

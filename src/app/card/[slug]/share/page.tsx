@@ -44,13 +44,13 @@ export default async function SharePage({ params }: { params: { slug: string } }
   return (
     <main className="mx-auto min-h-screen w-full max-w-5xl px-6 py-10">
       <section className="card-panel relative overflow-hidden p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(200,121,65,0.24),transparent_42%),radial-gradient(circle_at_75%_85%,rgba(196,176,212,0.25),transparent_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(212,168,83,0.15),transparent_42%),radial-gradient(circle_at_75%_85%,rgba(42,27,61,0.30),transparent_42%)]" />
         <div className="relative">
           <p className="ui-label">Card ready</p>
           <h1 className="section-title mt-2 text-5xl">Your card is ready to send</h1>
           <p className="serif-copy mt-3 text-2xl text-brand-body">Copy your link or send instantly through your favorite channel.</p>
 
-          <div className="mt-7 rounded-2xl border border-[rgba(200,160,120,0.25)] bg-white/80 p-4">
+          <div className="mt-7 rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-4">
             <p className="ui-label">Shareable link</p>
             <p className="mt-2 break-all text-lg text-brand-charcoal">{shareUrl}</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -62,12 +62,12 @@ export default async function SharePage({ params }: { params: { slug: string } }
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-[320px_1fr]">
-            <div className="overflow-hidden rounded-2xl border border-[rgba(200,160,120,0.24)] bg-white/70">
+            <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
               {thumb ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={thumb} alt="Card preview" className="h-44 w-full object-cover" />
               ) : (
-                <div className="h-44 bg-[linear-gradient(135deg,#e9d6bd,#eadcf4)]" />
+                <div className="h-44 bg-[linear-gradient(135deg,var(--color-deep-plum),#1a1030)]" />
               )}
               <div className="p-3">
                 <p className="ui-label">Link preview</p>
@@ -76,7 +76,7 @@ export default async function SharePage({ params }: { params: { slug: string } }
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[rgba(200,160,120,0.24)] bg-white/70 p-4">
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4">
               <p className="ui-label">Delivery tracking</p>
               <p className="serif-copy mt-2 text-2xl text-brand-body">
                 We&apos;ll notify you when {card.recipientName} opens their card.

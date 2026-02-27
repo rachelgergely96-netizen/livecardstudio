@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 function CreateYourOwnCta() {
   return (
-    <section className="border-t border-[rgba(200,160,120,0.24)] bg-[#fffaf3] px-6 py-8">
+    <section className="border-t border-[var(--color-border)] bg-[var(--color-surface-solid)] px-6 py-8">
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ui-label">Inspired by this card?</p>
@@ -37,7 +37,7 @@ function CreateYourOwnCta() {
               pathname: '/login',
               query: { callbackUrl: '/create' }
             }}
-            className="rounded-full border border-[rgba(200,160,120,0.28)] bg-white px-4 py-2 text-sm text-brand-muted"
+            className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-4 py-2 text-sm text-brand-muted"
           >
             Log In
           </Link>
@@ -127,7 +127,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function PublicCardPage({ params }: { params: { slug: string } }) {
   if (params.slug === 'demo') {
     return (
-      <main className="min-h-screen bg-[#fdf8f0]">
+      <main className="min-h-screen bg-[var(--color-midnight)]">
         <iframe
           title="LiveCardStudio demo"
           srcDoc={demoCardHtml}
@@ -206,7 +206,7 @@ export default async function PublicCardPage({ params }: { params: { slug: strin
   }
 
   return (
-    <main className="min-h-screen bg-[#fdf8f0]">
+    <main className="min-h-screen bg-[var(--color-midnight)]">
       <iframe
         title={`Card for ${card.recipientName}`}
         srcDoc={html}

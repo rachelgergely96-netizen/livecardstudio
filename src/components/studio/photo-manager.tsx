@@ -75,7 +75,7 @@ function SortablePhotoCard({
     <article
       ref={setNodeRef}
       style={style}
-      className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/80 p-2"
+      className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-2"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imageSrc} alt="Uploaded memory" className="h-28 w-full rounded-lg object-cover" />
@@ -83,7 +83,7 @@ function SortablePhotoCard({
       <div className="mt-2 flex items-center justify-between gap-2">
         <button
           type="button"
-          className="cursor-grab rounded-full border border-[rgba(200,160,120,0.35)] px-2 py-1 text-xs text-brand-muted active:cursor-grabbing"
+          className="cursor-grab rounded-full border border-[var(--color-border-strong)] px-2 py-1 text-xs text-brand-muted active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
@@ -418,7 +418,7 @@ export function PhotoManager({
   return (
     <div className="space-y-4">
       <label className="ui-label">Upload photos</label>
-      <label className="flex min-h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[rgba(200,160,120,0.4)] bg-white/70 p-6 text-center">
+      <label className="flex min-h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] p-6 text-center">
         <input
           type="file"
           className="hidden"
@@ -460,7 +460,7 @@ export function PhotoManager({
 
       {activeCropPhoto ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-[rgba(200,160,120,0.3)] bg-white p-4">
+          <div className="w-full max-w-3xl rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] p-4">
             <p className="ui-label">Crop Photo</p>
             <div className="relative mt-3 h-[55vh] rounded-xl bg-[#2a2a2a]">
               <Cropper

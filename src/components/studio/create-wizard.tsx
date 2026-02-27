@@ -435,9 +435,9 @@ export function CreateWizard({
             Step {step + 1} of {steps.length}
           </p>
           <h1 className="section-title mt-2 text-4xl">{steps[step]}</h1>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(200,160,120,0.18)]">
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
             <i
-              className="block h-full rounded-full bg-[linear-gradient(90deg,#c87941,#d4a574)] transition-all"
+              className="block h-full rounded-full bg-[linear-gradient(90deg,#D4A853,#F0D48A)] transition-all"
               style={{ width: `${((step + 1) / steps.length) * 100}%` }}
             />
           </div>
@@ -449,7 +449,7 @@ export function CreateWizard({
                 className={`rounded-full border px-2.5 py-1 ${
                   index === step
                     ? 'border-brand-copper bg-brand-copper text-white'
-                    : 'border-[rgba(200,160,120,0.3)] bg-[#fffaf3]'
+                    : 'border-[var(--color-border-medium)] bg-[var(--color-surface-solid)]'
                 }`}
                 onClick={() => setStep(index)}
               >
@@ -472,7 +472,7 @@ export function CreateWizard({
                     className={`rounded-xl border px-3 py-2 text-left text-sm ${
                       card.occasion === value
                         ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
-                        : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
+                        : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] text-brand-muted'
                     }`}
                   >
                     {label}
@@ -540,7 +540,7 @@ export function CreateWizard({
                   className={`rounded-2xl border p-4 text-left ${
                     card.tier === tier
                       ? 'border-brand-copper bg-brand-copper/10'
-                      : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                      : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)]'
                   }`}
                 >
                   <p className="ui-label">{cardTierLabels[tier]}</p>
@@ -553,7 +553,7 @@ export function CreateWizard({
               ))}
             </div>
 
-            <p className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 px-3 py-2 text-sm text-brand-body">
+            <p className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] px-3 py-2 text-sm text-brand-body">
               {card.tier === 'QUICK'
                 ? 'Quick cards require exactly 1 photo.'
                 : userPlan === 'FREE'
@@ -585,7 +585,7 @@ export function CreateWizard({
               onBusyChange={setSaving}
             />
 
-            <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
+            <div className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-4">
               <label className="ui-label">Fallback soundtrack style</label>
               <p className="mt-1 text-xs text-brand-muted">
                 Used when no uploaded audio is attached. Uploaded audio always takes priority.
@@ -599,7 +599,7 @@ export function CreateWizard({
                     className={`rounded-xl border px-3 py-2 text-left text-sm ${
                       card.musicStyle === musicStyle
                         ? 'border-brand-copper bg-brand-copper/10 text-brand-charcoal'
-                        : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
+                        : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] text-brand-muted'
                     }`}
                   >
                     {toMusicLabel(musicStyle)}
@@ -621,7 +621,7 @@ export function CreateWizard({
                   className={`rounded-2xl border p-4 text-left ${
                     card.tier === tier
                       ? 'border-brand-copper bg-brand-copper/10'
-                      : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                      : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)]'
                   }`}
                 >
                   <p className="ui-label">{cardTierLabels[tier]}</p>
@@ -642,7 +642,7 @@ export function CreateWizard({
               <label className="ui-label">Recommended for {occasionLabels[card.occasion]}</label>
               <div className="mt-2 flex flex-wrap gap-2 text-xs">
                 {(card.tier === 'QUICK' ? recommendations.quick : recommendations.premium).map((theme) => (
-                  <span key={theme} className="rounded-full border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] px-2.5 py-1">
+                  <span key={theme} className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-2.5 py-1">
                     {card.tier === 'QUICK'
                       ? quickThemeLabels[theme as QuickTheme]
                       : premiumThemeLabels[theme as PremiumTheme]}
@@ -660,7 +660,7 @@ export function CreateWizard({
                     className={`rounded-2xl border p-3 ${
                       themeSelected(theme, card)
                         ? 'border-brand-copper bg-brand-copper/10'
-                        : 'border-[rgba(200,160,120,0.28)] bg-white/70'
+                        : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)]'
                     }`}
                   >
                     <button type="button" className="w-full text-left" onClick={() => applyThemeDemo(theme.id)}>
@@ -693,7 +693,7 @@ export function CreateWizard({
                 {Object.entries(card.featureToggles).map(([key, value]) => (
                   <label
                     key={key}
-                    className="flex items-center justify-between rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 px-3 py-2"
+                    className="flex items-center justify-between rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] px-3 py-2"
                   >
                     <span className="text-sm text-brand-charcoal">{key}</span>
                     <input
@@ -718,7 +718,7 @@ export function CreateWizard({
 
         {step === 4 ? (
           <div className="mt-6 space-y-4">
-            <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-3">
+            <div className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-3">
               <label className="flex items-center justify-between">
                 <span className="ui-label">Include gift card</span>
                 <input
@@ -755,7 +755,7 @@ export function CreateWizard({
                   <div>
                     <label className="ui-label">Brand</label>
                     <select
-                      className="mt-1 w-full rounded-xl border border-[rgba(200,160,120,0.28)] bg-white px-3 py-2"
+                      className="mt-1 w-full rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-3 py-2 text-[var(--color-text-primary)]"
                       value={card.giftCard.tremendousProductId || ''}
                       onChange={(event) => {
                         const selected = giftBrands.find((brand) => brand.id === event.target.value);
@@ -790,7 +790,7 @@ export function CreateWizard({
                           className={`rounded-full border px-3 py-1.5 text-sm ${
                             card.giftCard?.amount === amount
                               ? 'border-brand-copper bg-brand-copper text-white'
-                              : 'border-[rgba(200,160,120,0.28)] bg-white/70 text-brand-muted'
+                              : 'border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] text-brand-muted'
                           }`}
                           onClick={() =>
                             setCard((current) => ({
@@ -812,7 +812,7 @@ export function CreateWizard({
 
         {step === 5 ? (
           <div className="mt-6 space-y-4">
-            <div className="rounded-xl border border-[rgba(200,160,120,0.28)] bg-white/70 p-4">
+            <div className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-4">
               <p className="ui-label">Order summary</p>
               <ul className="mt-2 space-y-1.5 text-sm text-brand-body">
                 <li>
@@ -849,7 +849,7 @@ export function CreateWizard({
           </div>
         ) : null}
 
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[rgba(200,160,120,0.2)] pt-4">
+        <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] pt-4">
           <div className="flex gap-2">
             <Button
               tone="secondary"
@@ -908,7 +908,7 @@ export function CreateWizard({
           </div>
         </dl>
 
-        <div className="mt-5 border-t border-[rgba(200,160,120,0.2)] pt-4 text-sm text-brand-body">
+        <div className="mt-5 border-t border-[var(--color-border)] pt-4 text-sm text-brand-body">
           <div className="flex justify-between">
             <span>{card.tier === 'QUICK' ? 'Quick card' : 'Premium card'}</span>
             <span>{formatUsd(cardCostCents)}</span>
@@ -924,7 +924,7 @@ export function CreateWizard({
         </div>
 
         {previewUrl ? (
-          <div className="mt-5 rounded-xl border border-[rgba(200,160,120,0.26)] bg-white/70 p-3">
+          <div className="mt-5 rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] p-3">
             <p className="ui-label">Preview</p>
             <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-sm text-brand-copper">
               Open recipient view
@@ -940,7 +940,7 @@ export function CreateWizard({
 
       {upgradePrompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[rgba(200,160,120,0.3)] bg-[#fffaf3] p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] p-5 shadow-xl">
             <p className="ui-label">Upgrade required</p>
             <h3 className="section-title mt-2 text-3xl">{UPGRADE_PROMPTS[upgradePrompt].title}</h3>
             <p className="mt-3 text-sm text-brand-body">{UPGRADE_PROMPTS[upgradePrompt].message}</p>

@@ -2,11 +2,11 @@ import { CardStatus } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
 const toneByStatus: Record<CardStatus, string> = {
-  DRAFT: 'border-amber-200 bg-amber-50 text-amber-700',
-  PREVIEW: 'border-blue-200 bg-blue-50 text-blue-700',
-  PAID: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  PUBLISHED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  ARCHIVED: 'border-slate-200 bg-slate-100 text-slate-600'
+  DRAFT: 'border-amber-600 bg-amber-900/50 text-amber-300',
+  PREVIEW: 'border-blue-600 bg-blue-900/50 text-blue-300',
+  PAID: 'border-emerald-600 bg-emerald-900/50 text-emerald-300',
+  PUBLISHED: 'border-emerald-600 bg-emerald-900/50 text-emerald-300',
+  ARCHIVED: 'border-slate-600 bg-slate-800 text-slate-300'
 };
 
 const labelByStatus: Record<CardStatus, string> = {

@@ -131,7 +131,7 @@ export function CardListSection({ cards }: { cards: DashboardCardSerializable[] 
   }, [cards, filter, query, sort]);
 
   const actionClass =
-    'inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf4] text-brand-muted transition hover:bg-[#f8ecdf] hover:text-brand-charcoal';
+    'inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] text-brand-muted transition hover:bg-[var(--color-surface-hover)] hover:text-brand-charcoal';
 
   return (
     <section className="space-y-3">
@@ -151,7 +151,7 @@ export function CardListSection({ cards }: { cards: DashboardCardSerializable[] 
               syncUrl(filter, sort, nextQuery);
             }}
             placeholder="Search by recipient name"
-            className="w-full rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf4] px-9 py-2 text-sm text-brand-charcoal placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-copper/20"
+            className="w-full rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-9 py-2 text-sm text-brand-charcoal placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-copper/20"
           />
         </label>
       </div>
@@ -170,7 +170,7 @@ export function CardListSection({ cards }: { cards: DashboardCardSerializable[] 
                 'rounded-full border px-3 py-1.5 transition',
                 filter === value
                   ? 'border-brand-copper bg-brand-copper text-white'
-                  : 'border-[rgba(200,160,120,0.3)] bg-[#fffaf4] text-brand-muted hover:bg-[#f8ecdf]'
+                  : 'border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] text-brand-muted hover:bg-[var(--color-surface-hover)]'
               )}
             >
               {value[0].toUpperCase() + value.slice(1)}
@@ -186,7 +186,7 @@ export function CardListSection({ cards }: { cards: DashboardCardSerializable[] 
               setSort(nextSort);
               syncUrl(filter, nextSort, query);
             }}
-            className="rounded-full border border-[rgba(200,160,120,0.3)] bg-[#fffaf4] px-3 py-1.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-copper/20"
+            className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-3 py-1.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-copper/20"
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
@@ -218,9 +218,9 @@ export function CardListSection({ cards }: { cards: DashboardCardSerializable[] 
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={thumbnail} alt={`${card.recipientName} thumbnail`} className="h-40 w-full object-cover" />
                   ) : (
-                    <div className="h-40 w-full bg-[linear-gradient(135deg,#f3debf,#ead8f4)]" />
+                    <div className="h-40 w-full bg-[linear-gradient(135deg,var(--color-deep-plum),#1a1030)]" />
                   )}
-                  <StatusBadge status={card.status} className="absolute right-2 top-2 bg-white/95" />
+                  <StatusBadge status={card.status} className="absolute right-2 top-2 bg-[var(--color-surface-solid)]" />
                 </div>
                 <div className="space-y-2 p-4">
                   <div className="space-y-1">

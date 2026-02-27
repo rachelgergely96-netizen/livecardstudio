@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Dancing_Script, Inter, Playfair_Display } from 'next/font/google';
+import { Caveat, Cormorant_Garamond, Dancing_Script, DM_Sans, Inter, Playfair_Display } from 'next/font/google';
 import { Providers } from '@/app/providers';
 import './globals.css';
 
@@ -22,6 +22,17 @@ const dancing = Dancing_Script({
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter'
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  weight: ['300', '400', '500', '600', '700']
+});
+
+const caveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-caveat'
 });
 
 export const metadata: Metadata = {
@@ -49,13 +60,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${cormorant.variable} ${dancing.variable} ${inter.variable}`}
+      className={`${playfair.variable} ${cormorant.variable} ${dancing.variable} ${inter.variable} ${dmSans.variable} ${caveat.variable}`}
       suppressHydrationWarning
     >
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="relative z-10">{children}</div>
+        </Providers>
       </body>
     </html>
   );
 }
-

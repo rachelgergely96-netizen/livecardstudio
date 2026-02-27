@@ -104,7 +104,7 @@ export default function ThemePreviewPage({
   });
 
   return (
-    <main className="min-h-screen bg-[#fdf8f0]">
+    <main className="min-h-screen bg-[var(--color-midnight)]">
       <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <div>
           <p className="ui-label">{tier === CardTier.QUICK ? 'Quick Theme Demo' : 'Premium Theme Demo'}</p>
@@ -114,13 +114,13 @@ export default function ThemePreviewPage({
         <div className="flex flex-wrap gap-2">
           <Link
             href={startUrl}
-            className="rounded-full border border-[rgba(200,160,120,0.28)] bg-brand-copper px-4 py-2 text-sm text-white"
+            className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-dark-midnight"
           >
             Start From This Theme
           </Link>
           <Link
             href="/#themes"
-            className="rounded-full border border-[rgba(200,160,120,0.28)] bg-[#fffaf4] px-4 py-2 text-sm text-brand-muted"
+            className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-4 py-2 text-sm text-brand-muted"
           >
             Back to Themes
           </Link>
