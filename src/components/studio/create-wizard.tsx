@@ -555,10 +555,10 @@ export function CreateWizard({
 
             <p className="rounded-xl border border-[var(--color-border-medium)] bg-[var(--color-surface-elevated)] px-3 py-2 text-sm text-brand-body">
               {card.tier === 'QUICK'
-                ? 'Quick cards require exactly 1 photo.'
+                ? 'Quick cards require exactly 1 photo or text panel.'
                 : userPlan === 'FREE'
-                ? 'Premium cards allow up to 4 photos on the Free plan.'
-                : 'Premium cards allow up to 12 photos.'}
+                ? 'Premium cards allow up to 4 photos or text panels on the Free plan.'
+                : 'Premium cards allow up to 12 photos or text panels.'}
             </p>
             <PhotoManager
               photos={card.photos}
@@ -820,7 +820,12 @@ export function CreateWizard({
                 </li>
                 <li>Type: {cardTierLabels[card.tier]}</li>
                 <li>Theme: {selectedThemeLabel}</li>
-                <li>Photos: {card.photos.length}</li>
+                <li>
+                  Media: {card.photos.filter((p) => p.slotType !== 'TEXT_PANEL').length} photo{card.photos.filter((p) => p.slotType !== 'TEXT_PANEL').length !== 1 ? 's' : ''}
+                  {card.photos.filter((p) => p.slotType === 'TEXT_PANEL').length > 0
+                    ? `, ${card.photos.filter((p) => p.slotType === 'TEXT_PANEL').length} text panel${card.photos.filter((p) => p.slotType === 'TEXT_PANEL').length !== 1 ? 's' : ''}`
+                    : ''}
+                </li>
                 <li>{audioSummary(card)}</li>
                 <li>Features: {Object.entries(card.featureToggles).filter(([, enabled]) => enabled).length} enabled</li>
                 {card.giftCard ? (
@@ -895,8 +900,17 @@ export function CreateWizard({
             <dd>{selectedThemeLabel}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt>Photos</dt>
-            <dd>{card.photos.length}</dd>
+            <dt>Media</dt>
+            <dd>
+              {(() => {
+                const photoCount = card.photos.filter((p) => p.slotType !== 'TEXT_PANEL').length;
+                const textCount = card.photos.filter((p) => p.slotType === 'TEXT_PANEL').length;
+                const parts: string[] = [];
+                if (photoCount > 0) parts.push(`${photoCount} photo${photoCount !== 1 ? 's' : ''}`);
+                if (textCount > 0) parts.push(`${textCount} text`);
+                return parts.length > 0 ? parts.join(', ') : '0';
+              })()}
+            </dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt>Status</dt>

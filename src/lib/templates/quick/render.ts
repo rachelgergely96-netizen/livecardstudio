@@ -6,6 +6,8 @@ import { getDefaultQuickTheme } from '@/types/card';
 type PhotoInput = {
   src: string;
   caption?: string | null;
+  slotType?: 'PHOTO' | 'TEXT_PANEL';
+  textContent?: string | null;
 };
 
 type GiftInput = {
@@ -266,6 +268,8 @@ function runtimePatchScript(data: {
   message: string;
   signature: string;
   photoSrc: string;
+  isTextPanel?: boolean;
+  textPanelContent?: string;
   customAudioUrl?: string;
   customAudioName?: string;
 }) {
@@ -340,7 +344,64 @@ function runtimePatchScript(data: {
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
   }
 
+  function renderTextPanel() {
+    var frame = document.getElementById('pf');
+    var canvas = document.getElementById('pc');
+    if (!frame || !canvas) { return; }
+
+    var size = frame.offsetWidth || 280;
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) { return; }
+
+    var grad = ctx.createLinearGradient(0, 0, size, size);
+    grad.addColorStop(0, 'rgba(212,168,83,0.15)');
+    grad.addColorStop(1, 'rgba(42,27,61,0.22)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    var text = String(data.textPanelContent || '');
+    var fontSize = Math.max(14, Math.min(size / 14, 22));
+    ctx.fillStyle = 'rgba(255,248,240,0.92)';
+    ctx.font = 'italic ' + fontSize + 'px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    var words = text.split(/\s+/);
+    var lines = [];
+    var currentLine = '';
+    var maxWidth = size * 0.78;
+    for (var w = 0; w < words.length; w++) {
+      var test = currentLine ? currentLine + ' ' + words[w] : words[w];
+      if (ctx.measureText(test).width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = words[w];
+      } else {
+        currentLine = test;
+      }
+    }
+    if (currentLine) { lines.push(currentLine); }
+
+    var lineHeight = fontSize * 1.6;
+    var totalHeight = lines.length * lineHeight;
+    var startY = (size - totalHeight) / 2 + fontSize / 2;
+    for (var i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], size / 2, startY + i * lineHeight);
+    }
+
+    var filterLabel = document.getElementById('fl');
+    if (filterLabel) { filterLabel.style.display = 'none'; }
+    var tapHint = document.querySelector('.tap-hint');
+    if (tapHint) { tapHint.style.display = 'none'; }
+  }
+
   function renderPhoto() {
+    if (data.isTextPanel) {
+      renderTextPanel();
+      return;
+    }
+
     if (!data.photoSrc || typeof Image === 'undefined') {
       if (previousInit) {
         previousInit();
@@ -458,7 +519,9 @@ export function renderQuickThemeHtml(input: QuickThemeRenderInput) {
   const themeTemplate = getTemplateForTheme(quickTheme);
   const occasionLabel = OCCASION_COPY[input.occasion] || 'A Living Card';
   const signature = (input.senderName || 'With love').trim();
-  const firstPhoto = input.photos[0]?.src || '';
+  const firstItem = input.photos[0];
+  const isTextPanel = firstItem?.slotType === 'TEXT_PANEL';
+  const firstPhoto = isTextPanel ? '' : (firstItem?.src || '');
 
   let html = themeTemplate.replace(
     /<title>[\s\S]*?<\/title>/i,
@@ -487,6 +550,8 @@ export function renderQuickThemeHtml(input: QuickThemeRenderInput) {
     message: input.message,
     signature,
     photoSrc: firstPhoto,
+    isTextPanel,
+    textPanelContent: isTextPanel ? (firstItem?.textContent || '') : '',
     customAudioUrl: input.customAudio?.url,
     customAudioName: input.customAudio?.name || undefined
   });

@@ -79,12 +79,17 @@ export async function PUT(
       return badRequest('Invalid photo update payload.');
     }
 
-    const caption = parseCaption((body as Record<string, unknown>).caption);
+    const rawBody = body as Record<string, unknown>;
+    const caption = parseCaption(rawBody.caption);
+    const textContent = typeof rawBody.textContent === 'string'
+      ? rawBody.textContent.trim().slice(0, 2000)
+      : undefined;
 
     const updated = await prisma.photo.update({
       where: { id: photo.id },
       data: {
-        caption
+        caption,
+        ...(textContent !== undefined ? { textContent } : {})
       }
     });
 

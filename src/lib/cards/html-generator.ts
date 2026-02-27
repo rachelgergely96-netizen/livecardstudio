@@ -7,6 +7,8 @@ import { renderPremiumSignatureThemeHtml } from '@/lib/templates/premium/signatu
 type InputPhoto = {
   src: string;
   caption?: string | null;
+  slotType?: 'PHOTO' | 'TEXT_PANEL';
+  textContent?: string | null;
 };
 
 type CustomAudioInput = {
@@ -409,19 +411,31 @@ function sectionCopy(input: CardGenerationInput) {
 
 function photoCards(input: CardGenerationInput) {
   const sectionMessages = sectionCopy(input);
-  const photos = input.tier === CardTier.QUICK ? input.photos.slice(0, 1) : input.photos;
+  const items = input.tier === CardTier.QUICK ? input.photos.slice(0, 1) : input.photos;
 
-  return photos
-    .map((photo, idx) => {
+  return items
+    .map((item, idx) => {
       const sectionLine = sectionMessages[idx % sectionMessages.length];
+
+      if (item.slotType === 'TEXT_PANEL') {
+        return `
+          <article class="photo-card ${idx % 2 ? 'offset' : ''}" data-tilt>
+            <div class="text-panel-shell">
+              <p class="text-panel-content">${toHtmlLines(item.textContent || '')}</p>
+            </div>
+            <p class="section-copy">${toHtmlLines(sectionLine)}</p>
+            ${item.caption ? `<p class="caption">${esc(item.caption)}</p>` : ''}
+          </article>
+        `;
+      }
 
       return `
         <article class="photo-card ${idx % 2 ? 'offset' : ''}" data-tilt>
           <div class="photo-shell">
-            <img src="${photo.src}" alt="Memory ${idx + 1} for ${esc(input.recipientName)}" loading="lazy" />
+            <img src="${item.src}" alt="Memory ${idx + 1} for ${esc(input.recipientName)}" loading="lazy" />
           </div>
           <p class="section-copy">${toHtmlLines(sectionLine)}</p>
-          ${photo.caption ? `<p class="caption">${esc(photo.caption)}</p>` : ''}
+          ${item.caption ? `<p class="caption">${esc(item.caption)}</p>` : ''}
         </article>
       `;
     })
@@ -920,6 +934,28 @@ export function generateCardHtml(input: CardGenerationInput) {
     overflow: hidden;
     border: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
     box-shadow: 0 10px 30px rgba(40, 20, 10, 0.12);
+  }
+
+  .text-panel-shell {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
+    box-shadow: 0 10px 30px rgba(40, 20, 10, 0.12);
+    background: linear-gradient(135deg, color-mix(in oklab, var(--accent) 18%, var(--card)), color-mix(in oklab, var(--accent-soft) 14%, var(--card)));
+    padding: 28px 24px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .text-panel-content {
+    font-size: clamp(18px, 3vw, 26px);
+    line-height: 1.6;
+    text-align: center;
+    color: var(--text);
+    font-style: italic;
+    white-space: pre-line;
   }
 
   .photo-shell img {

@@ -183,15 +183,22 @@ model Card {
   @@index([status])
 }
 
+enum PhotoSlotType {
+  PHOTO
+  TEXT_PANEL
+}
+
 model Photo {
-  id           String  @id @default(cuid())
+  id           String        @id @default(cuid())
   cardId       String
-  card         Card    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  card         Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  slotType     PhotoSlotType @default(PHOTO)
   originalUrl  String
   processedUrl String?
-  base64Data   String? @db.Text
+  base64Data   String?       @db.Text
   caption      String?
-  sortOrder    Int     @default(0)
+  textContent  String?       @db.Text
+  sortOrder    Int           @default(0)
   width        Int?
   height       Int?
 

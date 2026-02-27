@@ -51,8 +51,10 @@ export function toCardGenerationInput(card: CardWithAssets): CardGenerationInput
     photos: card.photos
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((photo) => ({
-        src: photo.base64Data || photo.processedUrl || photo.originalUrl,
-        caption: photo.caption
+        src: photo.slotType === 'TEXT_PANEL' ? '' : (photo.base64Data || photo.processedUrl || photo.originalUrl),
+        caption: photo.caption,
+        slotType: photo.slotType as 'PHOTO' | 'TEXT_PANEL',
+        textContent: photo.textContent
       })),
     features:
       card.featureToggles && typeof card.featureToggles === 'object'

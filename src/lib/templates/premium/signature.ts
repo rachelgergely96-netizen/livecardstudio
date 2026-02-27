@@ -5,6 +5,8 @@ import { Occasion, PremiumTheme } from '@prisma/client';
 type PhotoInput = {
   src: string;
   caption?: string | null;
+  slotType?: 'PHOTO' | 'TEXT_PANEL';
+  textContent?: string | null;
 };
 
 type GiftInput = {
@@ -113,6 +115,7 @@ function buildPatchScript(data: {
   occasionLabel: string;
   message: string;
   photos: string[];
+  items?: Array<{ src?: string; slotType?: string; textContent?: string }>;
   customAudio?: { url: string; name?: string | null };
   gift?: { brand: string; amount: string; redemptionUrl?: string | null };
 }) {
@@ -159,8 +162,32 @@ function buildPatchScript(data: {
 
   document.title = data.occasionLabel + ' for ' + data.recipientName;
 
+  var items = Array.isArray(data.items) ? data.items : [];
   var photos = Array.isArray(data.photos) ? data.photos.filter(Boolean) : [];
-  if (photos.length) {
+  if (items.length) {
+    var frames = document.querySelectorAll('.photo-frame');
+    frames.forEach(function (frame, index) {
+      var item = items[index % items.length];
+      var img = frame.querySelector('img');
+      if (item.slotType === 'TEXT_PANEL') {
+        if (img) { img.style.display = 'none'; }
+        var overlay = frame.querySelector('.photo-overlay');
+        if (overlay) { overlay.style.display = 'none'; }
+        frame.style.display = 'flex';
+        frame.style.alignItems = 'center';
+        frame.style.justifyContent = 'center';
+        frame.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))';
+        frame.style.minHeight = '200px';
+        var textEl = document.createElement('p');
+        textEl.style.cssText = 'font: italic 400 clamp(14px, 2vw, 20px)/1.6 Georgia, serif; text-align: center; padding: 20px; word-break: break-word; color: inherit;';
+        textEl.textContent = item.textContent || '';
+        frame.appendChild(textEl);
+      } else if (img && item.src) {
+        img.src = item.src;
+        img.alt = 'Memory ' + (index + 1) + ' for ' + data.recipientName;
+      }
+    });
+  } else if (photos.length) {
     var photoNodes = document.querySelectorAll('.photo-frame img');
     photoNodes.forEach(function (img, index) {
       img.src = photos[index % photos.length];
@@ -251,7 +278,12 @@ function buildPatchScript(data: {
 export function renderPremiumSignatureThemeHtml(input: PremiumSignatureRenderInput) {
   const occasionLabel = OCCASION_COPY[input.occasion] || 'A Living Card';
   const senderName = (input.senderName || 'With love').trim();
-  const photoSources = input.photos.map((photo) => photo.src).filter(Boolean);
+  const photoSources = input.photos.filter((p) => p.slotType !== 'TEXT_PANEL').map((photo) => photo.src).filter(Boolean);
+  const itemsForPatch = input.photos.map((p) => ({
+    src: p.slotType === 'TEXT_PANEL' ? '' : p.src,
+    slotType: p.slotType || 'PHOTO',
+    textContent: p.textContent || ''
+  }));
 
   let html = getTemplateHtml(input.premiumTheme);
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(`${occasionLabel} ${input.recipientName}`)}</title>`);
@@ -263,6 +295,7 @@ export function renderPremiumSignatureThemeHtml(input: PremiumSignatureRenderInp
     occasionLabel,
     message: input.message,
     photos: photoSources,
+    items: itemsForPatch,
     customAudio: input.customAudio?.url
       ? {
           url: input.customAudio.url,

@@ -5,6 +5,8 @@ import { Occasion } from '@prisma/client';
 type PhotoInput = {
   src: string;
   caption?: string | null;
+  slotType?: 'PHOTO' | 'TEXT_PANEL';
+  textContent?: string | null;
 };
 
 type GiftInput = {
@@ -77,6 +79,21 @@ const PREMIUM_STYLE = `
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.lcs-premium-text-panel {
+  background: linear-gradient(135deg, rgba(212,168,83,0.12), rgba(42,27,61,0.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.lcs-premium-text-content {
+  font: italic 400 clamp(11px, 1.4vw, 15px)/1.5 Georgia, serif;
+  color: rgba(58,47,42,0.82);
+  text-align: center;
+  word-break: break-word;
 }
 
 .lcs-premium-gift {
@@ -271,6 +288,7 @@ function buildPatchScript(data: {
   senderName: string;
   message: string;
   photos: string[];
+  items?: Array<{ src?: string; slotType?: string; textContent?: string }>;
   customAudioUrl?: string;
   customAudioName?: string;
 }) {
@@ -304,8 +322,10 @@ function buildPatchScript(data: {
 
   document.title = data.occasionLabel + ' ' + data.recipientName + ' - LiveCardStudio Premium Watercolor';
 
+  var items = Array.isArray(data.items) ? data.items : [];
   var photos = Array.isArray(data.photos) ? data.photos.filter(Boolean) : [];
-  if (photos.length) {
+  var hasItems = items.length > 0 || photos.length > 0;
+  if (hasItems) {
     var layer = document.createElement('div');
     layer.className = 'lcs-premium-photos';
 
@@ -318,9 +338,11 @@ function buildPatchScript(data: {
       { right: '34vw', bottom: '10vh', rot: '4deg', op: '0.24' }
     ];
 
-    photos.slice(0, 6).forEach(function (src, index) {
+    var renderItems = items.length > 0 ? items : photos.map(function (src) { return { src: src, slotType: 'PHOTO' }; });
+    renderItems.slice(0, 6).forEach(function (item, index) {
       var card = document.createElement('div');
-      card.className = 'lcs-premium-photo';
+      var isText = item.slotType === 'TEXT_PANEL';
+      card.className = isText ? 'lcs-premium-photo lcs-premium-text-panel' : 'lcs-premium-photo';
       var pos = positions[index] || positions[index % positions.length];
       Object.keys(pos).forEach(function (key) {
         card.style.setProperty(key, pos[key]);
@@ -328,11 +350,19 @@ function buildPatchScript(data: {
       card.style.setProperty('--rot', pos.rot);
       card.style.setProperty('--op', pos.op);
 
-      var img = document.createElement('img');
-      img.loading = 'lazy';
-      img.alt = 'Memory ' + (index + 1);
-      img.src = src;
-      card.appendChild(img);
+      if (isText) {
+        var textEl = document.createElement('p');
+        textEl.className = 'lcs-premium-text-content';
+        textEl.textContent = item.textContent || '';
+        card.appendChild(textEl);
+      } else {
+        var img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = 'Memory ' + (index + 1);
+        img.src = item.src || '';
+        card.appendChild(img);
+      }
+
       layer.appendChild(card);
     });
 
@@ -389,7 +419,12 @@ function buildPatchScript(data: {
 export function renderPremiumWatercolorHtml(input: PremiumWatercolorRenderInput) {
   const occasionLabel = OCCASION_COPY[input.occasion] || 'A Living Card';
   const senderName = (input.senderName || '').trim();
-  const photoSources = input.photos.map((photo) => photo.src).filter(Boolean);
+  const photoSources = input.photos.filter((p) => p.slotType !== 'TEXT_PANEL').map((photo) => photo.src).filter(Boolean);
+  const itemsForPatch = input.photos.map((p) => ({
+    src: p.slotType === 'TEXT_PANEL' ? '' : p.src,
+    slotType: p.slotType || 'PHOTO',
+    textContent: p.textContent || ''
+  }));
 
   let html = getTemplateHtml();
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(`${occasionLabel} ${input.recipientName}`)}</title>`);
@@ -413,6 +448,7 @@ export function renderPremiumWatercolorHtml(input: PremiumWatercolorRenderInput)
     senderName,
     message: input.message,
     photos: photoSources,
+    items: itemsForPatch,
     customAudioUrl: input.customAudio?.url,
     customAudioName: input.customAudio?.name || undefined
   });
