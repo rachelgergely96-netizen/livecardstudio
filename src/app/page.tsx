@@ -4,13 +4,7 @@ import { LandingNav } from '@/components/landing/landing-nav';
 import { Reveal } from '@/components/landing/reveal';
 import { DemoCanvas } from '@/components/landing/demo-canvas';
 import { FeatureCanvas } from '@/components/landing/feature-canvas';
-import {
-  BUILT_THEME_DEMOS,
-  getThemeDemoName,
-  getThemeDemoPreviewUrl,
-  getThemeDemoStartUrl
-} from '@/lib/themes/catalog';
-import { cardTierLabels } from '@/types/card';
+import { ThemeGallery } from '@/components/landing/theme-gallery';
 
 export default function LandingPage() {
   const signupUrl = { pathname: '/signup', query: { callbackUrl: '/create' } };
@@ -226,6 +220,58 @@ export default function LandingPage() {
         </section>
       </Reveal>
 
+      {/* ── Testimonials ── */}
+      <Reveal>
+        <section className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-dark-gold">
+            Loved by Senders
+          </p>
+          <h2 className="mt-4 text-center font-display text-4xl font-bold md:text-5xl">
+            Real reactions, real{' '}
+            <em className="font-script text-dark-gold-light not-italic">tears</em>
+          </h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {/* Replace with real customer quotes when available */}
+            {[
+              {
+                quote: "My mom literally cried. She kept tapping and swiping and said it was the most thoughtful thing she'd ever received.",
+                name: 'Sarah K.',
+                occasion: "Mother's Day",
+                stars: 5
+              },
+              {
+                quote: "We used LiveCard for our wedding thank-yous. Every single guest texted us about how beautiful they were.",
+                name: 'James & Priya',
+                occasion: 'Wedding',
+                stars: 5
+              },
+              {
+                quote: "I've sent birthday cards to my whole family now. The soundscapes and photo galleries are on another level.",
+                name: 'Marcus T.',
+                occasion: 'Birthday',
+                stars: 5
+              }
+            ].map((t) => (
+              <div
+                key={t.name}
+                className="rounded-2xl border border-[var(--color-border-medium)] bg-[var(--color-surface)] p-8 backdrop-blur-sm"
+              >
+                <div className="flex gap-0.5 text-dark-gold">
+                  {Array.from({ length: t.stars }).map((_, i) => (
+                    <span key={i}>&#9733;</span>
+                  ))}
+                </div>
+                <p className="mt-4 text-[var(--color-text-body)]">&ldquo;{t.quote}&rdquo;</p>
+                <div className="mt-4 border-t border-[var(--color-border)] pt-4">
+                  <p className="font-display font-bold">{t.name}</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">{t.occasion} card</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </Reveal>
+
       {/* ── Interactive Demos ── */}
       <Reveal>
         <section className="relative z-10 mx-auto max-w-6xl px-6 py-20">
@@ -255,7 +301,7 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between p-5">
                   <div>
                     <h3 className="font-display text-lg font-bold">{demo.label}</h3>
-                    <p className="text-sm text-[var(--color-text-muted)]">Interactive preview</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">Hover or tap to interact</p>
                   </div>
                   <Link
                     href={signupUrl}
@@ -272,65 +318,20 @@ export default function LandingPage() {
 
       {/* ── Theme Demo Gallery ── */}
       <Reveal>
-        <section className="relative z-10 mx-auto max-w-6xl px-6 py-20">
+        <section id="gallery" className="relative z-10 mx-auto max-w-6xl px-6 pt-10 pb-20">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-dark-gold">
             Theme Gallery
           </p>
           <h2 className="mt-4 text-center font-display text-4xl font-bold md:text-5xl">
             Choose your <em className="font-script text-dark-gold-light not-italic">visual world</em>
           </h2>
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {BUILT_THEME_DEMOS.map((theme) => {
-              const name = getThemeDemoName(theme);
-              const previewUrl = getThemeDemoPreviewUrl(theme);
-              const startUrl = getThemeDemoStartUrl(theme);
-
-              return (
-                <article
-                  key={theme.id}
-                  className="card-panel overflow-hidden p-4 transition hover:border-dark-gold/30"
-                >
-                  <div
-                    className="h-28 rounded-xl"
-                    style={{
-                      background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
-                    }}
-                  />
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <h4 className="font-display text-xl font-bold">{name}</h4>
-                    <span className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-2 py-1 text-xs text-[var(--color-text-muted)]">
-                      {cardTierLabels[theme.tier]}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                    {theme.collection}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--color-text-body)]">{theme.description}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link
-                      href={previewUrl}
-                      target="_blank"
-                      className="rounded-full border border-[var(--color-border-strong)] px-3 py-2 text-xs font-semibold text-[var(--color-text-body)] transition hover:border-dark-gold/40"
-                    >
-                      View Demo
-                    </Link>
-                    <Link
-                      href={startUrl}
-                      className="rounded-full bg-gold-gradient px-3 py-2 text-xs font-semibold text-dark-midnight"
-                    >
-                      Start From This Theme
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          <ThemeGallery />
         </section>
       </Reveal>
 
       {/* ── Pricing ── */}
       <Reveal>
-        <section className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+        <section id="pricing" className="relative z-10 mx-auto max-w-5xl px-6 py-20">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-dark-gold">
             Simple Pricing
           </p>
@@ -417,8 +418,8 @@ export default function LandingPage() {
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {[
               {
-                title: 'NFC Tap-to-Experience',
-                desc: 'A physical card with an embedded NFC chip. Tap your phone to launch the full digital experience — bridging physical and digital gifting.'
+                title: 'NFC Duo & Gift Sets',
+                desc: 'Multi-card NFC bundles with matching packaging — perfect for couples, families, or gifting several people at once.'
               },
               {
                 title: 'E-Gift Card Pairing',

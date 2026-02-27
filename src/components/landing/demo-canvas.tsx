@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type DemoType = 'celestial' | 'garden' | 'ocean' | 'aurora';
 
@@ -14,6 +14,7 @@ const PALETTES: Record<DemoType, { bg: string; primary: string; secondary: strin
 export function DemoCanvas({ type }: { type: DemoType }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -1000, y: -1000 });
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -42,8 +43,18 @@ export function DemoCanvas({ type }: { type: DemoType }) {
       mouseRef.current.y = -1000;
     }
 
+    function onTouch(e: TouchEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      const touch = e.touches[0];
+      if (!touch) return;
+      mouseRef.current.x = ((touch.clientX - rect.left) / rect.width) * W;
+      mouseRef.current.y = ((touch.clientY - rect.top) / rect.height) * H;
+    }
+
     canvas.addEventListener('mousemove', onMouse);
     canvas.addEventListener('mouseleave', onLeave);
+    canvas.addEventListener('touchmove', onTouch, { passive: true });
+    canvas.addEventListener('touchend', onLeave);
 
     function draw(time: number) {
       const t = time * 0.001;
@@ -103,15 +114,26 @@ export function DemoCanvas({ type }: { type: DemoType }) {
       cancelAnimationFrame(animId);
       canvas!.removeEventListener('mousemove', onMouse);
       canvas!.removeEventListener('mouseleave', onLeave);
+      canvas!.removeEventListener('touchmove', onTouch);
+      canvas!.removeEventListener('touchend', onLeave);
     };
   }, [type]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={400}
-      height={250}
-      className="w-full cursor-crosshair"
-    />
+    <div className="relative" onTouchStart={() => setTouched(true)}>
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={250}
+        className="w-full cursor-crosshair"
+      />
+      {!touched && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center md:hidden">
+          <span className="animate-pulse rounded-full border border-dark-gold/30 bg-[rgba(13,10,20,0.8)] px-4 py-2 text-xs font-semibold text-dark-gold backdrop-blur-sm">
+            Tap &amp; drag to interact
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

@@ -123,7 +123,27 @@ const PREMIUM_THEME_SWATCH: Partial<Record<PremiumTheme, [string, string]>> = {
   WRITTEN_IN_SAND: ['#F4E3C9', '#D3A46D'],
   CANDY_LAND: ['#FFE5F5', '#FF97D8'],
   FAIRYTALE: ['#F0E8FF', '#C8A8F3'],
-  PRINCESS: ['#F9E4F2', '#D8A5CF']
+  PRINCESS: ['#F9E4F2', '#D8A5CF'],
+  EDITORIAL: ['#F5F5F0', '#2A2A35'],
+  GOOD_BOY: ['#F5EDE2', '#C4935A'],
+  MIDNIGHT_WHISKERS: ['#0E0E1C', '#9B8FBF'],
+  MONARCH_MIGRATION: ['#1C1408', '#E89F35'],
+  MOTHERS_DAY: ['#FFF0F5', '#D4789C'],
+  FLOATING_HEARTS: ['#1A0A18', '#E87CA0'],
+  SERPENTINE: ['#0A1418', '#58C8A0'],
+  PASTA: ['#FFF6E8', '#D4883C'],
+  ORIGAMI: ['#F7F0E8', '#D45B5B'],
+  WOLF_PACK: ['#101418', '#8CA0B8'],
+  PARIS: ['#F2EDE8', '#C89878'],
+  LUCKY_ELEPHANT: ['#1A0E22', '#D4A83C'],
+  PIZZA_NIGHT: ['#2A1208', '#E85830'],
+  OMAKASE: ['#0A0E14', '#E8C8A0'],
+  TACO_TUESDAY: ['#2A1808', '#E8B830'],
+  COFFEE_RITUAL: ['#1A1008', '#C89460'],
+  DONUT_SHOP: ['#FFF0E8', '#E87CA0'],
+  BAKE_OFF: ['#2A1A0E', '#E8A848'],
+  ICE_CREAM_TRUCK: ['#E8F4FF', '#FF8EC8'],
+  BBQ_SMOKE: ['#1A1210', '#D47830']
 };
 
 const PREMIUM_THEME_OCCASION: Partial<Record<PremiumTheme, Occasion>> = {
@@ -137,6 +157,7 @@ const PREMIUM_THEME_OCCASION: Partial<Record<PremiumTheme, Occasion>> = {
 };
 
 const PREMIUM_THEME_COLLECTION: Partial<Record<PremiumTheme, string>> = {
+  WATERCOLOR: 'Signature Premium',
   CELESTIAL: 'Signature Premium',
   MIDNIGHT_GARDEN: 'Signature Premium',
   BOTANICAL: 'Signature Premium',
@@ -150,6 +171,8 @@ const PREMIUM_THEME_COLLECTION: Partial<Record<PremiumTheme, string>> = {
   AUTUMN_EMBER: 'Expansion',
   SAKURA_REVERIE: 'Expansion',
   NORTHERN_LIGHTS: 'Expansion',
+  NEON_TOKYO: 'Expansion',
+  EDITORIAL: 'Expansion',
   FAIRYTALE: 'Living Art',
   PRINCESS: 'Living Art',
   SERPENTINE: 'Living Art',
@@ -158,6 +181,9 @@ const PREMIUM_THEME_COLLECTION: Partial<Record<PremiumTheme, string>> = {
   WOLF_PACK: 'Living Art',
   PARIS: 'Living Art',
   LUCKY_ELEPHANT: 'Living Art',
+  CANDY_LAND: 'Living Art',
+  GOOD_BOY: 'Emotion',
+  MIDNIGHT_WHISKERS: 'Emotion',
   FLOATING_HEARTS: 'Emotion',
   MOTHERS_DAY: 'Emotion',
   BIOLUMINESCENT_OCEAN: 'Living World',
@@ -188,7 +214,44 @@ const PREMIUM_THEME_DESCRIPTION: Partial<Record<PremiumTheme, string>> = {
   MODERN_MINIMAL: 'Clean editorial contrast and restrained motion for polished modern messages.',
   PASTEL_DREAM: 'Soft pastel gradients, dreamy glow, and gentle romantic ambience.',
   ETERNAL_VOW: 'Wedding-forward visual language with rose-gold accents and vow-inspired tone.',
-  GRAND_CELEBRATION: 'High-energy premium celebration with rich contrast and festive movement.'
+  GRAND_CELEBRATION: 'High-energy premium celebration with rich contrast and festive movement.',
+  VELVET_NOIR: 'Rich plum velvet and shadow with moody, intimate nightclub atmosphere.',
+  OCEAN_DEPTHS: 'Deep blue immersion with bioluminescent glow and slow underwater drift.',
+  AUTUMN_EMBER: 'Warm amber leaves, rustic glow, and cozy fireside storytelling.',
+  SAKURA_REVERIE: 'Soft cherry blossom pink with petal drift and springtime reverie.',
+  NORTHERN_LIGHTS: 'Aurora greens and cosmic teal with polar night wonder.',
+  NEON_TOKYO: 'Electric cyan neon, rain-slicked streets, and cyberpunk energy.',
+  EDITORIAL: 'Clean lines, bold typography, and magazine-cover sophistication.',
+  BIOLUMINESCENT_OCEAN: 'Glowing deep-sea creatures and luminous teal ocean currents.',
+  NEBULA_GALAXY: 'Swirling purple nebula, distant stars, and infinite galactic scale.',
+  ENCHANTED_FOREST: 'Mossy greens, magical light shafts, and ancient woodland mystery.',
+  VOLCANIC_EMBER: 'Molten lava glow, ember particles, and raw elemental power.',
+  ZEN_GARDEN: 'Raked sand, moss stones, and meditative calm in muted greens.',
+  ETERNAL_GARDEN: 'Lush garden blooms and vine trails for everlasting wedding vows.',
+  STARLIT_VOWS: 'Lavender starlight and celestial romance for evening weddings.',
+  WRITTEN_IN_SAND: 'Golden sand, ocean breeze, and handwritten vows at sunset.',
+  FLOATING_HEARTS: 'Drifting hearts, warm blush tones, and pure romantic energy.',
+  MOTHERS_DAY: 'Soft florals and gentle warmth crafted for mothers everywhere.',
+  FAIRYTALE: 'Dreamy pastels, castle spires, and storybook enchantment.',
+  PRINCESS: 'Pink sparkle, crown motifs, and magical princess charm.',
+  SERPENTINE: 'Sinuous scales, jewel tones, and mythical serpent elegance.',
+  PASTA: 'Hand-rolled charm, Italian warmth, and carb-fueled celebration.',
+  ORIGAMI: 'Crisp paper folds, geometric beauty, and mindful precision.',
+  WOLF_PACK: 'Moonlit howl, pack loyalty, and wild forest spirit.',
+  PARIS: 'Eiffel Tower lights, cafe warmth, and French romantic allure.',
+  LUCKY_ELEPHANT: 'Jeweled elephant motifs, vibrant celebration, and good fortune.',
+  CANDY_LAND: 'Bubblegum swirls, pastel frosting, and sugary wonderland.',
+  GOOD_BOY: 'Playful paws, wagging tails, and loyal companion love.',
+  MIDNIGHT_WHISKERS: 'Moonlit cats, whisker silhouettes, and cozy night mystery.',
+  MONARCH_MIGRATION: 'Orange butterfly wings in flight across vast open skies.',
+  PIZZA_NIGHT: 'Melted cheese, red pepper flakes, and Friday night joy.',
+  OMAKASE: 'Minimalist plating, sushi precision, and chef\'s choice elegance.',
+  TACO_TUESDAY: 'Bright salsas, lime zest, and festive taqueria vibes.',
+  COFFEE_RITUAL: 'Steaming latte art, espresso warmth, and morning ritual calm.',
+  DONUT_SHOP: 'Sprinkled frosting, pastel glazes, and sweet indulgence.',
+  BAKE_OFF: 'Rolling pins, golden crusts, and homemade baking warmth.',
+  ICE_CREAM_TRUCK: 'Summer melodies, rainbow scoops, and childhood nostalgia.',
+  BBQ_SMOKE: 'Charcoal smoke, grill marks, and backyard gathering warmth.'
 };
 
 function toKebabCase(value: string) {
@@ -219,6 +282,18 @@ const PREMIUM_THEME_DEMOS: ThemeDemoItem[] = premiumThemeValues.map((theme) => {
 });
 
 export const BUILT_THEME_DEMOS: ThemeDemoItem[] = [...QUICK_THEME_DEMOS, ...PREMIUM_THEME_DEMOS];
+
+/** Unique collections in display order for gallery filtering */
+export const THEME_COLLECTIONS: string[] = [
+  'Atmospheric',
+  'Signature Premium',
+  'Expansion',
+  'Wedding',
+  'Living Art',
+  'Living World',
+  'Emotion',
+  'Food & Drink'
+];
 
 export function getThemeDemoPreset(item: ThemeDemoItem): CreateThemePreset {
   return {
