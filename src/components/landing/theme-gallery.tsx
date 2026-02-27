@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   BUILT_THEME_DEMOS,
   THEME_COLLECTIONS,
+  getThemeDemoEmbedPreviewUrl,
   getThemeDemoName,
   getThemeDemoPreviewUrl,
   getThemeDemoStartUrl
@@ -27,11 +28,11 @@ export function ThemeGallery() {
   return (
     <div>
       {/* Filter tabs */}
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
+      <div className="mt-8 flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:justify-center">
         <button
           type="button"
           onClick={() => { setCollection(null); setShowAll(false); }}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+          className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
             collection === null
               ? 'bg-dark-gold text-dark-midnight'
               : 'border border-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:border-dark-gold/40 hover:text-dark-cream'
@@ -46,7 +47,7 @@ export function ThemeGallery() {
               key={col}
               type="button"
               onClick={() => { setCollection(col); setShowAll(false); }}
-              className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                 collection === col
                   ? 'bg-dark-gold text-dark-midnight'
                   : 'border border-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:border-dark-gold/40 hover:text-dark-cream'
@@ -63,6 +64,7 @@ export function ThemeGallery() {
         {visible.map((theme) => {
           const name = getThemeDemoName(theme);
           const previewUrl = getThemeDemoPreviewUrl(theme);
+          const embedPreviewUrl = getThemeDemoEmbedPreviewUrl(theme);
           const startUrl = getThemeDemoStartUrl(theme);
 
           return (
@@ -70,12 +72,23 @@ export function ThemeGallery() {
               key={theme.id}
               className="card-panel overflow-hidden p-4 transition hover:border-dark-gold/30"
             >
-              <div
-                className="h-28 rounded-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
-                }}
-              />
+              <div className="relative h-36 overflow-hidden rounded-xl border border-[var(--color-border-medium)] md:h-28">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
+                  }}
+                />
+                <iframe
+                  title={`${name} preview`}
+                  src={embedPreviewUrl}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full border-none"
+                  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                  allow="autoplay"
+                />
+                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/20" />
+              </div>
               <div className="mt-3 flex items-center justify-between gap-2">
                 <h4 className="font-display text-xl font-bold">{name}</h4>
                 <span className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-2 py-1 text-xs text-[var(--color-text-muted)]">

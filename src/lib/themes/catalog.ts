@@ -97,7 +97,7 @@ const QUICK_THEME_DEMOS: ThemeDemoItem[] = [
   }
 ];
 
-const PREMIUM_THEME_SWATCH: Partial<Record<PremiumTheme, [string, string]>> = {
+export const PREMIUM_THEME_SWATCH: Partial<Record<PremiumTheme, [string, string]>> = {
   WATERCOLOR: ['#FAF7F2', '#D99CB5'],
   CELESTIAL: ['#08071E', '#C9A0FF'],
   MIDNIGHT_GARDEN: ['#041208', '#00E8A0'],
@@ -258,13 +258,52 @@ function toKebabCase(value: string) {
   return value.toLowerCase().replace(/_/g, '-');
 }
 
+function hslToHex(h: number, s: number, l: number) {
+  const saturation = s / 100;
+  const lightness = l / 100;
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const hPrime = h / 60;
+  const x = chroma * (1 - Math.abs((hPrime % 2) - 1));
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (hPrime >= 0 && hPrime < 1) {
+    r = chroma;
+    g = x;
+  } else if (hPrime >= 1 && hPrime < 2) {
+    r = x;
+    g = chroma;
+  } else if (hPrime >= 2 && hPrime < 3) {
+    g = chroma;
+    b = x;
+  } else if (hPrime >= 3 && hPrime < 4) {
+    g = x;
+    b = chroma;
+  } else if (hPrime >= 4 && hPrime < 5) {
+    r = x;
+    b = chroma;
+  } else if (hPrime >= 5 && hPrime < 6) {
+    r = chroma;
+    b = x;
+  }
+
+  const match = lightness - chroma / 2;
+  const rr = Math.round((r + match) * 255);
+  const gg = Math.round((g + match) * 255);
+  const bb = Math.round((b + match) * 255);
+
+  return `#${[rr, gg, bb].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function fallbackSwatch(theme: PremiumTheme): [string, string] {
   const seed = theme
     .split('')
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const hueA = seed % 360;
   const hueB = (seed * 3) % 360;
-  return [`hsl(${hueA} 45% 18%)`, `hsl(${hueB} 55% 56%)`];
+  return [hslToHex(hueA, 45, 18), hslToHex(hueB, 55, 56)];
 }
 
 const PREMIUM_THEME_DEMOS: ThemeDemoItem[] = premiumThemeValues.map((theme) => {
@@ -322,3 +361,26 @@ export function getThemeDemoPreviewUrl(item: ThemeDemoItem) {
   return buildThemePreviewUrl(getThemeDemoPreset(item));
 }
 
+export function getThemeDemoEmbedPreviewUrl(item: ThemeDemoItem) {
+  const base = getThemeDemoPreviewUrl(item);
+  const [path, query] = base.split('?');
+  const params = new URLSearchParams(query || '');
+  params.set('embed', '1');
+  const serialized = params.toString();
+  return serialized ? `${path}?${serialized}` : path;
+}
+
+/** Look up the [bg, accent] swatch for a theme by its enum key. */
+export function getThemeSwatch(
+  quickTheme?: QuickTheme | string,
+  premiumTheme?: PremiumTheme | string
+): [string, string] | undefined {
+  if (premiumTheme) {
+    return PREMIUM_THEME_SWATCH[premiumTheme as PremiumTheme] ?? fallbackSwatch(premiumTheme as PremiumTheme);
+  }
+  if (quickTheme) {
+    const item = QUICK_THEME_DEMOS.find((d) => d.quickTheme === quickTheme);
+    return item?.swatch;
+  }
+  return undefined;
+}
