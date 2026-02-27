@@ -12,9 +12,14 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = normalizeCallbackUrl(searchParams.get('callbackUrl'), '/dashboard');
+  const errorParam = searchParams.get('error');
+  const oauthError =
+    errorParam === 'OAuthCallback' || errorParam === 'OAuthAccountNotLinked'
+      ? 'Google sign-in failed. Please try again or use email and password.'
+      : '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState<string>(oauthError);
   const [loading, setLoading] = useState(false);
 
   async function handlePasswordLogin(event: FormEvent<HTMLFormElement>) {

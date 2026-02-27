@@ -12,12 +12,17 @@ export function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = normalizeCallbackUrl(searchParams.get('callbackUrl'), '/dashboard');
+  const errorParam = searchParams.get('error');
+  const oauthError =
+    errorParam === 'OAuthCallback' || errorParam === 'OAuthAccountNotLinked'
+      ? 'Google sign-in failed. Please try again or use email and password.'
+      : '';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(oauthError);
 
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

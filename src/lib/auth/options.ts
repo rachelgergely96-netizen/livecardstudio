@@ -60,7 +60,14 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code'
+        }
+      }
     })
   );
 }
@@ -76,6 +83,49 @@ export const authOptions: AuthOptions = {
     signIn: '/login'
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google' && user.email) {
+        try {
+          const existing = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { accounts: { where: { provider: 'google' } } }
+          });
+
+          if (existing && existing.accounts.length === 0) {
+            await prisma.account.create({
+              data: {
+                userId: existing.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token ?? undefined,
+                refresh_token: account.refresh_token ?? undefined,
+                expires_at: account.expires_at ?? undefined,
+                token_type: account.token_type ?? undefined,
+                scope: account.scope ?? undefined,
+                id_token: account.id_token ?? undefined
+              }
+            });
+
+            if (!existing.name && profile?.name) {
+              await prisma.user.update({
+                where: { id: existing.id },
+                data: {
+                  name: profile.name,
+                  image: (profile as { picture?: string }).picture ?? undefined
+                }
+              });
+            }
+
+            user.id = existing.id;
+          }
+        } catch (error) {
+          console.error('Google account linking failed.', error);
+        }
+      }
+
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
