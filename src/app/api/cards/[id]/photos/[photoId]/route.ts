@@ -80,17 +80,29 @@ export async function PUT(
     }
 
     const rawBody = body as Record<string, unknown>;
-    const caption = parseCaption(rawBody.caption);
-    const textContent = typeof rawBody.textContent === 'string'
-      ? rawBody.textContent.trim().slice(0, 2000)
-      : undefined;
+    const updateData: { caption?: string | null; textContent?: string | null } = {};
+
+    if (Object.prototype.hasOwnProperty.call(rawBody, 'caption')) {
+      updateData.caption = parseCaption(rawBody.caption);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(rawBody, 'textContent')) {
+      if (typeof rawBody.textContent === 'string') {
+        updateData.textContent = rawBody.textContent.trim().slice(0, 2000);
+      } else if (rawBody.textContent === null) {
+        updateData.textContent = null;
+      } else {
+        return badRequest('Invalid text panel content.');
+      }
+    }
+
+    if (!Object.keys(updateData).length) {
+      return badRequest('No updatable fields provided.');
+    }
 
     const updated = await prisma.photo.update({
       where: { id: photo.id },
-      data: {
-        caption,
-        ...(textContent !== undefined ? { textContent } : {})
-      }
+      data: updateData
     });
 
     return ok({ photo: updated });
