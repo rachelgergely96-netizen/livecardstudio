@@ -5,6 +5,8 @@ import { Reveal } from '@/components/landing/reveal';
 import { DemoCanvas } from '@/components/landing/demo-canvas';
 import { FeatureCanvas } from '@/components/landing/feature-canvas';
 import { ThemeGallery } from '@/components/landing/theme-gallery';
+import { BILLING_PRICES } from '@/lib/billing/pricing';
+import { formatUsd } from '@/lib/utils';
 
 export default function LandingPage() {
   const signupUrl = { pathname: '/signup', query: { callbackUrl: '/create' } };
@@ -22,7 +24,7 @@ export default function LandingPage() {
         <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-8xl">
           Send Cards That
           <br />
-          <em className="bg-gradient-to-r from-dark-gold to-dark-gold-light bg-clip-text font-script text-[1.15em] not-italic text-transparent">
+          <em className="inline-block bg-gradient-to-r from-dark-gold to-dark-gold-light bg-clip-text pb-2 font-script text-[1.15em] not-italic leading-[1.2] text-transparent">
             Breathe
           </em>
         </h1>
@@ -332,36 +334,39 @@ export default function LandingPage() {
       {/* ── Pricing ── */}
       <Reveal>
         <section id="pricing" className="relative z-10 mx-auto max-w-5xl px-6 py-20">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-dark-gold">
-            Simple Pricing
-          </p>
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-dark-gold">Pricing</p>
           <h2 className="mt-4 text-center font-display text-4xl font-bold md:text-5xl">
-            One card or <em className="font-script text-dark-gold-light not-italic">unlimited</em>
+            Built for occasional senders and power creators
           </h2>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               {
-                name: 'Single Card',
-                price: '$4.99',
-                period: 'one-time',
-                features: ['1 premium card', 'All themes & effects', 'Up to 10 photos', 'Ambient soundscapes', 'Shareable link'],
-                cta: 'Create a Card',
+                name: 'Free',
+                price: formatUsd(BILLING_PRICES.planMonthlyCents.FREE),
+                period: '/month',
+                features: ['Quick cards', '1 photo or text panel', 'No gift card reveals', 'Send cost: $0 for quick cards'],
+                cta: 'Start Free',
                 highlight: false
               },
               {
-                name: 'Unlimited',
-                price: '$9.99',
+                name: 'Premium',
+                price: formatUsd(BILLING_PRICES.planMonthlyCents.PREMIUM),
                 period: '/month',
-                features: ['Unlimited cards', 'All premium features', 'Priority support', 'Custom music upload', 'Analytics dashboard'],
-                cta: 'Go Unlimited',
+                features: [
+                  'Premium themes + gift reveals',
+                  'Up to 12 photos or text panels',
+                  `Send cost: ${formatUsd(BILLING_PRICES.cardCents.QUICK)} quick card`,
+                  `Send cost: ${formatUsd(BILLING_PRICES.cardCents.PREMIUM)} premium card`
+                ],
+                cta: 'Upgrade to Premium',
                 highlight: true
               },
               {
-                name: 'NFC Luxe',
-                price: '$24.99',
-                period: 'per card + NFC',
-                features: ['Physical NFC card', 'Tap-to-experience', 'Premium packaging', 'All digital features', 'Gift-ready presentation'],
-                cta: 'Order NFC Card',
+                name: 'Pro',
+                price: formatUsd(BILLING_PRICES.planMonthlyCents.PRO),
+                period: '/month',
+                features: ['Everything in Premium', 'Up to 12 photos or text panels', 'Send cost: $0 quick + premium cards'],
+                cta: 'Upgrade to Pro',
                 highlight: false
               }
             ].map((tier) => (
@@ -384,14 +389,14 @@ export default function LandingPage() {
                   <span className="ml-1 text-sm text-[var(--color-text-muted)]">{tier.period}</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-left">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-[var(--color-text-body)]">
-                      <span className="text-dark-gold">✓</span> {f}
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-sm text-[var(--color-text-body)]">
+                      <span className="text-dark-gold">+</span> {feature}
                     </li>
                   ))}
                 </ul>
                 <Link
-                  href={signupUrl}
+                  href="/pricing"
                   className={`mt-8 block rounded-full py-3 text-sm font-bold uppercase tracking-widest transition ${
                     tier.highlight
                       ? 'bg-gold-gradient text-dark-midnight shadow-[0_8px_30px_rgba(212,168,83,0.3)] hover:-translate-y-0.5'
@@ -492,3 +497,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

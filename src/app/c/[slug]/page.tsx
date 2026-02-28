@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ViewTracker } from '@/components/card/view-tracker';
 import { demoCardHtml } from '@/lib/cards/demo-html';
 import { toCardGenerationInput } from '@/lib/cards/build-card-input';
 import { generateCardHtml } from '@/lib/cards/html-generator';
 import { prisma } from '@/lib/db/prisma';
-import { buildFirstViewOpenedEmail, sendEmail } from '@/lib/integrations/email';
 import { readStorageContent } from '@/lib/integrations/storage-read';
 import { absoluteUrl } from '@/lib/utils';
 
@@ -145,50 +145,6 @@ export default async function PublicCardPage({ params }: { params: { slug: strin
     notFound();
   }
 
-  const firstViewTimestamp = new Date();
-  const firstViewUpdate = await prisma.card.updateMany({
-    where: {
-      id: card.id,
-      firstViewedAt: null
-    },
-    data: {
-      firstViewedAt: firstViewTimestamp
-    }
-  });
-
-  await prisma.card.update({
-    where: { id: card.id },
-    data: {
-      viewCount: { increment: 1 }
-    }
-  });
-
-  if (firstViewUpdate.count > 0 && card.notifyOnFirstView) {
-    const targetEmail = card.notifyEmail || card.user.email;
-    if (targetEmail) {
-      const emailPayload = buildFirstViewOpenedEmail({
-        recipientName: card.recipientName,
-        viewedAtIso: firstViewTimestamp.toISOString(),
-        statsUrl: absoluteUrl(`/card/${card.slug}/share`)
-      });
-
-      try {
-        await sendEmail({
-          to: targetEmail,
-          subject: emailPayload.subject,
-          html: emailPayload.html,
-          text: emailPayload.text
-        });
-      } catch (error) {
-        console.error('Failed to send first-view notification email', {
-          cardId: card.id,
-          slug: card.slug,
-          error
-        });
-      }
-    }
-  }
-
   let html = '';
 
   if (card.htmlUrl) {
@@ -207,6 +163,7 @@ export default async function PublicCardPage({ params }: { params: { slug: strin
 
   return (
     <main className="min-h-screen bg-[var(--color-midnight)]">
+      <ViewTracker slug={card.slug} />
       <iframe
         title={`Card for ${card.recipientName}`}
         srcDoc={html}

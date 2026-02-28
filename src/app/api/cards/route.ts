@@ -2,6 +2,7 @@ import { CardStatus, Occasion, CardTier, QuickTheme, PremiumTheme, MusicStyle } 
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, created, serverError, unauthorized, ok } from '@/lib/api';
+import { canAccessPremiumThemes, canUseGiftCards } from '@/lib/billing/pricing';
 import { createCardSlug } from '@/lib/cards/slug';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
@@ -133,12 +134,17 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const slug = createCardSlug(`${payload.occasion}-${payload.recipientName}`);
     const resolvedThemes = resolveThemeSelection(payload);
+    const userRecord = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true }
+    });
+    const userPlan = userRecord?.plan || session.user.plan;
 
-    if (session.user.plan === 'FREE' && payload.tier === CardTier.PREMIUM) {
+    if (!canAccessPremiumThemes(userPlan) && payload.tier === CardTier.PREMIUM) {
       return badRequest('Premium themes require Premium or Pro plans.');
     }
 
-    if (session.user.plan === 'FREE' && payload.giftCard) {
+    if (!canUseGiftCards(userPlan) && payload.giftCard) {
       return badRequest('Gift cards require Premium or Pro plans.');
     }
 

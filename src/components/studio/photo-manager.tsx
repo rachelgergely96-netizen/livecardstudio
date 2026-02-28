@@ -23,6 +23,7 @@ import { type DragEvent, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { getMediaItemCap } from '@/lib/billing/pricing';
 
 const HEIC_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1'];
 
@@ -357,7 +358,7 @@ export function PhotoManager({
     [photos]
   );
 
-  const tierCap = tier === 'QUICK' ? 1 : userPlan === 'FREE' ? 4 : 12;
+  const tierCap = getMediaItemCap(userPlan, tier);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 

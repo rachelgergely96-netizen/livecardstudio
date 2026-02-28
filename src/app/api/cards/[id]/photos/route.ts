@@ -1,14 +1,11 @@
 import { auth } from '@/lib/auth/session';
 import { badRequest, notFound, ok, serverError, unauthorized } from '@/lib/api';
+import { getMediaItemCap } from '@/lib/billing/pricing';
 import { processUploadedPhoto } from '@/lib/cards/photo-processing';
 import { prisma } from '@/lib/db/prisma';
 import { uploadImage } from '@/lib/integrations/storage';
 
 export const runtime = 'nodejs';
-
-const MAX_PHOTOS_PREMIUM = 12;
-const MAX_PHOTOS_FREE = 4;
-const MAX_PHOTOS_QUICK = 1;
 
 export async function POST(request: Request, context: { params: { id: string } }) {
   try {
@@ -19,7 +16,10 @@ export async function POST(request: Request, context: { params: { id: string } }
 
     const card = await prisma.card.findFirst({
       where: { id: context.params.id, userId: session.user.id },
-      include: { photos: { orderBy: { sortOrder: 'asc' } } }
+      include: {
+        photos: { orderBy: { sortOrder: 'asc' } },
+        user: { select: { plan: true } }
+      }
     });
 
     if (!card) {
@@ -33,12 +33,7 @@ export async function POST(request: Request, context: { params: { id: string } }
       return badRequest('No photos uploaded. Use form-data key "photos".');
     }
 
-    const tierCap =
-      card.tier === 'QUICK'
-        ? MAX_PHOTOS_QUICK
-        : session.user.plan === 'FREE'
-        ? MAX_PHOTOS_FREE
-        : MAX_PHOTOS_PREMIUM;
+    const tierCap = getMediaItemCap(card.user.plan, card.tier);
     if (card.photos.length + fileEntries.length > tierCap) {
       return badRequest(`Photo limit exceeded. Your plan allows up to ${tierCap} photos.`);
     }

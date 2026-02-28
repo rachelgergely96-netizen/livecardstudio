@@ -1,4 +1,4 @@
-import { CardStatus, GiftCardStatus, Prisma } from '@prisma/client';
+import { CardStatus, GiftCardStatus, Plan, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { regenerateCardHtml } from '@/lib/cards/publish';
 import { prisma } from '@/lib/db/prisma';
@@ -12,8 +12,24 @@ export const runtime = 'nodejs';
 
 type StripeCheckoutSession = {
   id: string;
+  customer?: string | { id?: string } | null;
+  subscription?: string | { id?: string } | null;
   metadata?: Record<string, string | undefined>;
   payment_intent?: string | { id?: string } | null;
+};
+
+type StripeSubscription = {
+  id: string;
+  customer?: string | { id?: string } | null;
+  status?: string;
+  metadata?: Record<string, string | undefined>;
+  items?: {
+    data?: Array<{
+      price?: {
+        id?: string | null;
+      } | null;
+    }>;
+  };
 };
 
 function getPaymentIntentId(session: StripeCheckoutSession) {
@@ -24,6 +40,54 @@ function getPaymentIntentId(session: StripeCheckoutSession) {
     return session.payment_intent.id || null;
   }
   return null;
+}
+
+function getCustomerId(value: string | { id?: string } | null | undefined) {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value && typeof value === 'object' && value.id) {
+    return value.id;
+  }
+  return null;
+}
+
+function mapPriceIdToPlan(priceId: string | null | undefined): Plan | null {
+  if (!priceId) {
+    return null;
+  }
+  if (priceId === env.STRIPE_PRICE_PRO_MONTHLY) {
+    return 'PRO';
+  }
+  if (priceId === env.STRIPE_PRICE_PREMIUM_MONTHLY) {
+    return 'PREMIUM';
+  }
+  return null;
+}
+
+function resolvePlanFromSubscription(subscription: StripeSubscription) {
+  const status = (subscription.status || '').toLowerCase();
+  if (status === 'canceled' || status === 'unpaid' || status === 'incomplete_expired') {
+    return 'FREE' as Plan;
+  }
+
+  const plans =
+    subscription.items?.data
+      ?.map((item) => mapPriceIdToPlan(item.price?.id))
+      .filter((value): value is Exclude<Plan, 'FREE'> => Boolean(value)) || [];
+
+  if (plans.includes('PRO')) {
+    return 'PRO' as Plan;
+  }
+  if (plans.includes('PREMIUM')) {
+    return 'PREMIUM' as Plan;
+  }
+
+  if (status === 'active' || status === 'trialing' || status === 'past_due') {
+    return null;
+  }
+
+  return 'FREE' as Plan;
 }
 
 function serializeError(error: unknown) {
@@ -145,7 +209,81 @@ async function sendCardReadyEmail(args: { to: string; recipientName: string; slu
   });
 }
 
+async function applyPlanUpgrade(input: {
+  userId?: string;
+  customerId?: string | null;
+  targetPlan: Exclude<Plan, 'FREE'>;
+}) {
+  let userId = input.userId;
+  if (!userId && input.customerId) {
+    const userByCustomer = await prisma.user.findFirst({
+      where: { stripeCustomerId: input.customerId },
+      select: { id: true }
+    });
+    userId = userByCustomer?.id;
+  }
+
+  if (!userId) {
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      plan: input.targetPlan,
+      stripeCustomerId: input.customerId || undefined
+    }
+  });
+}
+
+async function handlePlanUpgradeCheckout(checkoutSession: StripeCheckoutSession) {
+  const targetPlan = checkoutSession.metadata?.targetPlan as Exclude<Plan, 'FREE'> | undefined;
+  const userId = checkoutSession.metadata?.userId;
+  if (!targetPlan || (targetPlan !== 'PREMIUM' && targetPlan !== 'PRO')) {
+    return;
+  }
+
+  const customerId = getCustomerId(checkoutSession.customer);
+  await applyPlanUpgrade({
+    userId,
+    customerId,
+    targetPlan
+  });
+}
+
+async function syncPlanFromSubscription(subscription: StripeSubscription) {
+  const customerId = getCustomerId(subscription.customer);
+  if (!customerId) {
+    return;
+  }
+
+  const targetPlan = resolvePlanFromSubscription(subscription);
+  if (!targetPlan) {
+    return;
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { stripeCustomerId: customerId },
+    select: { id: true, plan: true }
+  });
+  if (!user || user.plan === targetPlan) {
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      plan: targetPlan
+    }
+  });
+}
+
 async function handleCheckoutCompleted(checkoutSession: StripeCheckoutSession) {
+  if (checkoutSession.metadata?.purpose === 'plan_upgrade') {
+    await handlePlanUpgradeCheckout(checkoutSession);
+    return;
+  }
+
   const cardId = checkoutSession.metadata?.cardId;
   if (!cardId) {
     return;
@@ -305,7 +443,13 @@ export async function POST(request: Request) {
 
     const event = stripe.webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
 
-    if (event.type !== 'checkout.session.completed') {
+    const supportedTypes = new Set([
+      'checkout.session.completed',
+      'customer.subscription.updated',
+      'customer.subscription.deleted'
+    ]);
+
+    if (!supportedTypes.has(event.type)) {
       return NextResponse.json({ received: true });
     }
 
@@ -321,9 +465,13 @@ export async function POST(request: Request) {
     }
 
     try {
-      await handleCheckoutCompleted(event.data.object as StripeCheckoutSession);
+      if (event.type === 'checkout.session.completed') {
+        await handleCheckoutCompleted(event.data.object as StripeCheckoutSession);
+      } else {
+        await syncPlanFromSubscription(event.data.object as StripeSubscription);
+      }
       await markWebhookEventProcessed(event.id, {
-        checkoutSessionId: (event.data.object as StripeCheckoutSession).id
+        objectId: (event.data.object as { id?: string }).id
       });
       return NextResponse.json({ received: true });
     } catch (handlerError) {

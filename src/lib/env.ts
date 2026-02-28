@@ -18,9 +18,12 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_PREMIUM_CARD: z.string().optional(),
+  STRIPE_PRICE_PREMIUM_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
   TREMENDOUS_API_KEY: z.string().optional(),
   TREMENDOUS_BASE_URL: z.string().optional(),
   TREMENDOUS_FUNDING_SOURCE_ID: z.string().optional(),
+  PUBLISH_RETRY_SECRET: z.string().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional()
 });

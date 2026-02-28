@@ -2,6 +2,7 @@ import { CardStatus, Occasion, CardTier, QuickTheme, PremiumTheme, MusicStyle } 
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, notFound, ok, serverError, unauthorized } from '@/lib/api';
+import { canAccessPremiumThemes, canUseGiftCards } from '@/lib/billing/pricing';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import { findGiftBrandById, isGiftDenominationAllowed } from '@/lib/integrations/tremendous';
@@ -85,6 +86,11 @@ export async function PUT(request: Request, context: { params: { id: string } })
     if (!parsed.success) {
       return badRequest('Invalid card update payload', parsed.error.flatten());
     }
+    const userRecord = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true }
+    });
+    const userPlan = userRecord?.plan || session.user.plan;
 
     const payload = parsed.data;
     const nextOccasion = payload.occasion || existing.occasion;
@@ -104,11 +110,11 @@ export async function PUT(request: Request, context: { params: { id: string } })
           : payload.premiumTheme
         : null;
 
-    if (session.user.plan === 'FREE' && nextTier === CardTier.PREMIUM) {
+    if (!canAccessPremiumThemes(userPlan) && nextTier === CardTier.PREMIUM) {
       return badRequest('Premium themes require Premium or Pro plans.');
     }
 
-    if (session.user.plan === 'FREE' && payload.giftCard) {
+    if (!canUseGiftCards(userPlan) && payload.giftCard) {
       return badRequest('Gift cards require Premium or Pro plans.');
     }
 

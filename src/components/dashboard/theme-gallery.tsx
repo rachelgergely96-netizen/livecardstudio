@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   BUILT_THEME_DEMOS,
+  getThemeDemoEmbedPreviewUrl,
   getThemeDemoName,
   getThemeDemoPreviewUrl,
   getThemeDemoStartUrl
@@ -23,14 +24,26 @@ export function ThemeGallery() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {BUILT_THEME_DEMOS.map((theme) => {
           const name = getThemeDemoName(theme);
+          const embedPreviewUrl = getThemeDemoEmbedPreviewUrl(theme);
           return (
             <article key={theme.id} className="card-panel overflow-hidden p-4">
-              <div
-                className="h-20 rounded-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
-                }}
-              />
+              <div className="relative h-20 overflow-hidden rounded-xl border border-[var(--color-border-medium)]">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`
+                  }}
+                />
+                <iframe
+                  title={`${name} preview`}
+                  src={embedPreviewUrl}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full border-none"
+                  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                  allow="autoplay"
+                />
+                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/20" />
+              </div>
               <div className="mt-3 flex items-center justify-between gap-2">
                 <h3 className="section-title text-2xl">{name}</h3>
                 <span className="rounded-full border border-[var(--color-border-medium)] bg-[var(--color-surface-solid)] px-2 py-1 text-xs text-brand-muted">
@@ -56,4 +69,3 @@ export function ThemeGallery() {
     </section>
   );
 }
-

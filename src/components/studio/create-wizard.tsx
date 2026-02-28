@@ -9,6 +9,11 @@ import { PhotoManager, type PhotoItem } from '@/components/studio/photo-manager'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  canAccessPremiumThemes,
+  canUseGiftCards,
+  getCardPriceCents
+} from '@/lib/billing/pricing';
 import { formatUsd } from '@/lib/utils';
 import { BUILT_THEME_DEMOS, getThemeDemoName, getThemeDemoPreviewUrl } from '@/lib/themes/catalog';
 import {
@@ -170,14 +175,7 @@ export function CreateWizard({
     premiumTheme: card.premiumTheme
   });
 
-  const cardCostCents =
-    userPlan === 'PRO'
-      ? 0
-      : card.tier === 'QUICK'
-      ? userPlan === 'FREE'
-        ? 0
-        : 500
-      : 1900;
+  const cardCostCents = getCardPriceCents(userPlan, card.tier);
 
   const giftCostCents = card.giftCard?.amount || 0;
   const totalCents = cardCostCents + giftCostCents;
@@ -205,7 +203,7 @@ export function CreateWizard({
   }
 
   useEffect(() => {
-    if (userPlan === 'FREE' && card.tier === 'PREMIUM') {
+    if (!canAccessPremiumThemes(userPlan) && card.tier === 'PREMIUM') {
       setCard((current) => ({
         ...current,
         tier: 'QUICK',
@@ -231,7 +229,7 @@ export function CreateWizard({
   }
 
   function withTier(nextTier: CardTier) {
-    if (nextTier === 'PREMIUM' && userPlan === 'FREE') {
+    if (nextTier === 'PREMIUM' && !canAccessPremiumThemes(userPlan)) {
       openUpgradePrompt('premium_theme');
       return;
     }
@@ -251,7 +249,7 @@ export function CreateWizard({
       return;
     }
 
-    if (selected.tier === 'PREMIUM' && userPlan === 'FREE') {
+    if (selected.tier === 'PREMIUM' && !canAccessPremiumThemes(userPlan)) {
       openUpgradePrompt('premium_theme');
       return;
     }
@@ -725,7 +723,7 @@ export function CreateWizard({
                   type="checkbox"
                   checked={Boolean(card.giftCard)}
                   onChange={(event) => {
-                    if (event.target.checked && userPlan === 'FREE') {
+                    if (event.target.checked && !canUseGiftCards(userPlan)) {
                       openUpgradePrompt('gift_card');
                       return;
                     }
@@ -746,7 +744,7 @@ export function CreateWizard({
                 />
               </label>
 
-              {userPlan === 'FREE' ? (
+              {!canUseGiftCards(userPlan) ? (
                 <p className="mt-2 text-xs text-brand-copper">Gift cards are available on Premium and Pro plans.</p>
               ) : null}
 

@@ -38,8 +38,11 @@ API:
 - `POST /api/cards/[id]/generate`
 - `POST /api/cards/[id]/publish`
 - `GET /api/cards/[id]/stats`
+- `POST /api/cards/slug/[slug]/view`
 - `POST /api/checkout`
 - `POST /api/webhooks/stripe`
+- `POST /api/billing/checkout`
+- `POST /api/internal/publish-retries`
 - `GET /api/gifts/brands`
 - `GET /api/gifts/brands/[id]`
 - `POST /api/gifts/purchase`
@@ -75,7 +78,9 @@ npm run dev
 
 - If Tremendous keys are missing, `/api/gifts/brands` falls back to curated local brands for development.
 - If Stripe keys are missing, `/api/checkout` returns a mock checkout URL to keep flow testable.
+- If Stripe keys are missing, `/api/billing/checkout` upgrades plan in mock mode for local testing.
 - Card HTML is generated server-side and stored in S3/R2 when configured, otherwise on local disk (`storage/`).
+- Publish retry worker endpoint: call `POST /api/internal/publish-retries` with `x-publish-retry-secret` header.
 
 ## Reference assets
 

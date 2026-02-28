@@ -82,6 +82,11 @@ export default async function CreatePage({ searchParams }: { searchParams?: Crea
     const callbackUrl = buildCallbackUrl(searchParams) || buildCreateThemeUrl(preset, { cardId: searchParams?.cardId });
     redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
+  const userRecord = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: true }
+  });
+  const userPlan = userRecord?.plan || session.user.plan;
 
   let initialCard: Record<string, unknown> | undefined;
 
@@ -170,7 +175,7 @@ export default async function CreatePage({ searchParams }: { searchParams?: Crea
         </div>
       </header>
 
-      <CreateWizard initialCard={initialCard as never} userPlan={session.user.plan} />
+      <CreateWizard initialCard={initialCard as never} userPlan={userPlan} />
     </main>
   );
 }

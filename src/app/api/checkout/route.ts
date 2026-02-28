@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { auth } from '@/lib/auth/session';
 import { badRequest, ok, serverError, unauthorized, notFound } from '@/lib/api';
+import { getCardPriceCents, canUseGiftCards } from '@/lib/billing/pricing';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import { ensureStripe } from '@/lib/integrations/stripe';
@@ -40,18 +41,11 @@ export async function POST(request: Request) {
       return notFound('Card not found');
     }
 
-    if (card.user.plan === 'FREE' && card.giftCard) {
+    if (!canUseGiftCards(card.user.plan) && card.giftCard) {
       return badRequest('Gift cards require Premium or Pro plans.');
     }
 
-    const cardAmount =
-      card.user.plan === 'PRO'
-        ? 0
-        : card.tier === 'QUICK'
-        ? card.user.plan === 'FREE'
-          ? 0
-          : 500
-        : 1900;
+    const cardAmount = getCardPriceCents(card.user.plan, card.tier);
     const giftAmount = card.giftCard?.amount || 0;
 
     if (!env.STRIPE_SECRET_KEY) {
