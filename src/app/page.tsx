@@ -24,7 +24,7 @@ export default function LandingPage() {
         <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-8xl">
           Send Cards That
           <br />
-          <em className="inline-block bg-gradient-to-r from-dark-gold to-dark-gold-light bg-clip-text pb-2 font-script text-[1.15em] not-italic leading-[1.2] text-transparent">
+          <em className="inline-block bg-gradient-to-r from-dark-gold to-dark-gold-light bg-clip-text pb-4 font-script text-[1.15em] not-italic leading-[1.4] text-transparent">
             Breathe
           </em>
         </h1>
